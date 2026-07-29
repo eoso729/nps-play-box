@@ -41,29 +41,49 @@ public class XmlUtils {
         }
     }
 
+    private static void removeWhitespaceNodes(org.w3c.dom.Node node) {
+        org.w3c.dom.NodeList childNodes = node.getChildNodes();
+        for (int i = childNodes.getLength() - 1; i >= 0; i--) {
+            org.w3c.dom.Node child = childNodes.item(i);
+            if (child.getNodeType() == org.w3c.dom.Node.TEXT_NODE) {
+                if (child.getNodeValue().trim().isEmpty()) {
+                    node.removeChild(child);
+                }
+            } else if (child.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+                removeWhitespaceNodes(child);
+            }
+        }
+    }
+
     private static void saveDocument(Document doc, String filePath) throws Exception {
         Path path = Paths.get(filePath);
         Files.createDirectories(path.getParent());
+        Document docCopy = (Document) doc.cloneNode(true);
+        removeWhitespaceNodes(docCopy.getDocumentElement());
+        docCopy.normalize();
         try (OutputStream os = new FileOutputStream(filePath)) {
             TransformerFactory factory = TransformerFactory.newInstance();
             Transformer transformer = factory.newTransformer();
             transformer.setOutputProperty(javax.xml.transform.OutputKeys.STANDALONE, "no");
             transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(doc);
+            DOMSource source = new DOMSource(docCopy);
             StreamResult result = new StreamResult(os);
             transformer.transform(source, result);
         }
     }
 
     public static String documentToString(Document doc) throws Exception {
+        Document docCopy = (Document) doc.cloneNode(true);
+        removeWhitespaceNodes(docCopy.getDocumentElement());
+        docCopy.normalize();
         try (StringWriter sw = new StringWriter()) {
             TransformerFactory factory = TransformerFactory.newInstance();
             Transformer transformer = factory.newTransformer();
             transformer.setOutputProperty(javax.xml.transform.OutputKeys.STANDALONE, "no");
             transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            DOMSource source = new DOMSource(doc);
+            DOMSource source = new DOMSource(docCopy);
             StreamResult result = new StreamResult(sw);
             transformer.transform(source, result);
             return sw.toString();
