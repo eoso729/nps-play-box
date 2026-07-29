@@ -2,212 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --green-900: #0b2818;
-  --green-800: #0f3a22;
-  --green-700: #15803d;
-  --green-600: #16a34a;
-  --green-500: #22a05a;
-  --green-100: #e6f6ec;
-  --green-50: #f3faf5;
-  --border: #e2e8e6;
-  --text: #111827;
-  --muted: #6b7280;
-  --bg: #f7faf8;
-  --panel: #ffffff;
-  --danger: #dc2626;
+@layer utilities {
+  /* Radial brand gradient for left panel */
+  .bg-brand-radial {
+    background: radial-gradient(120% 120% at 0% 0%, #0f3a22 0%, #0b2818 60%, #071c11 100%);
+  }
+
+  /* Grid overlay pattern */
+  .bg-grid-pattern {
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 42px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 42px);
+  }
+
+  /* Button gradient */
+  .bg-btn-gradient {
+    background: linear-gradient(180deg, #16a34a, #15803d);
+  }
+
+  /* Logo mark gradient */
+  .bg-mark-gradient {
+    background: linear-gradient(135deg, #22a05a, #15803d);
+  }
 }
 
-body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+html, body, #root {
+  width: 100%;
   min-height: 100vh;
-  display: flex;
-}
-
-/* LEFT: brand panel */
-.brand-panel {
-  width: 44%;
-  background: radial-gradient(120% 120% at 0% 0%, var(--green-800) 0%, var(--green-900) 60%, #071c11 100%);
-  color: #eafcf1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 48px 56px;
-  position: relative;
-  overflow: hidden;
-}
-
-.brand-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 42px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 42px);
-  pointer-events: none;
-}
-
-.brand-top { position: relative; z-index: 1; }
-.brand-logo { display: flex; align-items: center; gap: 12px; }
-.brand-logo .mark {
-  width: 42px; height: 42px; border-radius: 10px;
-  background: linear-gradient(135deg, var(--green-500), var(--green-700));
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; letter-spacing: 0.5px; color: #fff; font-size: 15px;
-  box-shadow: 0 6px 20px rgba(21,128,61,0.45);
-}
-.brand-logo .name { font-size: 18px; font-weight: 700; letter-spacing: 0.2px; }
-.brand-logo .name span { display: block; font-size: 12px; font-weight: 500; color: #9fd8b3; margin-top: 2px; }
-
-.brand-mid { position: relative; z-index: 1; margin-top: 64px; }
-.brand-mid h1 { font-size: 32px; line-height: 1.25; font-weight: 700; margin: 0 0 16px 0; max-width: 420px; }
-.brand-mid p { color: #b7e3c4; font-size: 14.5px; line-height: 1.6; max-width: 400px; margin: 0; }
-.msg-chip {
-  display: inline-flex; align-items: center; gap: 8px; margin-top: 28px;
-  font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 12px;
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-  padding: 8px 12px; border-radius: 8px; color: #a7e8bd;
-}
-.msg-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-500); box-shadow: 0 0 0 3px rgba(34,160,90,0.25); }
-
-.brand-bottom { position: relative; z-index: 1; font-size: 12px; color: #77a98b; }
-.brand-bottom .divider { height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 16px; }
-.env-row { display: flex; gap: 22px; flex-wrap: wrap; }
-.env-row div strong { display: block; color: #dff3e6; font-size: 13px; font-weight: 600; }
-
-/* RIGHT: form panel */
-.form-panel {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-}
-.form-card { width: 100%; max-width: 400px; }
-
-.toggle-group {
-  display: flex;
-  background: var(--green-50);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 4px;
-  margin-bottom: 32px;
-}
-.toggle-btn {
-  flex: 1;
-  text-align: center;
-  padding: 10px 0;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--muted);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all .15s ease;
-  user-select: none;
-}
-.toggle-btn.active {
-  background: var(--panel);
-  color: var(--green-700);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-
-.form-title { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; }
-.form-sub { font-size: 13.5px; color: var(--muted); margin: 0 0 28px 0; }
-
-.field { margin-bottom: 18px; }
-.field label {
-  display: block; font-size: 12.5px; font-weight: 600; color: var(--text);
-  margin-bottom: 6px; letter-spacing: 0.2px;
-}
-.field label .req { color: var(--green-600); }
-.field input, .field select {
-  width: 100%;
-  padding: 11px 12px;
-  font-size: 13.5px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--panel);
-  color: var(--text);
-  font-family: inherit;
-  outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
-}
-.field input:focus {
-  border-color: var(--green-600);
-  box-shadow: 0 0 0 3px rgba(22,163,74,0.12);
-}
-.field .hint { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
-.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-.row-between { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-.checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-.checkbox-row input { width: 14px; height: 14px; accent-color: var(--green-600); }
-.link { color: var(--green-700); font-size: 13px; font-weight: 600; text-decoration: none; }
-.link:hover { text-decoration: underline; }
-
-.btn-primary {
-  width: 100%;
-  background: linear-gradient(180deg, var(--green-600), var(--green-700));
-  color: #fff;
-  border: none;
-  padding: 12.5px 0;
-  border-radius: 9px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  box-shadow: 0 6px 16px rgba(21,128,61,0.28);
-  transition: transform .1s ease, box-shadow .15s ease;
-}
-.btn-primary:hover { box-shadow: 0 8px 20px rgba(21,128,61,0.36); }
-.btn-primary:active { transform: translateY(1px); }
-
-.divider-row { display: flex; align-items: center; gap: 12px; margin: 24px 0; color: var(--muted); font-size: 12px; }
-.divider-row::before, .divider-row::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-
-.token-panel {
-  display: none;
-  margin-top: 22px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--green-50);
-  padding: 16px;
-}
-.token-panel.show { display: block; }
-.token-panel .label {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  font-size: 11.5px; font-weight: 700; color: var(--green-700);
-  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
-}
-.token-row {
-  display: flex; align-items: center; gap: 8px;
-  background: #0b2818; color: #a7e8bd;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 11.5px; padding: 10px 12px; border-radius: 7px;
-  overflow-x: auto; white-space: nowrap;
-}
-.copy-mini {
-  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-  color: #dff3e6; font-size: 10.5px; font-weight: 600; padding: 4px 8px; border-radius: 5px;
-  cursor: pointer; flex-shrink: 0;
-}
-
-.foot-note { text-align: center; margin-top: 26px; font-size: 12.5px; color: var(--muted); }
-.foot-note a { color: var(--green-700); font-weight: 600; text-decoration: none; }
-
-.badge-sandbox {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 11px; font-weight: 600; color: var(--green-700);
-  background: var(--green-100); border: 1px solid #c9ecd6;
-  padding: 5px 10px; border-radius: 999px; margin-bottom: 18px;
-}
-.badge-sandbox .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-600); }
-
-@media (max-width: 860px) {
-  .brand-panel { display: none; }
-  .form-panel { padding: 24px; }
+  margin: 0;
+  padding: 0;
 }

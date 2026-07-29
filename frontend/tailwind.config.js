@@ -7,22 +7,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        'green-900': 'var(--green-900)',
-        'green-800': 'var(--green-800)',
-        'green-700': 'var(--green-700)',
-        'green-600': 'var(--green-600)',
-        'green-500': 'var(--green-500)',
-        'green-100': 'var(--green-100)',
-        'green-50': 'var(--green-50)',
-        'border': 'var(--border)',
-        'text': 'var(--text)',
-        'muted': 'var(--muted)',
-        'bg': 'var(--bg)',
-        'panel': 'var(--panel)',
+        nps: {
+          900: '#0b2818',
+          800: '#0f3a22',
+          700: '#15803d',
+          600: '#16a34a',
+          500: '#22a05a',
+          100: '#e6f6ec',
+          50: '#f3faf5',
+        },
+        border: '#e2e8e6',
+        text: '#111827',
+        muted: '#6b7280',
+        bg: '#f7faf8',
+        panel: '#ffffff',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Courier New', 'monospace'],
       }
     },
   },

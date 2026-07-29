@@ -102,138 +102,174 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <>
-      {/* LEFT: brand panel */}
-      <div className="brand-panel">
-        <div className="brand-top">
-          <div className="brand-logo">
-            <div className="mark">NPS</div>
-            <div className="name">
+    <div className="w-full min-h-screen flex flex-col md:flex-row bg-bg text-text">
+      {/* LEFT: brand panel (44% width desktop) */}
+      <div className="hidden md:flex md:w-[44%] bg-brand-radial text-[#eafcf1] flex-col justify-between p-[48px_56px] relative overflow-hidden bg-grid-pattern min-h-screen shrink-0">
+        {/* Top Section */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-[12px]">
+            <div className="w-[42px] h-[42px] rounded-[10px] bg-mark-gradient flex items-center justify-center font-bold tracking-[0.5px] text-white text-[15px] shadow-[0_6px_20px_rgba(21,128,61,0.45)]">
+              NPS
+            </div>
+            <div className="text-[18px] font-bold tracking-[0.2px]">
               NPS Play Box Engine
-              <span>ISO 20022 Message Engineering Portal</span>
+              <span className="block text-[12px] font-medium text-[#9fd8b3] mt-[2px]">
+                ISO 20022 Message Engineering Portal
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="brand-mid">
-          <h1>Build, sign, and dispatch ISO 20022 payment messages against the NIBSS sandbox.</h1>
-          <p>
+        {/* Mid Section */}
+        <div className="relative z-10 mt-[64px]">
+          <h1 className="text-[32px] leading-[1.25] font-bold mb-[16px] max-w-[420px] text-white">
+            Build, sign, and dispatch ISO 20022 payment messages against the NIBSS sandbox.
+          </h1>
+          <p className="text-[#b7e3c4] text-[14.5px] leading-[1.6] max-w-[400px] font-normal">
             Configure message fields, generate compliant XML, apply PKCS#7 signing, and inspect the live gateway response — all in one pipeline.
           </p>
-          <div className="msg-chip">
-            <span className="dot"></span> pain.013.001.11 · pacs.008.001.10 · camt.060.001.05
+          <div className="inline-flex items-center gap-[8px] mt-[28px] font-mono text-[12px] bg-white/[0.06] border border-white/[0.12] px-[12px] py-[8px] rounded-[8px] text-[#a7e8bd]">
+            <span className="w-[6px] h-[6px] rounded-full bg-nps-500 shadow-[0_0_0_3px_rgba(34,160,90,0.25)]"></span>
+            pain.013.001.11 · pacs.008.001.10 · camt.060.001.05
           </div>
         </div>
 
-        <div className="brand-bottom">
-          <div className="divider"></div>
-          <div className="env-row">
+        {/* Bottom Section */}
+        <div className="relative z-10 text-[12px] text-[#77a98b]">
+          <div className="h-[1px] bg-white/10 mb-[16px]"></div>
+          <div className="flex gap-[22px] flex-wrap">
             <div>
-              <strong>NIBSS Sandbox v2.4</strong>Active target
+              <strong className="block text-[#dff3e6] text-[13px] font-semibold">NIBSS Sandbox v2.4</strong>
+              Active target
             </div>
             <div>
-              <strong>SHA-256 / RSA</strong>Signing algorithm
+              <strong className="block text-[#dff3e6] text-[13px] font-semibold">SHA-256 / RSA</strong>
+              Signing algorithm
             </div>
             <div>
-              <strong>984 / 1000</strong>Rate limit today
+              <strong className="block text-[#dff3e6] text-[13px] font-semibold">984 / 1000</strong>
+              Rate limit today
             </div>
           </div>
         </div>
       </div>
 
       {/* RIGHT: form panel */}
-      <div className="form-panel">
-        <div className="form-card">
-          <span className="badge-sandbox">
-            <span className="dot"></span>Sandbox environment
+      <div className="flex-1 flex items-center justify-center p-6 md:p-8 bg-bg min-h-screen">
+        <div className="w-full max-w-[400px]">
+          <span className="inline-flex items-center gap-[6px] text-[11px] font-semibold text-nps-700 bg-nps-100 border border-[#c9ecd6] px-[10px] py-[5px] rounded-full mb-[18px]">
+            <span className="w-[6px] h-[6px] rounded-full bg-nps-600"></span>
+            Sandbox environment
           </span>
 
-          <div className="toggle-group">
+          {/* Mode Switcher */}
+          <div className="flex bg-nps-50 border border-border rounded-[10px] p-[4px] mb-[32px]">
             <div
-              className={`toggle-btn ${mode === 'signin' ? 'active' : ''}`}
-              id="tab-signin"
+              className={`flex-1 text-center py-[10px] text-[13.5px] font-semibold rounded-[8px] cursor-pointer transition-all select-none ${
+                mode === 'signin'
+                  ? 'bg-panel text-nps-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                  : 'text-muted hover:text-text'
+              }`}
               onClick={() => { setMode('signin'); setAuthError(null); }}
             >
               Sign In
             </div>
             <div
-              className={`toggle-btn ${mode === 'register' ? 'active' : ''}`}
-              id="tab-register"
+              className={`flex-1 text-center py-[10px] text-[13.5px] font-semibold rounded-[8px] cursor-pointer transition-all select-none ${
+                mode === 'register'
+                  ? 'bg-panel text-nps-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                  : 'text-muted hover:text-text'
+              }`}
               onClick={() => { setMode('register'); setAuthError(null); }}
             >
               Register Account
             </div>
           </div>
 
-          {/* Auth Error Banner */}
+          {/* Error Message Banner */}
           {authError && (
-            <div style={{ color: 'var(--danger)', fontSize: '12.5px', marginBottom: '16px', fontWeight: 500 }}>
+            <div className="mb-4 text-[12.5px] font-medium text-red-600 bg-red-50 border border-red-200 p-3 rounded-lg">
               {authError}
             </div>
           )}
 
-          {/* User Session Bar if Authenticated */}
+          {/* User Authenticated Session Bar */}
           {isAuthenticated && user && (
-            <div style={{ marginBottom: '20px', padding: '12px', background: 'var(--green-50)', border: '1px solid var(--border)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="mb-5 p-3.5 bg-nps-50 border border-border rounded-lg flex items-center justify-between">
               <div>
-                <strong style={{ fontSize: '13px', color: 'var(--green-900)' }}>{user.email}</strong>
-                <span style={{ display: 'block', fontSize: '11px', color: 'var(--muted)' }}>Role: {user.role || 'USER'}</span>
+                <strong className="text-[13px] font-semibold text-nps-900 block">{user.email}</strong>
+                <span className="text-[11px] text-muted">Role: {user.role || 'USER'}</span>
               </div>
-              <button onClick={logout} style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+              <button
+                type="button"
+                onClick={logout}
+                className="text-[12px] font-semibold text-red-600 hover:underline bg-transparent border-0 cursor-pointer"
+              >
                 Sign Out
               </button>
             </div>
           )}
 
-          {/* SIGN IN PANEL */}
+          {/* SIGN IN FORM */}
           {mode === 'signin' && (
-            <div id="panel-signin">
-              <h2 className="form-title">Welcome back</h2>
-              <p className="form-sub">Sign in to continue to your workspace.</p>
+            <div>
+              <h2 className="text-[22px] font-bold mb-[6px] text-text">Welcome back</h2>
+              <p className="text-[13.5px] text-muted mb-[28px]">Sign in to continue to your workspace.</p>
 
               <form onSubmit={handleLoginSubmit(onLogin)}>
-                <div className="field">
-                  <label>
-                    Email or username <span className="req">*</span>
+                <div className="mb-[18px]">
+                  <label className="block text-[12.5px] font-semibold text-text mb-[6px] tracking-[0.2px]">
+                    Email or username <span className="text-nps-600">*</span>
                   </label>
                   <input
                     type="text"
                     {...registerLogin('email')}
                     placeholder="you@nibss-plc.com.ng"
+                    className="w-full px-[12px] py-[11px] text-[13.5px] border border-border rounded-[8px] bg-panel text-text outline-none focus:border-nps-600 focus:ring-4 focus:ring-nps-600/10 transition-all"
                   />
                   {loginErrors.email && (
-                    <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>
-                      {loginErrors.email.message}
-                    </div>
+                    <div className="text-[11.5px] text-red-600 mt-[5px]">{loginErrors.email.message}</div>
                   )}
                 </div>
 
-                <div className="field">
-                  <label>
-                    Password <span className="req">*</span>
+                <div className="mb-[18px]">
+                  <label className="block text-[12.5px] font-semibold text-text mb-[6px] tracking-[0.2px]">
+                    Password <span className="text-nps-600">*</span>
                   </label>
                   <input
                     type="password"
                     {...registerLogin('password')}
                     placeholder="••••••••••••"
+                    className="w-full px-[12px] py-[11px] text-[13.5px] border border-border rounded-[8px] bg-panel text-text outline-none focus:border-nps-600 focus:ring-4 focus:ring-nps-600/10 transition-all"
                   />
                   {loginErrors.password && (
-                    <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>
-                      {loginErrors.password.message}
-                    </div>
+                    <div className="text-[11.5px] text-red-600 mt-[5px]">{loginErrors.password.message}</div>
                   )}
                 </div>
 
-                <div className="row-between">
-                  <label className="checkbox-row">
-                    <input type="checkbox" {...registerLogin('keepSignedIn')} /> Keep me signed in
+                <div className="flex items-center justify-between mb-[22px]">
+                  <label className="flex items-center gap-[8px] text-[13px] text-muted cursor-pointer">
+                    <input
+                      type="checkbox"
+                      {...registerLogin('keepSignedIn')}
+                      className="w-[14px] h-[14px] accent-nps-600"
+                    />
+                    Keep me signed in
                   </label>
-                  <a href="#" className="link" onClick={(e) => { e.preventDefault(); alert('Password reset requested.'); }}>
+                  <a
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); alert('Password reset link requested.'); }}
+                    className="text-[13px] font-semibold text-nps-700 hover:underline"
+                  >
                     Forgot password?
                   </a>
                 </div>
 
-                <button type="submit" className="btn-primary" disabled={isLoginSubmitting}>
+                <button
+                  type="submit"
+                  disabled={isLoginSubmitting}
+                  className="btn-primary"
+                >
                   {isLoginSubmitting ? 'Signing In...' : 'Sign In'}
                 </button>
 
@@ -243,23 +279,9 @@ export const AuthScreen: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleMicrosoftLogin}
-                  style={{
-                    width: '100%',
-                    background: '#fff',
-                    border: '1px solid var(--border)',
-                    padding: '11px 0',
-                    borderRadius: '8px',
-                    fontSize: '13.5px',
-                    fontWeight: 600,
-                    color: 'var(--text)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '10px'
-                  }}
+                  className="w-full bg-panel border border-border py-[11px] rounded-[8px] text-[13.5px] font-semibold text-text cursor-pointer flex items-center justify-center gap-[10px] hover:bg-nps-50 transition-all"
                 >
-                  <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 23 23">
+                  <svg className="w-[16px] h-[16px]" viewBox="0 0 23 23">
                     <path fill="#f35325" d="M1 1h10v10H1z" />
                     <path fill="#81bc06" d="M12 1h10v10H12z" />
                     <path fill="#05a6f0" d="M1 12h10v10H1z" />
@@ -268,8 +290,8 @@ export const AuthScreen: React.FC = () => {
                   <span>Sign in with Microsoft</span>
                 </button>
 
-                {/* Token Panel (Shows when authenticated or after login) */}
-                <div className={`token-panel ${(token || isAuthenticated) ? 'show' : ''}`} id="tokenPanel">
+                {/* Token Panel */}
+                <div className={`token-panel ${(token || isAuthenticated) ? 'show' : ''}`}>
                   <div className="label">Session · API Token</div>
                   <div className="token-row">
                     <span id="tokenText">{token || 'eyJhbGciOiJSUzI1NiIs...NPSDEV001.9fA2'}</span>
@@ -282,78 +304,107 @@ export const AuthScreen: React.FC = () => {
             </div>
           )}
 
-          {/* REGISTER PANEL */}
+          {/* REGISTER FORM */}
           {mode === 'register' && (
-            <div id="panel-register">
-              <h2 className="form-title">Create an account</h2>
-              <p className="form-sub">Get sandbox access and an API token for testing.</p>
+            <div>
+              <h2 className="text-[22px] font-bold mb-[6px] text-text">Create an account</h2>
+              <p className="text-[13.5px] text-muted mb-[28px]">Get sandbox access and an API token for testing.</p>
 
               <form onSubmit={handleRegisterSubmit(onRegister)}>
-                <div className="row-2">
-                  <div className="field">
-                    <label>
-                      First name <span className="req">*</span>
+                <div className="grid grid-cols-2 gap-[12px] mb-[18px]">
+                  <div>
+                    <label className="block text-[12.5px] font-semibold text-text mb-[6px] tracking-[0.2px]">
+                      First name <span className="text-nps-600">*</span>
                     </label>
-                    <input type="text" {...registerReg('firstName')} placeholder="John" />
+                    <input
+                      type="text"
+                      {...registerReg('firstName')}
+                      placeholder="John"
+                      className="w-full px-[12px] py-[11px] text-[13.5px] border border-border rounded-[8px] bg-panel text-text outline-none focus:border-nps-600 focus:ring-4 focus:ring-nps-600/10 transition-all"
+                    />
                     {regErrors.firstName && (
-                      <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>
-                        {regErrors.firstName.message}
-                      </div>
+                      <div className="text-[11.5px] text-red-600 mt-[5px]">{regErrors.firstName.message}</div>
                     )}
                   </div>
-                  <div className="field">
-                    <label>
-                      Last name <span className="req">*</span>
+
+                  <div>
+                    <label className="block text-[12.5px] font-semibold text-text mb-[6px] tracking-[0.2px]">
+                      Last name <span className="text-nps-600">*</span>
                     </label>
-                    <input type="text" {...registerReg('lastName')} placeholder="Developer" />
+                    <input
+                      type="text"
+                      {...registerReg('lastName')}
+                      placeholder="Developer"
+                      className="w-full px-[12px] py-[11px] text-[13.5px] border border-border rounded-[8px] bg-panel text-text outline-none focus:border-nps-600 focus:ring-4 focus:ring-nps-600/10 transition-all"
+                    />
                     {regErrors.lastName && (
-                      <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>
-                        {regErrors.lastName.message}
-                      </div>
+                      <div className="text-[11.5px] text-red-600 mt-[5px]">{regErrors.lastName.message}</div>
                     )}
                   </div>
                 </div>
 
-                <div className="field">
-                  <label>
-                    Work email <span className="req">*</span>
+                <div className="mb-[18px]">
+                  <label className="block text-[12.5px] font-semibold text-text mb-[6px] tracking-[0.2px]">
+                    Work email <span className="text-nps-600">*</span>
                   </label>
-                  <input type="text" {...registerReg('workEmail')} placeholder="you@company.com" />
+                  <input
+                    type="text"
+                    {...registerReg('workEmail')}
+                    placeholder="you@company.com"
+                    className="w-full px-[12px] py-[11px] text-[13.5px] border border-border rounded-[8px] bg-panel text-text outline-none focus:border-nps-600 focus:ring-4 focus:ring-nps-600/10 transition-all"
+                  />
                   {regErrors.workEmail && (
-                    <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>
-                      {regErrors.workEmail.message}
-                    </div>
+                    <div className="text-[11.5px] text-red-600 mt-[5px]">{regErrors.workEmail.message}</div>
                   )}
                 </div>
 
-                <div className="field">
-                  <label>Organization</label>
-                  <input type="text" {...registerReg('organization')} placeholder="ACME Financial Services" />
-                </div>
-
-                <div className="field">
-                  <label>
-                    Password <span className="req">*</span>
+                <div className="mb-[18px]">
+                  <label className="block text-[12.5px] font-semibold text-text mb-[6px] tracking-[0.2px]">
+                    Organization
                   </label>
-                  <input type="password" {...registerReg('password')} placeholder="Minimum 8 characters" />
-                  <div className="hint">Use at least one uppercase letter, one number, and one symbol.</div>
+                  <input
+                    type="text"
+                    {...registerReg('organization')}
+                    placeholder="ACME Financial Services"
+                    className="w-full px-[12px] py-[11px] text-[13.5px] border border-border rounded-[8px] bg-panel text-text outline-none focus:border-nps-600 focus:ring-4 focus:ring-nps-600/10 transition-all"
+                  />
+                </div>
+
+                <div className="mb-[18px]">
+                  <label className="block text-[12.5px] font-semibold text-text mb-[6px] tracking-[0.2px]">
+                    Password <span className="text-nps-600">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    {...registerReg('password')}
+                    placeholder="Minimum 8 characters"
+                    className="w-full px-[12px] py-[11px] text-[13.5px] border border-border rounded-[8px] bg-panel text-text outline-none focus:border-nps-600 focus:ring-4 focus:ring-nps-600/10 transition-all"
+                  />
+                  <div className="text-[11.5px] text-muted mt-[5px]">
+                    Use at least one uppercase letter, one number, and one symbol.
+                  </div>
                   {regErrors.password && (
-                    <div style={{ fontSize: '11px', color: 'var(--danger)', marginTop: '4px' }}>
-                      {regErrors.password.message}
-                    </div>
+                    <div className="text-[11.5px] text-red-600 mt-[5px]">{regErrors.password.message}</div>
                   )}
                 </div>
 
-                <label className="checkbox-row" style={{ marginBottom: '20px' }}>
-                  <input type="checkbox" {...registerReg('agreeTerms')} /> I agree to the Sandbox Terms of Use
+                <label className="flex items-center gap-[8px] text-[13px] text-muted mb-[20px] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...registerReg('agreeTerms')}
+                    className="w-[14px] h-[14px] accent-nps-600"
+                  />
+                  I agree to the Sandbox Terms of Use
                 </label>
                 {regErrors.agreeTerms && (
-                  <div style={{ fontSize: '11px', color: 'var(--danger)', marginBottom: '12px' }}>
-                    {regErrors.agreeTerms.message}
-                  </div>
+                  <div className="text-[11.5px] text-red-600 mb-[12px]">{regErrors.agreeTerms.message}</div>
                 )}
 
-                <button type="submit" className="btn-primary" disabled={isRegSubmitting}>
+                <button
+                  type="submit"
+                  disabled={isRegSubmitting}
+                  className="btn-primary"
+                >
                   {isRegSubmitting ? 'Creating Account...' : 'Create Account'}
                 </button>
               </form>
@@ -361,10 +412,10 @@ export const AuthScreen: React.FC = () => {
           )}
 
           <div className="foot-note">
-            Need gateway credentials instead? <a href="#">Contact NIBSS integration support</a>
+            Need gateway credentials instead? <a href="#" className="text-nps-700 font-semibold hover:underline">Contact NIBSS integration support</a>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
