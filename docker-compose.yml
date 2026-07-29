@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nps-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-npsplaybox}
+      POSTGRES_USER: ${DB_USER:-npsuser}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-npspassword}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-npsuser} -d ${DB_NAME:-npsplaybox}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nps-backend
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-npsplaybox}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-npsuser}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-npspassword}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_SECRET: ${JWT_SECRET:-9a8f7e6d5c4b3a2101928374655647382910abcdef1234567890abcdef123456}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
+      AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-dummy_azure_client_id}
+      AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-dummy_azure_client_secret}
+      AZURE_TENANT_ID: ${AZURE_TENANT_ID:-dummy_azure_tenant_id}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nps-frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
