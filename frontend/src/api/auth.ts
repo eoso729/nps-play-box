@@ -21,7 +21,8 @@ export interface AuthResponse {
 }
 
 export interface LoginRequest {
-  email: string;
+  email?: string;
+  emailOrUsername?: string;
   password: string;
 }
 
@@ -35,7 +36,11 @@ export interface RegisterRequest {
 }
 
 export const loginApi = async (data: LoginRequest): Promise<AuthResponse> => {
-  const res = await apiClient.post<AuthResponse>('/api/auth/login', data);
+  const payload = {
+    emailOrUsername: data.emailOrUsername || data.email || '',
+    password: data.password,
+  };
+  const res = await apiClient.post<AuthResponse>('/api/auth/login', payload);
   return res.data;
 };
 
