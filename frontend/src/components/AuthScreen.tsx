@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 // Validation Schemas using Zod
@@ -26,11 +27,30 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export const AuthScreen: React.FC = () => {
-  const [mode, setMode] = useState<'signin' | 'register'>('signin');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [mode, setMode] = useState<'signin' | 'register'>(
+    location.pathname === '/register' ? 'register' : 'signin'
+  );
   const [copiedToken, setCopiedToken] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
   const { login, register, token, user, isAuthenticated, logout } = useAuth();
+
+  useEffect(() => {
+    if (location.pathname === '/register') {
+      setMode('register');
+    } else if (location.pathname === '/login') {
+      setMode('signin');
+    }
+  }, [location.pathname]);
+
+  const handleTabSwitch = (newMode: 'signin' | 'register') => {
+    setMode(newMode);
+    setAuthError(null);
+    navigate(newMode === 'register' ? '/register' : '/login', { replace: true });
+  };
 
   // Login Form Hook
   const {
@@ -170,7 +190,7 @@ export const AuthScreen: React.FC = () => {
                   ? 'bg-panel text-nps-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
                   : 'text-muted hover:text-text'
               }`}
-              onClick={() => { setMode('signin'); setAuthError(null); }}
+              onClick={() => handleTabSwitch('signin')}
             >
               Sign In
             </div>
@@ -180,7 +200,7 @@ export const AuthScreen: React.FC = () => {
                   ? 'bg-panel text-nps-700 shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
                   : 'text-muted hover:text-text'
               }`}
-              onClick={() => { setMode('register'); setAuthError(null); }}
+              onClick={() => handleTabSwitch('register')}
             >
               Register Account
             </div>
