@@ -1,0 +1,31 @@
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.p12
+*.jks
+*.key
+*.crt
+
+# Keystore & Private key directories
+backend/src/main/java/org/example/signer/keys/
+backend/src/main/java/org/example/signer/xmlOutput/
+
+# Build & Output
+target/
+backend/target/
+frontend/dist/
+frontend/node_modules/
+node_modules/
+build/
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE & System
+.idea/
+.vscode/
+*.iws
+*.iml
+*.ipr
+.DS_Store
+Thumbs.db
