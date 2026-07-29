@@ -37,6 +37,8 @@ services:
       AZURE_CLIENT_ID: ${AZURE_CLIENT_ID:-dummy_azure_client_id}
       AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-dummy_azure_client_secret}
       AZURE_TENANT_ID: ${AZURE_TENANT_ID:-dummy_azure_tenant_id}
+      KEY_PATH_PRIVATE: /app/keys/999999.private.pem
+      KEY_PATH_PUBLIC: /app/keys/NIBSS-999999.public.pem
     ports:
       - "${BACKEND_PORT:-8081}:8080"
     depends_on:
