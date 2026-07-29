@@ -6,7 +6,7 @@ interface AppHeaderProps {
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({ onCredentialsClick }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const initials = user
     ? ((user.firstName?.[0] || '') + (user.lastName?.[0] || '') || user.username?.[0]?.toUpperCase() || 'U')
@@ -40,6 +40,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onCredentialsClick }) => {
           className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-[#111827] hover:border-[#22a05a] hover:text-[#15803d] transition-colors cursor-pointer"
         >
           Credentials and Tokens
+        </button>
+
+        <button
+          type="button"
+          onClick={logout}
+          className="flex items-center gap-1.5 border border-red-100 bg-white px-3 py-[7px] rounded-lg text-[12.5px] font-semibold text-red-600 hover:border-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+        >
+          Sign Out
         </button>
 
         <div className="flex items-center gap-2.5 border border-[#e4e9e6] rounded-lg px-2.5 py-1.5 cursor-pointer hover:border-[#22a05a] transition-colors">
