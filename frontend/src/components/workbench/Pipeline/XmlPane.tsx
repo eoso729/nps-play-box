@@ -75,39 +75,55 @@ function renderXmlLine(line: string, lineNum: number) {
 
 function formatXml(xml: string): string {
   try {
-    // Strip existing newlines and extra spaces between tags
-    const cleanXml = xml
-      .replace(/>\s+</g, '><')
-      .replace(/(<[^\/][^>]*[^\/]>)([^<]+)(<\/[^>]+>)/g, '$1$2$3')
-      .trim();
-
+    // Basic cleanup: remove extra newlines and trim whitespace between tags
+    const cleanXml = xml.replace(/>\s+</g, '><').trim();
+    
     let formatted = '';
     let pad = 0;
     
-    // Split by tags
-    const tokens = cleanXml.split(/(?=<)/g);
+    // Split into tags and text content
+    const tokens = cleanXml.split(/(<\/?[^>]+>)/g).filter(t => t.trim() !== '');
     
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i].trim();
       if (!token) continue;
       
+      // If it's a closing tag
       if (token.startsWith('</')) {
         pad = Math.max(0, pad - 1);
       }
       
-      formatted += '  '.repeat(pad) + token + '\n';
-      
-      if (
-        token.startsWith('<') &&
-        !token.startsWith('</') &&
-        !token.startsWith('<?') &&
-        !token.startsWith('<!') &&
-        !token.endsWith('/>') &&
-        !token.includes('</')
-      ) {
-        pad++;
+      // Check if it's a tag or text
+      if (token.startsWith('<')) {
+        // If it's a closing tag or self-closing or declaration
+        if (token.startsWith('</') || token.endsWith('/>') || token.startsWith('<?') || token.startsWith('<!')) {
+          formatted += '  '.repeat(pad) + token + '\n';
+        } else {
+          // It's an opening tag. Let's look ahead to see if the next token is text and the one after is the closing tag of this tag.
+          const nextToken = tokens[i + 1]?.trim();
+          const nextNextToken = tokens[i + 2]?.trim();
+          
+          const tagName = token.match(/<([\w:.-]+)/)?.[1];
+          if (nextToken && nextNextToken === `</${tagName}>`) {
+            // Leaf node: format on a single line!
+            formatted += '  '.repeat(pad) + token + nextToken + nextNextToken + '\n';
+            i += 2; // skip text and closing tag
+          } else if (nextNextToken === undefined && nextToken === `</${tagName}>`) {
+            // Leaf node with empty/no text: format on a single line!
+            formatted += '  '.repeat(pad) + token + nextToken + '\n';
+            i += 1;
+          } else {
+            // Standard opening tag with child elements
+            formatted += '  '.repeat(pad) + token + '\n';
+            pad++;
+          }
+        }
+      } else {
+        // Raw text outside of leaf node wrapper
+        formatted += '  '.repeat(pad) + token + '\n';
       }
     }
+    
     return formatted.trim();
   } catch (e) {
     console.warn('Failed to format XML, returning raw:', e);
