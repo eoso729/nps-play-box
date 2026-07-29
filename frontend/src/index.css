@@ -2,37 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Left panel background and responsive layout */
-.left-brand-panel {
-  display: flex !important;
-  width: 44% !important;
-  min-height: 100vh !important;
-  background: radial-gradient(130% 130% at 10% 10%, #082916 0%, #051a0e 55%, #031109 100%) !important;
-  color: #ffffff !important;
-  flex-direction: column !important;
-  justify-content: space-between !important;
-  padding: 3rem 3.5rem !important;
-  position: relative !important;
-  overflow: hidden !important;
-  flex-shrink: 0 !important;
-}
-
-@media (max-width: 768px) {
-  .left-brand-panel {
-    display: none !important;
-  }
-}
-
-/* Right panel layout */
-.right-form-panel {
-  flex: 1 1 0% !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  padding: 3rem 1.5rem !important;
-  background-color: #f7faf8 !important;
-  min-height: 100vh !important;
+/* Dark rich forest radial brand gradient for left panel */
+.bg-brand-radial {
+  background: radial-gradient(130% 130% at 10% 10%, #0f4c28 0%, #0b3b1e 55%, #082e18 100%) !important;
 }
 
 /* Crisp grid overlay pattern */
@@ -108,6 +80,5 @@ html, body, #root {
   background-color: #f7faf8;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-
 
 
