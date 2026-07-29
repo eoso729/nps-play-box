@@ -73,6 +73,48 @@ function renderXmlLine(line: string, lineNum: number) {
   );
 }
 
+function formatXml(xml: string): string {
+  try {
+    // Strip existing newlines and extra spaces between tags
+    const cleanXml = xml
+      .replace(/>\s+</g, '><')
+      .replace(/(<[^\/][^>]*[^\/]>)([^<]+)(<\/[^>]+>)/g, '$1$2$3')
+      .trim();
+
+    let formatted = '';
+    let pad = 0;
+    
+    // Split by tags
+    const tokens = cleanXml.split(/(?=<)/g);
+    
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i].trim();
+      if (!token) continue;
+      
+      if (token.startsWith('</')) {
+        pad = Math.max(0, pad - 1);
+      }
+      
+      formatted += '  '.repeat(pad) + token + '\n';
+      
+      if (
+        token.startsWith('<') &&
+        !token.startsWith('</') &&
+        !token.startsWith('<?') &&
+        !token.startsWith('<!') &&
+        !token.endsWith('/>') &&
+        !token.includes('</')
+      ) {
+        pad++;
+      }
+    }
+    return formatted.trim();
+  } catch (e) {
+    console.warn('Failed to format XML, returning raw:', e);
+    return xml;
+  }
+}
+
 const STATUS_CHIP_STYLES: Record<string, { bg: string; color: string; text: string }> = {
   gen: { bg: '#e6f6ec', color: '#15803d', text: 'Generated' },
   signed: { bg: '#eef0fe', color: '#6366f1', text: 'Signed' },
@@ -95,27 +137,29 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
   const chip = STATUS_CHIP_STYLES[statusVariant] || STATUS_CHIP_STYLES.idle;
   const displayStatusText = statusText || chip.text;
 
+  const formattedXml = xml ? formatXml(xml) : null;
+
   const handleCopy = useCallback(() => {
-    if (xml) {
-      navigator.clipboard.writeText(xml).then(() => {
+    if (formattedXml) {
+      navigator.clipboard.writeText(formattedXml).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 1200);
       });
     }
-  }, [xml]);
+  }, [formattedXml]);
 
   const handleExport = useCallback(() => {
-    if (!xml) return;
-    const blob = new Blob([xml], { type: 'application/xml' });
+    if (!formattedXml) return;
+    const blob = new Blob([formattedXml], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `nps-${title.toLowerCase().replace(/\s+/g, '-')}.xml`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [xml, title]);
+  }, [formattedXml, title]);
 
-  const lines = xml ? xml.split('\n') : [];
+  const lines = formattedXml ? formattedXml.split('\n') : [];
 
   return (
     <div className="flex flex-col border-r border-[#e4e9e6] min-w-0 overflow-hidden" style={{ flex: 1 }}>
