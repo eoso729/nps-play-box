@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -10,7 +8,7 @@ services:
       POSTGRES_USER: ${DB_USER:-npsuser}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-npspassword}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,10 +24,13 @@ services:
     container_name: nps-backend
     restart: always
     environment:
+      SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-npsplaybox}
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-npsuser}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-npspassword}
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       JWT_SECRET: ${JWT_SECRET:-9a8f7e6d5c4b3a2101928374655647382910abcdef1234567890abcdef123456}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-86400000}
@@ -37,7 +38,7 @@ services:
       AZURE_CLIENT_SECRET: ${AZURE_CLIENT_SECRET:-dummy_azure_client_secret}
       AZURE_TENANT_ID: ${AZURE_TENANT_ID:-dummy_azure_tenant_id}
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8081}:8080"
     depends_on:
       postgres:
         condition: service_healthy
