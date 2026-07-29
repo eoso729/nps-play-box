@@ -4,15 +4,17 @@
 
 /* Dark rich forest radial brand gradient for left panel */
 .bg-brand-radial {
-  background: radial-gradient(130% 130% at 10% 10%, #0f4c28 0%, #0b3b1e 55%, #082e18 100%) !important;
+  background-color: #0b3b1e !important;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(130% 130% at 10% 10%, #0f4c28 0%, #0b3b1e 55%, #082e18 100%) !important;
+  background-size: 32px 32px, 32px 32px, 100% 100% !important;
 }
 
 /* Crisp grid overlay pattern */
 .bg-grid-pattern {
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px) !important;
-  background-size: 32px 32px !important;
+  background-size: 32px 32px;
 }
 
 /* Primary action button styling */

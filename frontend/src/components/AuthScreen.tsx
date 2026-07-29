@@ -125,9 +125,12 @@ export const AuthScreen: React.FC = () => {
     <div className="w-full min-h-screen flex flex-col md:flex-row bg-[#f7faf8] text-gray-900 font-sans">
       {/* LEFT: Branded Information Panel */}
       <div
-        className="hidden md:flex md:w-[46%] lg:w-[44%] text-white flex-col justify-between p-10 md:p-12 lg:p-14 min-h-screen shrink-0 relative overflow-hidden bg-grid-pattern"
+        className="hidden md:flex md:w-[46%] lg:w-[44%] text-white flex-col justify-between p-10 md:p-12 lg:p-14 min-h-screen shrink-0 relative overflow-hidden bg-brand-radial"
         style={{
-          background: 'radial-gradient(130% 130% at 10% 10%, #0f4c28 0%, #0b3b1e 55%, #082e18 100%)',
+          backgroundColor: '#0b3b1e',
+          backgroundImage:
+            'linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px), radial-gradient(130% 130% at 10% 10%, #0f4c28 0%, #0b3b1e 55%, #082e18 100%)',
+          backgroundSize: '32px 32px, 32px 32px, 100% 100%',
         }}
       >
         {/* Top Header */}
