@@ -32,7 +32,7 @@ export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result }) => {
             }`}>
               1
             </span>
-            Plaine XML
+            Plain XML
           </button>
           <button
             type="button"
@@ -48,7 +48,7 @@ export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result }) => {
             }`}>
               2
             </span>
-            Signened XML
+            Signed XML
           </button>
         </div>
 
@@ -74,7 +74,7 @@ export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result }) => {
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {activeTab === 'plain' ? (
           <XmlPane
-            title="Plaine XML"
+            title="Plain XML"
             stageNum={1}
             stageColor="#16a34a"
             statusText={plainStatus === 'gen' ? 'Generated' : plainStatus === 'error' ? 'Error' : 'Awaiting input'}
@@ -84,7 +84,7 @@ export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result }) => {
           />
         ) : (
           <XmlPane
-            title="Signened XML"
+            title="Signed XML"
             stageNum={2}
             stageColor="#6366f1"
             statusText={signedStatus === 'signed' ? 'Signed' : signedStatus === 'error' ? 'Error' : 'Awaiting input'}
