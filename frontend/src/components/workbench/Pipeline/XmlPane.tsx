@@ -68,7 +68,7 @@ function renderXmlLine(line: string, lineNum: number) {
       <span className="select-none mr-3 text-right" style={{ width: 22, flexShrink: 0, color: '#3f6a52', userSelect: 'none' }}>
         {lineNum}
       </span>
-      <span>{renderContent()}</span>
+      <span style={{ whiteSpace: 'pre' }}>{renderContent()}</span>
     </div>
   );
 }
