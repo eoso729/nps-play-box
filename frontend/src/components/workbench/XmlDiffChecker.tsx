@@ -188,7 +188,7 @@ export const XmlDiffChecker: React.FC = () => {
         <div className="flex-1 flex min-h-0 gap-4">
           {!diffResult ? (
             /* Input View */
-            <div className="flex-grow flex gap-4 min-h-0">
+            <div className="flex-1 flex gap-4 min-h-0 w-full h-full">
               {/* Left Input */}
               <div className="flex-1 flex flex-col bg-white border border-[#e4e9e6] rounded-xl overflow-hidden shadow-2xs min-h-0">
                 <div className="px-4 py-3 bg-[#f6f9f7] border-b border-[#e4e9e6] flex items-center justify-between flex-shrink-0">
@@ -237,7 +237,7 @@ export const XmlDiffChecker: React.FC = () => {
             </div>
           ) : (
             /* Visual Diff View */
-            <div className="flex-grow flex gap-4 min-h-0">
+            <div className="flex-1 flex gap-4 min-h-0 w-full h-full">
               {/* Left Diff Pane */}
               <div className="flex-1 flex flex-col bg-[#0b1a12] border border-[#e4e9e6] rounded-xl overflow-hidden shadow-inner min-h-0">
                 <div className="px-4 py-3 bg-[#f6f9f7] border-b border-[#e4e9e6] flex items-center justify-between flex-shrink-0">
