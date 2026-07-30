@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { XmlPane } from './XmlPane';
-import { SignatureBox } from './SignatureBox';
 import { PipelineResult } from '../../../types/workbench';
 
 interface PipelinePanelProps {
@@ -8,7 +7,7 @@ interface PipelinePanelProps {
 }
 
 export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result }) => {
-  const { plainXml, signedXml, generatedAt, isLoading, error } = result;
+  const { plainXml, signedXml, isLoading, error } = result;
   const [activeTab, setActiveTab] = useState<'plain' | 'signed'>('plain');
 
   const plainStatus = isLoading ? 'idle' : plainXml ? 'gen' : error ? 'error' : 'idle';
@@ -92,11 +91,6 @@ export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result }) => {
             statusVariant={signedStatus as any}
             xml={signedXml}
             isLoading={isLoading}
-            footer={
-              signedXml ? (
-                <SignatureBox signedAt={generatedAt} visible={!!signedXml} />
-              ) : undefined
-            }
           />
         )}
       </div>
