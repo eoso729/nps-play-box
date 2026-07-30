@@ -73,64 +73,6 @@ function renderXmlLine(line: string, lineNum: number) {
   );
 }
 
-function formatXml(xml: string): string {
-  try {
-    // Basic cleanup: remove extra newlines and trim whitespace between tags
-    const cleanXml = xml.replace(/>\s+</g, '><').trim();
-    
-    let formatted = '';
-    let pad = 0;
-    
-    // Split into tags and text content
-    const tokens = cleanXml.split(/(<\/?[^>]+>)/g).filter(t => t.trim() !== '');
-    
-    for (let i = 0; i < tokens.length; i++) {
-      const token = tokens[i].trim();
-      if (!token) continue;
-      
-      // If it's a closing tag
-      if (token.startsWith('</')) {
-        pad = Math.max(0, pad - 1);
-      }
-      
-      // Check if it's a tag or text
-      if (token.startsWith('<')) {
-        // If it's a closing tag or self-closing or declaration
-        if (token.startsWith('</') || token.endsWith('/>') || token.startsWith('<?') || token.startsWith('<!')) {
-          formatted += '  '.repeat(pad) + token + '\n';
-        } else {
-          // It's an opening tag. Let's look ahead to see if the next token is text and the one after is the closing tag of this tag.
-          const nextToken = tokens[i + 1]?.trim();
-          const nextNextToken = tokens[i + 2]?.trim();
-          
-          const tagName = token.match(/<([\w:.-]+)/)?.[1];
-          if (nextToken && nextNextToken === `</${tagName}>`) {
-            // Leaf node: format on a single line!
-            formatted += '  '.repeat(pad) + token + nextToken + nextNextToken + '\n';
-            i += 2; // skip text and closing tag
-          } else if (nextNextToken === undefined && nextToken === `</${tagName}>`) {
-            // Leaf node with empty/no text: format on a single line!
-            formatted += '  '.repeat(pad) + token + nextToken + '\n';
-            i += 1;
-          } else {
-            // Standard opening tag with child elements
-            formatted += '  '.repeat(pad) + token + '\n';
-            pad++;
-          }
-        }
-      } else {
-        // Raw text outside of leaf node wrapper
-        formatted += '  '.repeat(pad) + token + '\n';
-      }
-    }
-    
-    return formatted.trim();
-  } catch (e) {
-    console.warn('Failed to format XML, returning raw:', e);
-    return xml;
-  }
-}
-
 const STATUS_CHIP_STYLES: Record<string, { bg: string; color: string; text: string }> = {
   gen: { bg: '#e6f6ec', color: '#15803d', text: 'Generated' },
   signed: { bg: '#eef0fe', color: '#6366f1', text: 'Signed' },
@@ -153,29 +95,27 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
   const chip = STATUS_CHIP_STYLES[statusVariant] || STATUS_CHIP_STYLES.idle;
   const displayStatusText = statusText || chip.text;
 
-  const formattedXml = xml ? formatXml(xml) : null;
-
   const handleCopy = useCallback(() => {
-    if (formattedXml) {
-      navigator.clipboard.writeText(formattedXml).then(() => {
+    if (xml) {
+      navigator.clipboard.writeText(xml).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 1200);
       });
     }
-  }, [formattedXml]);
+  }, [xml]);
 
   const handleExport = useCallback(() => {
-    if (!formattedXml) return;
-    const blob = new Blob([formattedXml], { type: 'application/xml' });
+    if (!xml) return;
+    const blob = new Blob([xml], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `nps-${title.toLowerCase().replace(/\s+/g, '-')}.xml`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [formattedXml, title]);
+  }, [xml, title]);
 
-  const lines = formattedXml ? formattedXml.split('\n') : [];
+  const lines = xml ? xml.split('\n') : [];
 
   return (
     <div className="flex flex-col border-r border-[#e4e9e6] min-w-0 overflow-hidden" style={{ flex: 1 }}>
