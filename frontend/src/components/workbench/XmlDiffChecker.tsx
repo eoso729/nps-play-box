@@ -190,7 +190,7 @@ export const XmlDiffChecker: React.FC = () => {
             /* Input View */
             <div className="flex-grow flex gap-4 min-h-0">
               {/* Left Input */}
-              <div className="flex-1 flex flex-col bg-white border border-[#e4e9e6] rounded-xl overflow-hidden shadow-2xs">
+              <div className="flex-1 flex flex-col bg-white border border-[#e4e9e6] rounded-xl overflow-hidden shadow-2xs min-h-0">
                 <div className="px-4 py-3 bg-[#f6f9f7] border-b border-[#e4e9e6] flex items-center justify-between flex-shrink-0">
                   <span className="text-[13px] font-bold text-[#0f3a22]">{originalTitle}</span>
                   <label className="text-[11px] font-semibold text-[#16a34a] bg-white border border-[#d2efe0] px-2.5 py-1 rounded-md shadow-2xs cursor-pointer hover:bg-[#e8f6ed] transition-colors">
@@ -213,7 +213,7 @@ export const XmlDiffChecker: React.FC = () => {
               </div>
 
               {/* Right Input */}
-              <div className="flex-1 flex flex-col bg-white border border-[#e4e9e6] rounded-xl overflow-hidden shadow-2xs">
+              <div className="flex-1 flex flex-col bg-white border border-[#e4e9e6] rounded-xl overflow-hidden shadow-2xs min-h-0">
                 <div className="px-4 py-3 bg-[#f6f9f7] border-b border-[#e4e9e6] flex items-center justify-between flex-shrink-0">
                   <span className="text-[13px] font-bold text-[#0f3a22]">External Reference XML</span>
                   <label className="text-[11px] font-semibold text-[#16a34a] bg-white border border-[#d2efe0] px-2.5 py-1 rounded-md shadow-2xs cursor-pointer hover:bg-[#e8f6ed] transition-colors">
@@ -239,7 +239,7 @@ export const XmlDiffChecker: React.FC = () => {
             /* Visual Diff View */
             <div className="flex-grow flex gap-4 min-h-0">
               {/* Left Diff Pane */}
-              <div className="flex-1 flex flex-col bg-[#0b1a12] border border-[#e4e9e6] rounded-xl overflow-hidden shadow-inner">
+              <div className="flex-1 flex flex-col bg-[#0b1a12] border border-[#e4e9e6] rounded-xl overflow-hidden shadow-inner min-h-0">
                 <div className="px-4 py-3 bg-[#f6f9f7] border-b border-[#e4e9e6] flex items-center justify-between flex-shrink-0">
                   <span className="text-[13px] font-bold text-[#0f3a22]">{originalTitle} (Original)</span>
                   <button
@@ -273,7 +273,7 @@ export const XmlDiffChecker: React.FC = () => {
               </div>
 
               {/* Right Diff Pane */}
-              <div className="flex-1 flex flex-col bg-[#0b1a12] border border-[#e4e9e6] rounded-xl overflow-hidden shadow-inner">
+              <div className="flex-1 flex flex-col bg-[#0b1a12] border border-[#e4e9e6] rounded-xl overflow-hidden shadow-inner min-h-0">
                 <div className="px-4 py-3 bg-[#f6f9f7] border-b border-[#e4e9e6] flex items-center justify-between flex-shrink-0">
                   <span className="text-[13px] font-bold text-[#0f3a22]">External Reference (Modified)</span>
                   <button
