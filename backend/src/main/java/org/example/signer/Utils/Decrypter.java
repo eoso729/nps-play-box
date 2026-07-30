@@ -50,8 +50,6 @@ public final class Decrypter {
     private static String documentToString(Document doc) throws Exception {
         javax.xml.transform.TransformerFactory factory = javax.xml.transform.TransformerFactory.newInstance();
         javax.xml.transform.Transformer transformer = factory.newTransformer();
-        transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
-        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
         java.io.StringWriter sw = new java.io.StringWriter();
         javax.xml.transform.dom.DOMSource source = new javax.xml.transform.dom.DOMSource(doc);
         javax.xml.transform.stream.StreamResult result = new javax.xml.transform.stream.StreamResult(sw);
