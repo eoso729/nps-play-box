@@ -4,6 +4,7 @@ services:
     container_name: nps-postgres
     restart: always
     environment:
+      TZ: Africa/Lagos
       POSTGRES_DB: ${DB_NAME:-npsplaybox}
       POSTGRES_USER: ${DB_USER:-npsuser}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-npspassword}
@@ -24,6 +25,7 @@ services:
     container_name: nps-backend
     restart: always
     environment:
+      TZ: Africa/Lagos
       SERVER_PORT: 8080
       SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-npsplaybox}
