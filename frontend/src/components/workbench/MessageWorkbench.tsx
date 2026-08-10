@@ -19,6 +19,7 @@ const EMPTY_RESULT: PipelineResult = {
 
 export const MessageWorkbench: React.FC = () => {
   const [activeMessage, setActiveMessage] = useState<string>('pain.013');
+  const [workbenchMode, setWorkbenchMode] = useState<'generation' | 'dispatch'>('generation');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [result, setResult] = useState<PipelineResult>(EMPTY_RESULT);
 
@@ -76,7 +77,10 @@ export const MessageWorkbench: React.FC = () => {
   return (
     <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: '#f6f9f7' }}>
       {/* Header */}
-      <AppHeader />
+      <AppHeader
+        activeMode={workbenchMode}
+        onModeChange={setWorkbenchMode}
+      />
 
       {/* Body Row */}
       <div className="flex flex-1 min-h-0">
@@ -100,6 +104,7 @@ export const MessageWorkbench: React.FC = () => {
               onGenerate={handleGenerate}
               onSend={handleSend}
               isLoading={result.isLoading}
+              mode={workbenchMode}
             />
           </div>
 
@@ -113,7 +118,7 @@ export const MessageWorkbench: React.FC = () => {
                 {result.error}
               </div>
             )}
-            <PipelinePanel result={result} />
+            <PipelinePanel result={result} mode={workbenchMode} />
           </div>
         </main>
       </div>
@@ -123,3 +128,4 @@ export const MessageWorkbench: React.FC = () => {
     </div>
   );
 };
+

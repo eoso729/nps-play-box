@@ -3,9 +3,15 @@ import { useAuth } from '../../context/AuthContext';
 
 interface AppHeaderProps {
   onCredentialsClick?: () => void;
+  activeMode?: 'generation' | 'dispatch';
+  onModeChange?: (mode: 'generation' | 'dispatch') => void;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({ onCredentialsClick }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({
+  onCredentialsClick,
+  activeMode = 'generation',
+  onModeChange,
+}) => {
   const { user, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -32,6 +38,34 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onCredentialsClick }) => {
           <h1 className="text-[16px] font-bold text-[#0f3a22] m-0 leading-tight">NPS Play Box Engine</h1>
           <p className="text-[11.5px] text-[#6b7280] m-0 mt-[1px]">ISO 20022 Message Engineering Portal</p>
         </div>
+      </div>
+
+      {/* Top Nav Mode Switcher Tabs */}
+      <div className="flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
+        <button
+          type="button"
+          onClick={() => onModeChange?.('generation')}
+          className={`px-4 py-1.5 text-[12.5px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+            activeMode === 'generation'
+              ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full ${activeMode === 'generation' ? 'bg-[#16a34a]' : 'bg-gray-400'}`}></span>
+          XML Generation
+        </button>
+        <button
+          type="button"
+          onClick={() => onModeChange?.('dispatch')}
+          className={`px-4 py-1.5 text-[12.5px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+            activeMode === 'dispatch'
+              ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full ${activeMode === 'dispatch' ? 'bg-[#16a34a]' : 'bg-gray-400'}`}></span>
+          Pipeline Execution & Response
+        </button>
       </div>
 
       <div className="flex items-center gap-2.5 relative">

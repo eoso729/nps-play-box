@@ -7,6 +7,7 @@ interface MessageConfiguratorProps {
   onGenerate: (payload: Record<string, any>) => void;
   onSend: (payload: Record<string, any>) => void;
   isLoading: boolean;
+  mode?: 'generation' | 'dispatch';
 }
 
 export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
@@ -14,6 +15,7 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
   onGenerate,
   onSend,
   isLoading,
+  mode = 'generation',
 }) => {
   const config = MESSAGE_CONFIGS[messageKey];
   const [formData, setFormData] = useState<Record<string, any>>({});
@@ -104,30 +106,37 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
           >
             Load Pre-filled Spec Data
           </button>
-          <button
-            type="button"
-            onClick={() => onSend(buildPayload())}
-            disabled={isLoading}
-            className="flex-[1.4] border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{
-              background: isLoading ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
-              boxShadow: isLoading ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
-            }}
-          >
-            {isLoading ? 'Processing...' : 'Execute Request Pipeline'}
-          </button>
+          
+          {mode === 'generation' ? (
+            <button
+              type="button"
+              onClick={() => onGenerate(buildPayload())}
+              disabled={isLoading}
+              className="flex-[1.4] border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                background: isLoading ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
+                boxShadow: isLoading ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
+              }}
+            >
+              {isLoading ? 'Generating XML...' : 'Generate ISO 20022 XML'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onSend(buildPayload())}
+              disabled={isLoading}
+              className="flex-[1.4] border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{
+                background: isLoading ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
+                boxShadow: isLoading ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
+              }}
+            >
+              {isLoading ? 'Processing...' : 'Execute Request Pipeline'}
+            </button>
+          )}
         </div>
-
-        {/* Generate Only button */}
-        <button
-          type="button"
-          onClick={() => onGenerate(buildPayload())}
-          disabled={isLoading}
-          className="w-full mt-2.5 border border-[#e4e9e6] text-[#6b7280] bg-white py-2 rounded-lg text-[12px] font-semibold cursor-pointer hover:border-[#16a34a] hover:text-[#15803d] transition-colors disabled:opacity-60"
-        >
-          Generate XML Only (no send)
-        </button>
       </div>
     </div>
   );
 };
+;
