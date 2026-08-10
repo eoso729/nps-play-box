@@ -40,7 +40,7 @@ services:
       KEY_PATH_PRIVATE: /app/keys/999999.private.pem
       KEY_PATH_PUBLIC: /app/keys/NIBSS-999999.public.pem
     ports:
-      - "${BACKEND_PORT:-8081}:8080"
+      - "${BACKEND_PORT:-8088}:8080"
     depends_on:
       postgres:
         condition: service_healthy
