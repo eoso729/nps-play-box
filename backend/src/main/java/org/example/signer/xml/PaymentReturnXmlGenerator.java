@@ -4,6 +4,8 @@ import org.example.signer.dto.PaymentReturnRequestDto;
 import org.example.signer.model.PaymentReturn;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class PaymentReturnXmlGenerator {
@@ -18,8 +20,8 @@ public class PaymentReturnXmlGenerator {
         String bicfi         = dto.getBicfi()         != null ? dto.getBicfi()         : sourceId;
         String currency      = dto.getCurrency()      != null ? dto.getCurrency()       : "NGN";
 
+        String creDtTm = ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
 
         // ── Group Header ────────────────────────────────────────────────────
         PaymentReturn.GrpHdr grpHdr = new PaymentReturn.GrpHdr();

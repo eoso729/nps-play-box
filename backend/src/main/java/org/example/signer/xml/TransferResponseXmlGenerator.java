@@ -4,6 +4,8 @@ import org.example.signer.dto.TransferResponseDto;
 import org.example.signer.model.TransferResponse;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
 
@@ -16,7 +18,7 @@ public class TransferResponseXmlGenerator {
         // --- Group Header ---
         TransferResponse.GrpHdr grpHdr = new TransferResponse.GrpHdr();
         grpHdr.setMsgId(generateMsgId(requestDto.getSendingInstitutionId()));
-        grpHdr.setCreDtTm(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")));
+        grpHdr.setCreDtTm(ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
         grpHdr.setInstgAgt(createAgt(requestDto.getSendingInstitutionId()));
         grpHdr.setInstdAgt(createAgt(requestDto.getReceivingInstitutionId()));
 

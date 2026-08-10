@@ -4,6 +4,8 @@ import org.example.signer.dto.NameVerificationReportDto;
 import org.example.signer.model.NameVerificationReport;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
 
@@ -16,7 +18,7 @@ public class NameVerificationReportXmlGenerator {
         // --- Assignment ---
         NameVerificationReport.Assgnmt assgnmt = new NameVerificationReport.Assgnmt();
         assgnmt.setMsgId(generateMsgId(requestDto.getSendingInstitutionId()));
-        assgnmt.setCreDtTm(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")));
+        assgnmt.setCreDtTm(ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
 
         NameVerificationReport.Assgnr assgnr = new NameVerificationReport.Assgnr();
         assgnr.setAgt(createAgt(requestDto.getSendingInstitutionId()));
