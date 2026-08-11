@@ -41,23 +41,21 @@ public class NameVerificationReportXmlGenerator {
         rpt.setOrgnlId(requestDto.getOriginalMsgId());
 
         String vrfctnVal = requestDto.getVerificationResponse();
-        if (vrfctnVal == null || vrfctnVal.trim().isEmpty()) {
-            vrfctnVal = "true";
-        }
-        rpt.setVrfctn(vrfctnVal);
+        boolean isSuccess = vrfctnVal == null || vrfctnVal.trim().isEmpty() || "true".equalsIgnoreCase(vrfctnVal);
+        rpt.setVrfctn(isSuccess ? "true" : "false");
 
-        boolean hasReasonCode = requestDto.getReasonCode() != null && !requestDto.getReasonCode().trim().isEmpty();
-        boolean hasReasonProprietary = requestDto.getReasonProprietary() != null && !requestDto.getReasonProprietary().trim().isEmpty();
+        if (!isSuccess) {
+            String code = (requestDto.getReasonCode() != null && !requestDto.getReasonCode().trim().isEmpty())
+                    ? requestDto.getReasonCode().trim() : "33";
+            String reasonText = (requestDto.getReasonProprietary() != null && !requestDto.getReasonProprietary().trim().isEmpty())
+                    ? requestDto.getReasonProprietary().trim() : "Account number mismatch";
 
-        if (hasReasonCode || hasReasonProprietary) {
             NameVerificationReport.Rsn rsn = new NameVerificationReport.Rsn();
-            if (hasReasonCode) {
-                rsn.setCd(requestDto.getReasonCode().trim());
-            }
-            if (hasReasonProprietary) {
-                rsn.setPrtry(requestDto.getReasonProprietary().trim());
-            }
+            rsn.setCd(code);
+            rsn.setPrtry(reasonText);
             rpt.setRsn(rsn);
+        } else {
+            rpt.setRsn(null);
         }
 
         NameVerificationReport.OrgnlPtyAndAcctId orgnlPtyAndAcctId = new NameVerificationReport.OrgnlPtyAndAcctId();
@@ -68,7 +66,6 @@ public class NameVerificationReportXmlGenerator {
         orgnlPtyAndAcctId.setAcct(orgnlAcct);
         rpt.setOrgnlPtyAndAcctId(orgnlPtyAndAcctId);
 
-        boolean isSuccess = "true".equalsIgnoreCase(vrfctnVal);
         if (isSuccess && requestDto.getVerifiedAccountName() != null && !requestDto.getVerifiedAccountName().trim().isEmpty()) {
             NameVerificationReport.UpdtdPtyAndAcctId updtdPtyAndAcctId = new NameVerificationReport.UpdtdPtyAndAcctId();
             NameVerificationReport.Pty updtdPty = new NameVerificationReport.Pty();
