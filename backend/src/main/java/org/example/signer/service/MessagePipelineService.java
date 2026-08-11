@@ -219,7 +219,7 @@ public class MessagePipelineService {
         NameVerification model = NameVerificationXmlGenerator.generate(requestDto, msgId);
 
         return executeFullPipeline("acmt.023", msgId, model, "IdVrfctnReq",
-                "https://apitest.nibss-plc.com.ng:1443/nibss-inst/acmt/023", null, true, "https://apitest.nibss-plc.com.ng:1443/reset");
+                "http://10.8.8.132:8022/nps/acmt", "10.8.8.132", false, null);
     }
 
     public MessageSendResponseDto sendBalanceEnquiryCamt060(AccountReportingRequestDto requestDto) throws Exception {

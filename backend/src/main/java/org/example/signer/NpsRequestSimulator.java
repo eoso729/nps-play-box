@@ -7,15 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-
 @SpringBootApplication
-@OpenAPIDefinition(
-        info = @Info(
-                title = "NPS Request Simulator",
-                version = "1.0",
-                description = "Documentation for my NPS Request Simulator"
-        )
-)
+@OpenAPIDefinition(info = @Info(title = "NPS Request Simulator", version = "1.0", description = "Documentation for my NPS Request Simulator"))
 public class NpsRequestSimulator {
 
     private static final Logger log = LoggerFactory.getLogger(NpsRequestSimulator.class);
