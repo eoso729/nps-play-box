@@ -547,6 +547,76 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
     },
   },
 
+  'acmt.024': {
+    key: 'acmt.024',
+    label: 'Name Verification Report',
+    isoCode: 'acmt.024.001.04',
+    category: 'Account Services',
+    sections: [
+      {
+        title: '1. Assignment & Institutions',
+        fields: [
+          { key: 'sendingInstitutionId', label: 'Sending Inst. ID', type: 'text', required: true, placeholder: '999012' },
+          { key: 'receivingInstitutionId', label: 'Receiving Inst. ID', type: 'text', required: true, placeholder: '999999' },
+          { key: 'receiverName', label: 'Receiver Name', type: 'text', required: true, placeholder: 'Oso International Bank', fullWidth: true },
+        ],
+      },
+      {
+        title: '2. Original Request Reference',
+        fields: [
+          { key: 'originalMsgId', label: 'Original Msg ID (acmt.023)', type: 'text', required: true, placeholder: '99999920250829150504887742643314693', fullWidth: true },
+          { key: 'originalCreDtTm', label: 'Original Creation Date-Time', type: 'text', required: true, placeholder: '2025-08-29T15:05:04.347Z', fullWidth: true },
+        ],
+      },
+      {
+        title: '3. Verification Result',
+        fields: [
+          {
+            key: 'verificationResponse',
+            label: 'Verification Status',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'true', label: 'True (Success)' },
+              { value: 'false', label: 'False (Failure)' },
+            ],
+          },
+          { key: 'verifiedAccountNumber', label: 'Verified Account Number', type: 'text', required: true, placeholder: '1029384756' },
+          { key: 'verifiedAccountName', label: 'Verified Account Name', type: 'text', placeholder: 'Emmanuel Oso' },
+          { key: 'reasonCode', label: 'Failure Reason Code', type: 'text', placeholder: '33' },
+          { key: 'reasonProprietary', label: 'Failure Reason Text', type: 'text', placeholder: 'Account number mismatch' },
+        ],
+      },
+      {
+        title: '4. Supplementary Details',
+        fields: [
+          { key: 'creditorAccountDesignation', label: 'Account Designation', type: 'text', placeholder: '1' },
+          { key: 'creditorIdType', label: 'ID Type', type: 'text', placeholder: 'BVN' },
+          { key: 'creditorIdValue', label: 'ID Value', type: 'text', placeholder: '2211232346' },
+          { key: 'creditorAccountTier', label: 'Account Tier', type: 'text', placeholder: '1' },
+          { key: 'transactionRiskRating', label: 'Risk Rating', type: 'text', placeholder: 'R000000000000000000B9', fullWidth: true },
+        ],
+      },
+    ],
+    prefill: {
+      sendingInstitutionId: '999012',
+      receivingInstitutionId: '999999',
+      receiverName: 'Oso International Bank',
+      originalMsgId: '99999920250829150504887742643314693',
+      originalCreDtTm: '2025-08-29T15:05:04.347Z',
+      verificationResponse: 'true',
+      verifiedAccountNumber: '1029384756',
+      verifiedAccountName: 'Emmanuel Oso',
+      reasonCode: '',
+      reasonProprietary: '',
+      creditorAccountDesignation: '1',
+      creditorIdType: 'BVN',
+      creditorIdValue: '2211232346',
+      creditorAccountTier: '1',
+      transactionRiskRating: 'R000000000000000000B9',
+    },
+  },
+
   'camt.060': {
     key: 'camt.060',
     label: 'Balance Enquiry',
