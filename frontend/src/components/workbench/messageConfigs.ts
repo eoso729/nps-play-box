@@ -633,6 +633,7 @@ export const SIDEBAR_GROUPS = [
     label: 'Account Services',
     items: [
       { key: 'acmt.023', isoCode: 'acmt.023.001.03 (Name Verification)' },
+      { key: 'acmt.024', isoCode: 'acmt.024.001.04 (Name Verification Report)' },
       { key: 'camt.060', isoCode: 'camt.060.001.05 (Balance Enquiry)' },
     ],
   },
