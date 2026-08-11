@@ -10,7 +10,7 @@ public class NameVerificationReportDto {
     private String receiverName;
     private String originalMsgId;
     private String originalCreDtTm;
-    private boolean verificationResponse;
+    private String verificationResponse;
     private String verifiedAccountNumber;
     private String verifiedAccountName;
     private String reasonCode;
