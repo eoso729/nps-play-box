@@ -98,7 +98,7 @@ public class NameVerificationReport {
         @XmlElement(name = "OrgnlId")
         private String orgnlId;
         @XmlElement(name = "Vrfctn")
-        private boolean vrfctn;
+        private String vrfctn;
         @XmlElement(name = "Rsn")
         private Rsn rsn;
         @XmlElement(name = "OrgnlPtyAndAcctId")

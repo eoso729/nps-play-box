@@ -16,7 +16,7 @@ const GENERATE_ENDPOINTS: Record<MessageKey, string> = {
   'camt.060': '/api/generate/balance-enquiry-camt060',
 };
 
-const SEND_ENDPOINTS: Record<MessageKey, string> = {
+const SEND_ENDPOINTS: Partial<Record<MessageKey, string>> = {
   'pain.013': '/api/payment-activation-pain013',
   'pain.001': '/api/payment-initiation-pain001',
   'pain.008': '/api/direct-debit-pain008',
@@ -27,7 +27,6 @@ const SEND_ENDPOINTS: Record<MessageKey, string> = {
   'pacs.003': '/api/customer-direct-debit-pacs003',
   'pacs.004': '/api/payment-return-pacs004',
   'acmt.023': '/api/name-verification-acmt023',
-  'acmt.024': '/api/name-verification-report-acmt024',
   'camt.060': '/api/balance-enquiry-camt060',
 };
 
@@ -45,6 +44,9 @@ export const sendMessage = async (
   payload: Record<string, any>
 ): Promise<MessageSendResponseDto> => {
   const endpoint = SEND_ENDPOINTS[messageKey];
+  if (!endpoint) {
+    throw new Error(`Pushing to pipeline is not supported for ${messageKey}`);
+  }
   const res = await apiClient.post<MessageSendResponseDto>(endpoint, payload);
   return res.data;
 };

@@ -124,9 +124,9 @@ public class MessagePipelineService {
     }
 
     public XmlGenerationResponseDto generateNameVerificationReportAcmt024(NameVerificationReportDto requestDto) throws Exception {
-        String sendingId = requestDto.getSendingInstitutionId() != null && !requestDto.getSendingInstitutionId().isEmpty() ? requestDto.getSendingInstitutionId() : "999012";
-        String msgId = generateMsgId(sendingId);
-        NameVerificationReport model = NameVerificationReportXmlGenerator.generate(requestDto, msgId);
+        String srcId = requestDto.getSendingInstitutionId() != null ? requestDto.getSendingInstitutionId() : "999012";
+        String msgId = generateMsgId(srcId);
+        NameVerificationReport model = NameVerificationReportXmlGenerator.generate(requestDto);
         return buildXmlGenerationResponse("acmt.024", msgId, model);
     }
 

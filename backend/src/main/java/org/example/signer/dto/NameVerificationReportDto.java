@@ -11,10 +11,10 @@ public class NameVerificationReportDto {
     private String originalMsgId;
     private String originalCreDtTm;
     private boolean verificationResponse;
-    private String reasonCode;
-    private String reasonProprietary;
     private String verifiedAccountNumber;
     private String verifiedAccountName;
+    private String reasonCode;
+    private String reasonProprietary;
 
     // Supplementary Data fields
     private String creditorAccountDesignation;
