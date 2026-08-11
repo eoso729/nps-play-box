@@ -525,24 +525,25 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       {
         title: '1. Party Identifiers',
         fields: [
-          { key: 'sourceId', label: 'Source ID', type: 'text', required: true, placeholder: '999999' },
-          { key: 'beneficiaryId', label: 'Beneficiary ID', type: 'text', required: true, placeholder: '999015' },
+          { key: 'sourceId', label: 'Source ID', type: 'text', required: true, placeholder: '999997' },
+          { key: 'beneficiaryId', label: 'Beneficiary ID', type: 'text', required: true, placeholder: '991029' },
         ],
       },
       {
         title: '2. Verification Details',
         fields: [
-          { key: 'partyToBeVerifiedName', label: 'Party Name to Verify', type: 'text', required: true, placeholder: 'John Developer', fullWidth: true },
-          { key: 'partyToBeVerifiedAccountNumber', label: 'Account Number', type: 'text', required: true, placeholder: '1111111111' },
-          { key: 'sendingPartyName', label: 'Sending Party Name', type: 'text', required: true, placeholder: 'Fidelity' },
+          { key: 'partyToBeVerifiedName', label: 'Party Name to Verify', type: 'text', required: true, placeholder: 'Ayobami Olatunji', fullWidth: true },
+          { key: 'partyToBeVerifiedAccountNumber', label: 'Account Number', type: 'text', required: true, placeholder: '0033344455' },
+          { key: 'sendingPartyName', label: 'Sending Party Name', type: 'text', required: true, placeholder: 'Oso Emmanuel' },
         ],
       },
     ],
     prefill: {
-      sourceId: '999999', beneficiaryId: '999015',
-      partyToBeVerifiedName: 'John Developer',
-      partyToBeVerifiedAccountNumber: '1111111111',
-      sendingPartyName: 'Fidelity',
+      sourceId: '999997',
+      beneficiaryId: '991029',
+      partyToBeVerifiedName: 'Ayobami Olatunji',
+      partyToBeVerifiedAccountNumber: '0033344455',
+      sendingPartyName: 'Oso Emmanuel',
     },
   },
 

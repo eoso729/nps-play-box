@@ -18,12 +18,16 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
   mode = 'generation',
 }) => {
   const config = MESSAGE_CONFIGS[messageKey];
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, any>>(config?.prefill ? { ...config.prefill } : {});
 
-  // Reset form when message type changes
+  // Pre-fill form with defaults when message type changes
   useEffect(() => {
-    setFormData({});
-  }, [messageKey]);
+    if (config?.prefill) {
+      setFormData({ ...config.prefill });
+    } else {
+      setFormData({});
+    }
+  }, [messageKey, config]);
 
   const handleChange = (key: string, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }));
