@@ -130,6 +130,17 @@ public class XmlGenerationController {
         }
     }
 
+    @PostMapping("/name-verification-report-acmt024")
+    public ResponseEntity<XmlGenerationResponseDto> generateNameVerificationReportAcmt024(@RequestBody NameVerificationReportDto requestDto) {
+        try {
+            XmlGenerationResponseDto response = messagePipelineService.generateNameVerificationReportAcmt024(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating acmt.024", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @PostMapping("/balance-enquiry-camt060")
     public ResponseEntity<XmlGenerationResponseDto> generateBalanceEnquiryCamt060(@RequestBody AccountReportingRequestDto requestDto) {
         try {

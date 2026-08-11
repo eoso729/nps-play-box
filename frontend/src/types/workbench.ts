@@ -43,6 +43,7 @@ export type MessageKey =
   | 'pacs.003'
   | 'pacs.004'
   | 'acmt.023'
+  | 'acmt.024'
   | 'camt.060';
 
 export interface FieldDef {

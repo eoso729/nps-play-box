@@ -11,6 +11,8 @@ public class NameVerificationReportDto {
     private String originalMsgId;
     private String originalCreDtTm;
     private boolean verificationResponse;
+    private String reasonCode;
+    private String reasonProprietary;
     private String verifiedAccountNumber;
     private String verifiedAccountName;
 

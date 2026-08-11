@@ -12,6 +12,7 @@ const GENERATE_ENDPOINTS: Record<MessageKey, string> = {
   'pacs.003': '/api/generate/customer-direct-debit-pacs003',
   'pacs.004': '/api/generate/payment-return-pacs004',
   'acmt.023': '/api/generate/name-verification-acmt023',
+  'acmt.024': '/api/generate/name-verification-report-acmt024',
   'camt.060': '/api/generate/balance-enquiry-camt060',
 };
 
@@ -26,6 +27,7 @@ const SEND_ENDPOINTS: Record<MessageKey, string> = {
   'pacs.003': '/api/customer-direct-debit-pacs003',
   'pacs.004': '/api/payment-return-pacs004',
   'acmt.023': '/api/name-verification-acmt023',
+  'acmt.024': '/api/name-verification-report-acmt024',
   'camt.060': '/api/balance-enquiry-camt060',
 };
 

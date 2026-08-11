@@ -123,6 +123,13 @@ public class MessagePipelineService {
         return buildXmlGenerationResponse("acmt.023", msgId, model);
     }
 
+    public XmlGenerationResponseDto generateNameVerificationReportAcmt024(NameVerificationReportDto requestDto) throws Exception {
+        String sendingId = requestDto.getSendingInstitutionId() != null && !requestDto.getSendingInstitutionId().isEmpty() ? requestDto.getSendingInstitutionId() : "999012";
+        String msgId = generateMsgId(sendingId);
+        NameVerificationReport model = NameVerificationReportXmlGenerator.generate(requestDto, msgId);
+        return buildXmlGenerationResponse("acmt.024", msgId, model);
+    }
+
     public XmlGenerationResponseDto generateBalanceEnquiryCamt060(AccountReportingRequestDto requestDto) throws Exception {
         String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";
         String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() : "999997";

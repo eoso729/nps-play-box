@@ -99,10 +99,21 @@ public class NameVerificationReport {
         private String orgnlId;
         @XmlElement(name = "Vrfctn")
         private boolean vrfctn;
+        @XmlElement(name = "Rsn")
+        private Rsn rsn;
         @XmlElement(name = "OrgnlPtyAndAcctId")
         private OrgnlPtyAndAcctId orgnlPtyAndAcctId;
         @XmlElement(name = "UpdtdPtyAndAcctId")
         private UpdtdPtyAndAcctId updtdPtyAndAcctId;
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
+    public static class Rsn {
+        @XmlElement(name = "Cd")
+        private String cd;
+        @XmlElement(name = "Prtry")
+        private String prtry;
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)
