@@ -4,6 +4,7 @@ import org.example.signer.dto.DirectDebitRequestDto;
 import org.example.signer.model.DirectDebit;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -14,7 +15,7 @@ public class DirectDebitXmlGenerator {
 
     public static DirectDebit generate(DirectDebitRequestDto requestDto, String msgId, String endToEndId, String instrId) {
         BigDecimal amount = (requestDto.getAmount() != null && requestDto.getAmount().compareTo(BigDecimal.ZERO) > 0)
-                ? requestDto.getAmount()
+                ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP)
                 : DEFAULT_AMOUNT;
 
         DirectDebit doc = new DirectDebit();

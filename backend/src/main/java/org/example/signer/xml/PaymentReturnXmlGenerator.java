@@ -3,6 +3,8 @@ package org.example.signer.xml;
 import org.example.signer.dto.PaymentReturnRequestDto;
 import org.example.signer.model.PaymentReturn;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -65,7 +67,8 @@ public class PaymentReturnXmlGenerator {
         // Returned settlement amount
         PaymentReturn.RtrdIntrBkSttlmAmt rtrdAmt = new PaymentReturn.RtrdIntrBkSttlmAmt();
         rtrdAmt.setCcy(currency);
-        rtrdAmt.setValue(dto.getReturnedAmount());
+        BigDecimal retAmt = dto.getReturnedAmount() != null ? dto.getReturnedAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("0.00");
+        rtrdAmt.setValue(retAmt);
         txInf.setRtrdIntrBkSttlmAmt(rtrdAmt);
 
         // Settlement date for the return

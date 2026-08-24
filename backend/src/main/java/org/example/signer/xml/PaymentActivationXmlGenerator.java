@@ -4,6 +4,7 @@ import org.example.signer.dto.PaymentActivationRequestDto;
 import org.example.signer.model.PaymentActivation;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -76,7 +77,7 @@ public class PaymentActivationXmlGenerator {
         PaymentActivation.Amt amt = new PaymentActivation.Amt();
         PaymentActivation.InstdAmt instdAmt = new PaymentActivation.InstdAmt();
         instdAmt.setCcy(currency);
-        instdAmt.setValue(requestDto.getAmount() != null ? requestDto.getAmount() : new BigDecimal("2500.00"));
+        instdAmt.setValue(requestDto.getAmount() != null ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("2500.00"));
         amt.setInstdAmt(instdAmt);
         cdtTrfTx.setAmt(amt);
 

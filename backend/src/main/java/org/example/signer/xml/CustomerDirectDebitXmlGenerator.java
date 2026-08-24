@@ -4,6 +4,7 @@ import org.example.signer.dto.CustomerDirectDebitRequestDto;
 import org.example.signer.model.CustomerDirectDebit;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
@@ -21,7 +22,7 @@ public class CustomerDirectDebitXmlGenerator {
         String creDtTm = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
         grpHdr.setCreDtTm(creDtTm);
         grpHdr.setNbOfTxs(1);
-        BigDecimal amount = requestDto.getAmount() != null ? requestDto.getAmount() : new BigDecimal("2200.00");
+        BigDecimal amount = requestDto.getAmount() != null ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("2200.00");
         grpHdr.setCtrlSum(amount);
 
         String instgAgtId = requestDto.getInstructingBankMemberId() != null ? requestDto.getInstructingBankMemberId() : "999998";

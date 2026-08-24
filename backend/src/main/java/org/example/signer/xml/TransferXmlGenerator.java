@@ -4,6 +4,7 @@ import org.example.signer.dto.TransferRequestDto;
 import org.example.signer.model.Transfer;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
@@ -59,7 +60,8 @@ public class TransferXmlGenerator {
 
         Transfer.IntrBkSttlmAmt intrBkSttlmAmt = new Transfer.IntrBkSttlmAmt();
         intrBkSttlmAmt.setCcy(requestDto.getCurrency() != null ? requestDto.getCurrency() : "NGN");
-        intrBkSttlmAmt.setValue(requestDto.getAmount() != null ? requestDto.getAmount() : new BigDecimal("0.00"));
+        BigDecimal amtVal = requestDto.getAmount() != null ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("0.00");
+        intrBkSttlmAmt.setValue(amtVal);
         cdtTrfTxInf.setIntrBkSttlmAmt(intrBkSttlmAmt);
 
         cdtTrfTxInf.setIntrBkSttlmDt(intrBkSttlmDt);

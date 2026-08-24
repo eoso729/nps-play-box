@@ -4,6 +4,7 @@ import org.example.signer.dto.PaymentInitiationRequestDto;
 import org.example.signer.model.PaymentInitiation;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +16,7 @@ public class PaymentInitiationXmlGenerator {
     public static PaymentInitiation generate(PaymentInitiationRequestDto requestDto, String msgId, String endToEndId, String reqdExctnDt) {
         // Use provided amount or default
         BigDecimal amount = (requestDto.getAmount() != null && requestDto.getAmount().compareTo(BigDecimal.ZERO) > 0) 
-                ? requestDto.getAmount() 
+                ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP) 
                 : DEFAULT_AMOUNT;
         
         PaymentInitiation doc = new PaymentInitiation();
