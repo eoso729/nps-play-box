@@ -526,24 +526,24 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
         title: '1. Party Identifiers',
         fields: [
           { key: 'sourceId', label: 'Source ID', type: 'text', required: true, placeholder: '999997' },
-          { key: 'beneficiaryId', label: 'Beneficiary ID', type: 'text', required: true, placeholder: '991029' },
+          { key: 'beneficiaryId', label: 'Beneficiary ID', type: 'text', required: true, placeholder: '991040' },
         ],
       },
       {
         title: '2. Verification Details',
         fields: [
-          { key: 'partyToBeVerifiedName', label: 'Party Name to Verify', type: 'text', required: true, placeholder: 'Ayobami Olatunji', fullWidth: true },
-          { key: 'partyToBeVerifiedAccountNumber', label: 'Account Number', type: 'text', required: true, placeholder: '0033344455' },
-          { key: 'sendingPartyName', label: 'Sending Party Name', type: 'text', required: true, placeholder: 'Oso Emmanuel' },
+          { key: 'partyToBeVerifiedName', label: 'Party Name to Verify', type: 'text', required: true, placeholder: 'SAMUEL ADEBOLA', fullWidth: true },
+          { key: 'partyToBeVerifiedAccountNumber', label: 'Account Number', type: 'text', required: true, placeholder: '5000002100' },
+          { key: 'sendingPartyName', label: 'Sending Party Name', type: 'text', required: true, placeholder: 'test' },
         ],
       },
     ],
     prefill: {
       sourceId: '999997',
-      beneficiaryId: '991029',
-      partyToBeVerifiedName: 'Ayobami Olatunji',
-      partyToBeVerifiedAccountNumber: '0033344455',
-      sendingPartyName: 'Oso Emmanuel',
+      beneficiaryId: '991040',
+      partyToBeVerifiedName: 'SAMUEL ADEBOLA',
+      partyToBeVerifiedAccountNumber: '5000002100',
+      sendingPartyName: 'test',
     },
   },
 
