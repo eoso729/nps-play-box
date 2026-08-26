@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { inspectXml, autoFixXml, getAllSamples } from '../../api/validation';
 import { ValidationReport, MessageSample } from '../../types/validation';
@@ -7,6 +7,7 @@ import { ValidationReport, MessageSample } from '../../types/validation';
 export const XmlInspectorPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [xmlContent, setXmlContent] = useState<string>('');
   const [selectedMessageType, setSelectedMessageType] = useState<string>('auto');
@@ -20,20 +21,6 @@ export const XmlInspectorPage: React.FC = () => {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Load samples on mount
-  useEffect(() => {
-    getAllSamples()
-      .then(data => {
-        setSamples(data);
-        // Preload default sample if empty
-        const defaultSample = data.find(s => s.key === 'pacs.008') || data[0];
-        if (defaultSample) {
-          setXmlContent(defaultSample.sampleXml);
-        }
-      })
-      .catch(err => console.error('Failed to load message samples', err));
-  }, []);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -62,6 +49,37 @@ export const XmlInspectorPage: React.FC = () => {
       setIsInspecting(false);
     }
   };
+
+  // Load passed XML or default sample on mount
+  useEffect(() => {
+    // 1. Check if XML was passed via navigation state or localStorage
+    const navState = location.state as { xml?: string; title?: string } | undefined;
+    const passedXml = navState?.xml || localStorage.getItem('nps_inspector_xml') || localStorage.getItem('nps_diff_source_xml');
+    const passedTitle = navState?.title || localStorage.getItem('nps_inspector_title') || localStorage.getItem('nps_diff_source_title');
+
+    if (passedXml && passedXml.trim()) {
+      setXmlContent(passedXml);
+      handleInspect(passedXml, 'auto');
+      showToast(`Loaded ${passedTitle || 'generated XML'} for Health Check inspection`, 'info');
+      // Clean up storage key so it doesn't linger
+      localStorage.removeItem('nps_inspector_xml');
+      localStorage.removeItem('nps_inspector_title');
+    }
+
+    getAllSamples()
+      .then(data => {
+        setSamples(data);
+        // Only preload sample XML if no XML was passed into the inspector
+        if (!passedXml || !passedXml.trim()) {
+          const defaultSample = data.find(s => s.key === 'pacs.008') || data[0];
+          if (defaultSample) {
+            setXmlContent(defaultSample.sampleXml);
+            handleInspect(defaultSample.sampleXml, defaultSample.key);
+          }
+        }
+      })
+      .catch(err => console.error('Failed to load message samples', err));
+  }, []);
 
   const handleAutoFix = async () => {
     if (!xmlContent.trim()) return;
