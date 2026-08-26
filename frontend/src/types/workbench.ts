@@ -33,18 +33,25 @@ export type PipelineResult = {
 };
 
 export type MessageKey =
-  | 'pain.013'
-  | 'pain.001'
-  | 'pain.008'
+  | 'pacs.008'
+  | 'pacs.002'
+  | 'pacs.028'
+  | 'acmt.023'
+  | 'acmt.024'
   | 'pain.009'
   | 'pain.010'
   | 'pain.011'
-  | 'pacs.008'
+  | 'pain.012'
   | 'pacs.003'
-  | 'pacs.004'
-  | 'acmt.023'
-  | 'acmt.024'
-  | 'camt.060';
+  | 'pain.013'
+  | 'pain.014'
+  | 'camt.060'
+  | 'camt.052'
+  | 'camt.053'
+  | 'pain.001'
+  | 'pain.002'
+  | 'pain.008'
+  | 'pacs.004';
 
 export interface FieldDef {
   key: string;

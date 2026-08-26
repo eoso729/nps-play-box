@@ -682,45 +682,266 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       reportingPeriodType: 'DAILY', accountDesignation: 'Personal', channelCode: 'MOB',
     },
   },
+
+  'pacs.002': {
+    key: 'pacs.002',
+    label: 'Payment Status Report',
+    isoCode: 'pacs.002.001.12',
+    category: 'Credit Transfer & Returns',
+    sections: [
+      {
+        title: '1. Header & Agents',
+        fields: [
+          { key: 'sourceId', label: 'Instructing Agent ID', type: 'text', required: true, placeholder: '090004' },
+          { key: 'destinationId', label: 'Instructed Agent ID', type: 'text', required: true, placeholder: '100022' },
+        ],
+      },
+      {
+        title: '2. Original Message Details',
+        fields: [
+          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '10002220260402170095982371426577881', fullWidth: true },
+          { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', placeholder: 'pacs.008.001.12' },
+          { key: 'groupStatus', label: 'Group Status', type: 'select', options: [
+            { value: 'ACSC', label: 'ACSC - Accepted Settlement Completed' },
+            { value: 'RJCT', label: 'RJCT - Rejected' },
+            { value: 'ACCP', label: 'ACCP - Accepted Customer Profile' },
+          ]},
+        ],
+      },
+      {
+        title: '3. Transaction Information',
+        fields: [
+          { key: 'originalTxId', label: 'Original Transaction ID', type: 'text', placeholder: '10002220260331170095982371426577885', fullWidth: true },
+          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', placeholder: '10002221234519115702293163242525113', fullWidth: true },
+        ],
+      },
+    ],
+    prefill: {
+      sourceId: '090004',
+      destinationId: '100022',
+      originalMsgId: '10002220260402170095982371426577881',
+      originalMsgNmId: 'pacs.008.001.12',
+      groupStatus: 'ACSC',
+      originalTxId: '10002220260331170095982371426577885',
+      originalEndToEndId: '10002221234519115702293163242525113',
+    },
+  },
+
+  'pacs.028': {
+    key: 'pacs.028',
+    label: 'Payment Status Request',
+    isoCode: 'pacs.028.001.05',
+    category: 'Credit Transfer & Returns',
+    sections: [
+      {
+        title: '1. Header & Agent',
+        fields: [
+          { key: 'sourceId', label: 'Instructing Agent ID', type: 'text', required: true, placeholder: '999057' },
+          { key: 'destinationId', label: 'Instructed Agent ID', type: 'text', required: true, placeholder: '999012' },
+        ],
+      },
+      {
+        title: '2. Original Message References',
+        fields: [
+          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905820250802112346977904433112345', fullWidth: true },
+          { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', placeholder: 'pacs.008.001.12' },
+          { key: 'originalTxId', label: 'Original Transaction ID', type: 'text', placeholder: '99905820250802112346977904433112345', fullWidth: true },
+        ],
+      },
+    ],
+    prefill: {
+      sourceId: '999057',
+      destinationId: '999012',
+      originalMsgId: '99905820250802112346977904433112345',
+      originalMsgNmId: 'pacs.008.001.12',
+      originalTxId: '99905820250802112346977904433112345',
+    },
+  },
+
+  'pain.012': {
+    key: 'pain.012',
+    label: 'Mandate Acceptance Report',
+    isoCode: 'pain.012.001.08',
+    category: 'Mandate Management',
+    sections: [
+      {
+        title: '1. Original Mandate Details',
+        fields: [
+          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905820251211112346125578725905163', fullWidth: true },
+          { key: 'originalMandateId', label: 'Original Mandate ID', type: 'text', required: true, placeholder: 'MNDT-RCUR-00001' },
+          { key: 'accepted', label: 'Accepted Result', type: 'select', options: [
+            { value: 'true', label: 'Accepted (True)' },
+            { value: 'false', label: 'Rejected (False)' },
+          ]},
+        ],
+      },
+      {
+        title: '2. Parties',
+        fields: [
+          { key: 'creditorName', label: 'Creditor Name', type: 'text', placeholder: 'CreditorCorp' },
+          { key: 'creditorAccountNumber', label: 'Creditor Account (IBAN)', type: 'text', placeholder: '5555544443' },
+          { key: 'debtorName', label: 'Debtor Name', type: 'text', placeholder: 'Debtor Customer' },
+          { key: 'debtorAccountNumber', label: 'Debtor Account (IBAN)', type: 'text', placeholder: '8888899999' },
+        ],
+      },
+    ],
+    prefill: {
+      originalMsgId: '99905820251211112346125578725905163',
+      originalMandateId: 'MNDT-RCUR-00001',
+      accepted: 'true',
+      creditorName: 'CreditorCorp',
+      creditorAccountNumber: '5555544443',
+      debtorName: 'Debtor Customer',
+      debtorAccountNumber: '8888899999',
+    },
+  },
+
+  'pain.014': {
+    key: 'pain.014',
+    label: 'Payment Activation Status Report',
+    isoCode: 'pain.014.001.11',
+    category: 'Payment Activation',
+    sections: [
+      {
+        title: '1. Original Activation References',
+        fields: [
+          { key: 'originalMsgId', label: 'Original pain.013 Msg ID', type: 'text', required: true, placeholder: '99905820260105102349998878725905163', fullWidth: true },
+          { key: 'originalPmtInfId', label: 'Original PmtInfId', type: 'text', placeholder: 'GSFPMTINF035985837' },
+          { key: 'groupStatus', label: 'Group Status', type: 'select', options: [
+            { value: 'ACCP', label: 'ACCP - Accepted' },
+            { value: 'RJCT', label: 'RJCT - Rejected' },
+          ]},
+        ],
+      },
+    ],
+    prefill: {
+      originalMsgId: '99905820260105102349998878725905163',
+      originalPmtInfId: 'GSFPMTINF035985837',
+      groupStatus: 'ACCP',
+    },
+  },
+
+  'camt.052': {
+    key: 'camt.052',
+    label: 'Bank To Customer Account Report',
+    isoCode: 'camt.052.001.08',
+    category: 'Account Services & Statements',
+    sections: [
+      {
+        title: '1. Account & Balance',
+        fields: [
+          { key: 'accountNumber', label: 'Account Number (IBAN)', type: 'text', required: true, placeholder: '4488447166' },
+          { key: 'currency', label: 'Currency', type: 'text', placeholder: 'NGN' },
+          { key: 'balanceAmount', label: 'Balance Amount', type: 'number', placeholder: '500000.00' },
+          { key: 'creditDebitIndicator', label: 'Credit/Debit Indicator', type: 'select', options: [
+            { value: 'CRDT', label: 'CRDT - Credit' },
+            { value: 'DBIT', label: 'DBIT - Debit' },
+          ]},
+        ],
+      },
+    ],
+    prefill: {
+      accountNumber: '4488447166',
+      currency: 'NGN',
+      balanceAmount: 500000.00,
+      creditDebitIndicator: 'CRDT',
+    },
+  },
+
+  'camt.053': {
+    key: 'camt.053',
+    label: 'Bank To Customer Statement',
+    isoCode: 'camt.053.001.08',
+    category: 'Account Services & Statements',
+    sections: [
+      {
+        title: '1. Statement Details',
+        fields: [
+          { key: 'accountNumber', label: 'Account Number (IBAN)', type: 'text', required: true, placeholder: '8887788778' },
+          { key: 'currency', label: 'Currency', type: 'text', placeholder: 'NGN' },
+          { key: 'openingBalance', label: 'Opening Balance', type: 'number', placeholder: '482000.00' },
+        ],
+      },
+    ],
+    prefill: {
+      accountNumber: '8887788778',
+      currency: 'NGN',
+      openingBalance: 482000.00,
+    },
+  },
+
+  'pain.002': {
+    key: 'pain.002',
+    label: 'Payment Status Report (Customer)',
+    isoCode: 'pain.002.001.12',
+    category: 'Payment Initiation',
+    sections: [
+      {
+        title: '1. Original Initiation References',
+        fields: [
+          { key: 'originalMsgId', label: 'Original pain.001 Msg ID', type: 'text', required: true, placeholder: '99905720260225192650869851166984847', fullWidth: true },
+          { key: 'groupStatus', label: 'Group Status', type: 'select', options: [
+            { value: 'ACSC', label: 'ACSC - Accepted Settlement Completed' },
+            { value: 'RJCT', label: 'RJCT - Rejected' },
+          ]},
+        ],
+      },
+    ],
+    prefill: {
+      originalMsgId: '99905720260225192650869851166984847',
+      groupStatus: 'ACSC',
+    },
+  },
 };
 
 export const SIDEBAR_GROUPS = [
   {
     label: 'Payment Activation',
-    items: [{ key: 'pain.013', isoCode: 'pain.013.001.11' }],
+    items: [
+      { key: 'pain.013', isoCode: 'pain.013 (Payment Activation)' },
+      { key: 'pain.014', isoCode: 'pain.014 (Activation Status Report)' },
+    ],
   },
   {
     label: 'Payment Initiation',
-    items: [{ key: 'pain.001', isoCode: 'pain.001.001.11' }],
+    items: [
+      { key: 'pain.001', isoCode: 'pain.001 (Credit Transfer Initiation)' },
+      { key: 'pain.002', isoCode: 'pain.002 (Payment Status Report)' },
+    ],
   },
   {
     label: 'Mandate Management',
     items: [
-      { key: 'pain.009', isoCode: 'pain.009.001.07 (Creation)' },
-      { key: 'pain.010', isoCode: 'pain.010.001.07 (Amendment)' },
-      { key: 'pain.011', isoCode: 'pain.011.001.07 (Cancellation)' },
+      { key: 'pain.009', isoCode: 'pain.009 (Mandate Creation)' },
+      { key: 'pain.010', isoCode: 'pain.010 (Mandate Amendment)' },
+      { key: 'pain.011', isoCode: 'pain.011 (Mandate Cancellation)' },
+      { key: 'pain.012', isoCode: 'pain.012 (Mandate Acceptance)' },
     ],
   },
   {
     label: 'Direct Debit Operations',
     items: [
-      { key: 'pain.008', isoCode: 'pain.008.001.10' },
-      { key: 'pacs.003', isoCode: 'pacs.003.001.09' },
+      { key: 'pain.008', isoCode: 'pain.008 (Direct Debit Initiation)' },
+      { key: 'pacs.003', isoCode: 'pacs.003 (Direct Debit Transfer)' },
     ],
   },
   {
-    label: 'Credit Transfer',
+    label: 'Credit Transfer & Returns',
     items: [
-      { key: 'pacs.008', isoCode: 'pacs.008.001.10' },
-      { key: 'pacs.004', isoCode: 'pacs.004.001.11 (Return)' },
+      { key: 'pacs.008', isoCode: 'pacs.008 (Customer Direct Credit)' },
+      { key: 'pacs.004', isoCode: 'pacs.004 (Payment Return)' },
+      { key: 'pacs.002', isoCode: 'pacs.002 (Payment Status Report)' },
+      { key: 'pacs.028', isoCode: 'pacs.028 (Payment Status Request)' },
     ],
   },
   {
-    label: 'Account Services',
+    label: 'Account Services & Statements',
     items: [
-      { key: 'acmt.023', isoCode: 'acmt.023.001.03 (Name Verification)' },
-      { key: 'acmt.024', isoCode: 'acmt.024.001.04 (Name Verification Report)' },
-      { key: 'camt.060', isoCode: 'camt.060.001.05 (Balance Enquiry)' },
+      { key: 'acmt.023', isoCode: 'acmt.023 (Name Verification Request)' },
+      { key: 'acmt.024', isoCode: 'acmt.024 (Name Verification Report)' },
+      { key: 'camt.060', isoCode: 'camt.060 (Balance Enquiry Request)' },
+      { key: 'camt.052', isoCode: 'camt.052 (Bank Account Report)' },
+      { key: 'camt.053', isoCode: 'camt.053 (Bank Statement)' },
     ],
   },
 ];

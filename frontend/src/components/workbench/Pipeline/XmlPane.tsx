@@ -206,13 +206,26 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
           Export XML
         </button>
         {xml && (
-          <button
-            type="button"
-            onClick={handleCompare}
-            className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold cursor-pointer hover:border-[#22a05a] hover:text-[#15803d] transition-colors animate-pulse"
-          >
-            Compare XML
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem('nps_diff_source_xml', xml);
+                localStorage.setItem('nps_diff_source_title', title);
+                window.location.href = '/inspector';
+              }}
+              className="flex items-center gap-1.5 border border-[#c4ebd3] bg-[#e6f6ec] text-[#15803d] px-2.5 py-1.5 rounded-[6px] text-[11px] font-bold cursor-pointer hover:bg-[#d2efe0] transition-colors"
+            >
+              <span>🔍</span> Health Check
+            </button>
+            <button
+              type="button"
+              onClick={handleCompare}
+              className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold cursor-pointer hover:border-[#22a05a] hover:text-[#15803d] transition-colors"
+            >
+              Compare XML
+            </button>
+          </>
         )}
       </div>
     </div>

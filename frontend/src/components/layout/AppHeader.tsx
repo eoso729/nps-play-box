@@ -45,7 +45,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={() => onModeChange?.('generation')}
-          className={`px-4 py-1.5 text-[12.5px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
             activeMode === 'generation'
               ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
               : 'text-gray-600 hover:text-gray-900'
@@ -57,15 +57,29 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={() => onModeChange?.('dispatch')}
-          className={`px-4 py-1.5 text-[12.5px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+          className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
             activeMode === 'dispatch'
               ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           <span className={`w-2 h-2 rounded-full ${activeMode === 'dispatch' ? 'bg-[#16a34a]' : 'bg-gray-400'}`}></span>
-          Pipeline Execution & Response
+          Pipeline Execution
         </button>
+        <a
+          href="/inspector"
+          className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer no-underline"
+        >
+          <span className="text-[12px]">🔍</span>
+          Fix My XML & Health Check
+        </a>
+        <a
+          href="/diff"
+          className="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer no-underline"
+        >
+          <span className="text-[12px]">⚖️</span>
+          Diff Checker
+        </a>
       </div>
 
       <div className="flex items-center gap-2.5 relative">

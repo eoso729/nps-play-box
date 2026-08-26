@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 import { XmlGenerationResponseDto, MessageSendResponseDto, MessageKey } from '../types/workbench';
 
-const GENERATE_ENDPOINTS: Record<MessageKey, string> = {
+const GENERATE_ENDPOINTS: Partial<Record<MessageKey, string>> = {
   'pain.013': '/api/generate/payment-activation-pain013',
   'pain.001': '/api/generate/payment-initiation-pain001',
   'pain.008': '/api/generate/direct-debit-pain008',
@@ -35,6 +35,9 @@ export const generateXml = async (
   payload: Record<string, any>
 ): Promise<XmlGenerationResponseDto> => {
   const endpoint = GENERATE_ENDPOINTS[messageKey];
+  if (!endpoint) {
+    throw new Error(`XML Generation endpoint not configured for ${messageKey}. Please use the Health Check tool to inspect & repair.`);
+  }
   const res = await apiClient.post<XmlGenerationResponseDto>(endpoint, payload);
   return res.data;
 };
