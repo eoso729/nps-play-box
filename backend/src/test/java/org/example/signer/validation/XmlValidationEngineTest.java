@@ -99,6 +99,60 @@ public class XmlValidationEngineTest {
     }
 
     @Test
+    public void testRemovingMandatoryTagsFlaggedAsErrors() {
+        // 1. pacs.008 with MsgId removed
+        IsoMessageDefinition pacs008Def = IsoMessageRegistry.getDefinition("pacs.008");
+        String samplePacs008 = pacs008Def.getSampleXml();
+        String missingMsgId = samplePacs008.replace("<MsgId>99905820250801205622930239203831721</MsgId>", "");
+        ValidationReportDto rep1 = validationEngine.validate(missingMsgId, "pacs.008");
+        assertFalse(rep1.isValid());
+        assertTrue(rep1.getIssues().stream().anyMatch(i -> "MANDATORY_FIELD_MISSING".equals(i.getRuleCode()) && i.getMessage().contains("Message ID")));
+
+        // 2. pacs.008 with Debtor Name removed
+        String missingDbtrNm = samplePacs008.replace("<Nm>James</Nm>", "");
+        ValidationReportDto rep2 = validationEngine.validate(missingDbtrNm, "pacs.008");
+        assertFalse(rep2.isValid());
+        assertTrue(rep2.getIssues().stream().anyMatch(i -> "MANDATORY_FIELD_MISSING".equals(i.getRuleCode()) && i.getMessage().contains("Debtor Name")));
+
+        // 3. pacs.008 with GrpHdr completely removed
+        String missingGrpHdr = samplePacs008.replaceAll("(?s)<GrpHdr>.*?</GrpHdr>", "");
+        ValidationReportDto rep3 = validationEngine.validate(missingGrpHdr, "pacs.008");
+        assertFalse(rep3.isValid());
+        assertTrue(rep3.getIssues().stream().anyMatch(i -> "MANDATORY_HEADER_MISSING".equals(i.getRuleCode())));
+
+        // 4. pain.009 with Mandate ID removed
+        IsoMessageDefinition pain009Def = IsoMessageRegistry.getDefinition("pain.009");
+        String missingMndtId = pain009Def.getSampleXml().replace("<MndtId>MNDT-RCUR-00001</MndtId>", "");
+        ValidationReportDto rep4 = validationEngine.validate(missingMndtId, "pain.009");
+        assertFalse(rep4.isValid());
+        assertTrue(rep4.getIssues().stream().anyMatch(i -> "MANDATORY_FIELD_MISSING".equals(i.getRuleCode()) && i.getMessage().contains("Mandate ID")));
+
+        // 5. camt.052 with Bal block removed
+        IsoMessageDefinition camt052Def = IsoMessageRegistry.getDefinition("camt.052");
+        String missingBal = camt052Def.getSampleXml().replaceAll("(?s)<Bal>.*?</Bal>", "");
+        ValidationReportDto rep5 = validationEngine.validate(missingBal, "camt.052");
+        assertFalse(rep5.isValid());
+        assertTrue(rep5.getIssues().stream().anyMatch(i -> "MANDATORY_FIELD_MISSING".equals(i.getRuleCode())));
+
+        // 6. pain.012 with Acceptance result removed
+        IsoMessageDefinition pain012Def = IsoMessageRegistry.getDefinition("pain.012");
+        String missingAccptd = pain012Def.getSampleXml().replace("<Accptd>true</Accptd>", "");
+        ValidationReportDto rep6 = validationEngine.validate(missingAccptd, "pain.012");
+        assertFalse(rep6.isValid());
+        assertTrue(rep6.getIssues().stream().anyMatch(i -> "MANDATORY_FIELD_MISSING".equals(i.getRuleCode()) && i.getMessage().contains("Acceptance Indicator")));
+    }
+
+    @Test
+    public void testEmptyMandatoryTagFlagged() {
+        IsoMessageDefinition pacs008Def = IsoMessageRegistry.getDefinition("pacs.008");
+        String sample = pacs008Def.getSampleXml();
+        String emptyMsgId = sample.replace("<MsgId>99905820250801205622930239203831721</MsgId>", "<MsgId></MsgId>");
+        ValidationReportDto report = validationEngine.validate(emptyMsgId, "pacs.008");
+        assertFalse(report.isValid());
+        assertTrue(report.getIssues().stream().anyMatch(i -> "MANDATORY_FIELD_EMPTY".equals(i.getRuleCode()) && i.getMessage().contains("Message ID")));
+    }
+
+    @Test
     public void testAutoFixRepairsDateTimeAndSupplementaryData() {
         String brokenXml = """
                 <FIToFICstmrCdtTrf>
@@ -143,8 +197,10 @@ public class XmlValidationEngineTest {
                                 <EndToEndId>99905899905798653637383920281615142</EndToEndId>
                                 <TxId>99905820250801205622930239203831721</TxId>
                             </PmtId>
+                            <PmtTpInf><ClrChanl>RTNS</ClrChanl></PmtTpInf>
                             <IntrBkSttlmAmt Ccy="ngn">1000.00</IntrBkSttlmAmt>
                             <IntrBkSttlmDt>2025-02-25Z</IntrBkSttlmDt>
+                            <ChrgBr>SLEV</ChrgBr>
                             <Dbtr><Nm>James</Nm></Dbtr>
                             <DbtrAcct><Id><iban>0177136558</iban></Id><Nm>James</Nm></DbtrAcct>
                             <DbtrAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></DbtrAgt>

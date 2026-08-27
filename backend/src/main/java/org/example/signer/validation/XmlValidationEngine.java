@@ -14,7 +14,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -180,19 +179,22 @@ public class XmlValidationEngine {
                     passedRules.add("Valid ISO 20022 XML namespace: " + ns);
                 }
             }
+
+            // 4. Validate Structural Containers (Main element, GrpHdr/Assgnmt, etc.)
+            validateMessageStructure(doc, def, issues, passedRules);
         }
 
-        // 4. Validate Fields & Business Rules from Message Definition
+        // 5. Validate Fields & Business Rules from Message Definition
         if (def != null && def.getFields() != null) {
             for (IsoFieldDef field : def.getFields()) {
                 validateField(doc, field, issues, passedRules);
             }
         }
 
-        // 5. Global Deep Scan of XML Elements for NIBSS conventions
+        // 6. Global Deep Scan of XML Elements for NIBSS conventions
         scanAllElementsForRules(doc.getDocumentElement(), "", issues, passedRules);
 
-        // 6. Check for Supplementary Data if mandatory for this message
+        // 7. Check for Supplementary Data if mandatory for this message
         if (def != null && isSupplementaryDataRequired(def.getKey())) {
             validateSupplementaryDataPresence(doc, issues, passedRules);
         }
@@ -206,6 +208,57 @@ public class XmlValidationEngine {
                 issues, passedRules, categoryCounts);
     }
 
+    private void validateMessageStructure(Document doc, IsoMessageDefinition def, List<ValidationIssueDto> issues, List<String> passedRules) {
+        if (doc == null || def == null) return;
+        Element root = doc.getDocumentElement();
+
+        // 1. Verify main message element inside Document
+        String mainElemName = def.getMainElement();
+        List<Element> mainElems = findElementsByPath(doc, mainElemName);
+        if (mainElems.isEmpty()) {
+            issues.add(ValidationIssueDto.builder()
+                    .id("ERR-MAIN-CONTAINER-MISSING")
+                    .severity("ERROR")
+                    .category("SCHEMA_STRUCTURE")
+                    .xpath("/Document/" + mainElemName)
+                    .fieldPath(mainElemName)
+                    .fieldName("Main Message Element")
+                    .lineNumber(getNodeLine(root))
+                    .columnNumber(getNodeCol(root))
+                    .currentValue("[MISSING]")
+                    .expected("<" + mainElemName + ">")
+                    .message("Main message container <" + mainElemName + "> is missing from <Document>.")
+                    .ruleCode("MAIN_CONTAINER_MISSING")
+                    .autoFixable(true)
+                    .build());
+        } else {
+            passedRules.add("Main message element <" + mainElemName + "> is present");
+        }
+
+        // 2. Verify Header Container (GrpHdr or Assgnmt)
+        String headerName = (def.getKey().startsWith("acmt")) ? "Assgnmt" : "GrpHdr";
+        List<Element> headerElems = findElementsByPath(doc, headerName);
+        if (headerElems.isEmpty()) {
+            issues.add(ValidationIssueDto.builder()
+                    .id("ERR-HEADER-MISSING")
+                    .severity("ERROR")
+                    .category("SCHEMA_STRUCTURE")
+                    .xpath("//" + headerName)
+                    .fieldPath(headerName)
+                    .fieldName(headerName + " Header Block")
+                    .lineNumber(getNodeLine(root))
+                    .columnNumber(getNodeCol(root))
+                    .currentValue("[MISSING]")
+                    .expected("<" + headerName + ">")
+                    .message("Mandatory header container <" + headerName + "> is missing.")
+                    .ruleCode("MANDATORY_HEADER_MISSING")
+                    .autoFixable(true)
+                    .build());
+        } else {
+            passedRules.add("Header container <" + headerName + "> is present");
+        }
+    }
+
     private void validateField(Document doc, IsoFieldDef field, List<ValidationIssueDto> issues, List<String> passedRules) {
         String xmlPath = field.getXmlPath();
         boolean isAttribute = xmlPath.contains("@");
@@ -213,8 +266,8 @@ public class XmlValidationEngine {
         String attributeName = null;
         if (isAttribute) {
             int atIdx = xmlPath.indexOf('@');
-            elementPath = (atIdx > 0 && (xmlPath.charAt(atIdx - 1) == '.' || xmlPath.charAt(atIdx - 1) == '/')) 
-                    ? xmlPath.substring(0, atIdx - 1) 
+            elementPath = (atIdx > 0 && (xmlPath.charAt(atIdx - 1) == '.' || xmlPath.charAt(atIdx - 1) == '/'))
+                    ? xmlPath.substring(0, atIdx - 1)
                     : xmlPath.substring(0, atIdx);
             attributeName = xmlPath.substring(atIdx + 1);
         } else {
@@ -718,7 +771,7 @@ public class XmlValidationEngine {
                     .build());
         }
 
-        // 2. Leaf Element Uppercase Value Validation
+        // 2. Leaf vs Container Element checks
         boolean isLeaf = true;
         NodeList children = element.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
@@ -732,20 +785,20 @@ public class XmlValidationEngine {
             if (NibssValidationRules.isUppercaseField(tagName) || "IdType".equalsIgnoreCase(tagName)) {
                 if (!text.equals(text.toUpperCase())) {
                     issues.add(ValidationIssueDto.builder()
-                            .id("ERR-UPPERCASE-" + line + "-" + sanitizeId(tagName))
-                            .severity("ERROR")
-                            .category("BUSINESS_RULE")
-                            .xpath(getElementXPath(element))
-                            .fieldPath(path)
-                            .fieldName(tagName)
-                            .lineNumber(line)
-                            .columnNumber(col)
-                            .currentValue(text)
-                            .expected(text.toUpperCase())
-                            .message("Value '" + text + "' in <" + tagName + "> must be strictly UPPERCASE as required by NIBSS specification: '" + text.toUpperCase() + "'.")
-                            .ruleCode("VALUE_UPPERCASE_REQUIRED")
-                            .autoFixable(true)
-                            .build());
+                    .id("ERR-UPPERCASE-" + line + "-" + sanitizeId(tagName))
+                    .severity("ERROR")
+                    .category("BUSINESS_RULE")
+                    .xpath(getElementXPath(element))
+                    .fieldPath(path)
+                    .fieldName(tagName)
+                    .lineNumber(line)
+                    .columnNumber(col)
+                    .currentValue(text)
+                    .expected(text.toUpperCase())
+                    .message("Value '" + text + "' in <" + tagName + "> must be strictly UPPERCASE as required by NIBSS specification: '" + text.toUpperCase() + "'.")
+                    .ruleCode("VALUE_UPPERCASE_REQUIRED")
+                    .autoFixable(true)
+                    .build());
                 }
             }
         }
@@ -939,7 +992,7 @@ public class XmlValidationEngine {
 
     private ValidationReportDto buildReport(boolean isValid, String messageType, String isoCode, String name, String category,
                                             List<ValidationIssueDto> issues, List<String> passedRules, Map<String, Integer> categoryCounts) {
-        // De-duplicate issues by ID and line
+        // De-duplicate issues by ID, line and xpath
         Map<String, ValidationIssueDto> unique = new LinkedHashMap<>();
         for (ValidationIssueDto issue : issues) {
             String key = issue.getRuleCode() + ":" + issue.getLineNumber() + ":" + issue.getXpath();
@@ -1088,8 +1141,18 @@ public class XmlValidationEngine {
         List<Element> results = new ArrayList<>();
         if (doc == null || xmlPath == null) return results;
 
-        String[] parts = xmlPath.split("\\.");
-        if (parts.length == 0) return results;
+        String[] rawParts = xmlPath.split("\\.");
+        if (rawParts.length == 0) return results;
+
+        List<String> cleanedPartsList = new ArrayList<>();
+        for (String p : rawParts) {
+            String clean = p.replaceAll("\\[.*?\\]", "").trim();
+            if (!clean.isEmpty()) {
+                cleanedPartsList.add(clean);
+            }
+        }
+        if (cleanedPartsList.isEmpty()) return results;
+        String[] parts = cleanedPartsList.toArray(new String[0]);
 
         // Search recursively for first segment, then descend
         searchRecursive(doc.getDocumentElement(), parts, 0, results);
