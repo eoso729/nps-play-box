@@ -34,6 +34,52 @@ public class XmlValidationEngineTest {
     }
 
     @Test
+    public void testAutoFixPreservesAll19ValidSamplesWithoutAddingErrors() {
+        for (IsoMessageDefinition def : IsoMessageRegistry.getAllDefinitions()) {
+            XmlAutoFixRequestDto req = XmlAutoFixRequestDto.builder()
+                    .xmlContent(def.getSampleXml())
+                    .messageType(def.getKey())
+                    .fixDates(true)
+                    .fixIds(true)
+                    .fixSupplementaryData(true)
+                    .build();
+
+            XmlAutoFixResponseDto resp = autoFixEngine.autoFix(req);
+            assertTrue(resp.isSuccess(), "Auto-fix should succeed for " + def.getKey());
+            assertNotNull(resp.getFixedXml());
+
+            ValidationReportDto report = validationEngine.validate(resp.getFixedXml(), def.getKey());
+            assertTrue(report.isValid(), "Auto-fixed XML for " + def.getKey() + " must remain valid. Errors: " +
+                    report.getIssues().stream().filter(i -> "ERROR".equals(i.getSeverity())).map(ValidationIssueDto::getMessage).toList());
+            assertTrue(report.getHealthScore() >= 80, "Health score for " + def.getKey() + " must remain high");
+        }
+    }
+
+    @Test
+    public void testAutoFixFormattingIsIdempotent() {
+        IsoMessageDefinition pacs008 = IsoMessageRegistry.getDefinition("pacs.008");
+        XmlAutoFixRequestDto req1 = XmlAutoFixRequestDto.builder()
+                .xmlContent(pacs008.getSampleXml())
+                .messageType("pacs.008")
+                .build();
+
+        XmlAutoFixResponseDto resp1 = autoFixEngine.autoFix(req1);
+        assertTrue(resp1.isSuccess());
+        String firstFix = resp1.getFixedXml();
+
+        XmlAutoFixRequestDto req2 = XmlAutoFixRequestDto.builder()
+                .xmlContent(firstFix)
+                .messageType("pacs.008")
+                .build();
+
+        XmlAutoFixResponseDto resp2 = autoFixEngine.autoFix(req2);
+        assertTrue(resp2.isSuccess());
+        String secondFix = resp2.getFixedXml();
+
+        assertEquals(firstFix, secondFix, "Subsequent formatting passes must be idempotent and not accumulate spaces or blank lines");
+    }
+
+    @Test
     public void testInvalidBvnDetected() {
         String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -166,6 +212,8 @@ public class XmlValidationEngineTest {
         XmlAutoFixRequestDto req = XmlAutoFixRequestDto.builder()
                 .xmlContent(brokenXml)
                 .messageType("pacs.008")
+                .fixDates(true)
+                .fixSupplementaryData(true)
                 .build();
 
         XmlAutoFixResponseDto resp = autoFixEngine.autoFix(req);
@@ -253,6 +301,8 @@ public class XmlValidationEngineTest {
         XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
                 .xmlContent(xml)
                 .messageType("pacs.008")
+                .fixDates(true)
+                .fixSupplementaryData(true)
                 .build();
         XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
         assertTrue(fixResp.isSuccess());

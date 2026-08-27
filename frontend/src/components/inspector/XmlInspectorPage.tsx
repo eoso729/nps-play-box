@@ -114,6 +114,30 @@ export const XmlInspectorPage: React.FC = () => {
     }
   };
 
+  const handleFormatOnly = async () => {
+    if (!xmlContent.trim()) return;
+    setIsFixing(true);
+    try {
+      const res = await autoFixXml({
+        xmlContent,
+        messageType: selectedMessageType === 'auto' ? undefined : selectedMessageType,
+        formatOnly: true,
+      });
+
+      if (res.fixedXml) {
+        setXmlContent(res.fixedXml);
+        setFixesApplied(res.fixesApplied || []);
+        setReport(res.validationReport);
+        showToast('XML formatted cleanly with 4-space indentation.', 'success');
+      }
+    } catch (err: any) {
+      console.error(err);
+      showToast('Formatting failed: ' + (err?.response?.data?.message || err?.message), 'error');
+    } finally {
+      setIsFixing(false);
+    }
+  };
+
   const handleLoadSample = (key: string) => {
     const sample = samples.find(s => s.key === key);
     if (sample) {
@@ -358,6 +382,16 @@ export const XmlInspectorPage: React.FC = () => {
                 <span>🔍</span> Inspect & Validate
               </>
             )}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleFormatOnly}
+            disabled={isFixing || !xmlContent.trim()}
+            className="px-3.5 py-2 border border-[#bce3cb] bg-[#e6f6ec] hover:bg-[#d5eedf] rounded-lg text-[12.5px] font-bold text-[#15803d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
+            title="Clean format XML with 4-space indentation without mutating field values"
+          >
+            <span>🧹</span> Format XML
           </button>
 
           <button

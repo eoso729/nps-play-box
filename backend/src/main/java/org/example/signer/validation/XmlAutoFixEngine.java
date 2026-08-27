@@ -9,14 +9,11 @@ import org.example.signer.dto.validation.XmlAutoFixResponseDto;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.*;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -44,7 +41,7 @@ public class XmlAutoFixEngine {
         }
 
         try {
-            // Check if XML is basic text without tags
+            // Check if XML is raw text without opening tags
             if (!xml.trim().startsWith("<")) {
                 xml = "<Document>" + xml.trim() + "</Document>";
                 fixesApplied.add("Wrapped raw payload in root <Document> tag.");
@@ -52,16 +49,47 @@ public class XmlAutoFixEngine {
 
             Document doc = XmlUtils.stringToDocument(xml);
             String messageType = request.getMessageType();
-            if (messageType == null || messageType.trim().isEmpty()) {
+            if (messageType == null || messageType.trim().isEmpty() || "auto".equalsIgnoreCase(messageType)) {
                 messageType = IsoMessageRegistry.detectMessageType(doc, xml);
             }
             messageType = IsoMessageRegistry.normalizeKey(messageType);
             IsoMessageDefinition def = IsoMessageRegistry.getDefinition(messageType);
 
+            // Check if the input is already valid before doing heavy modifications
+            ValidationReportDto initialReport = validationEngine.validate(xml, messageType);
+
+            if (request.isFormatOnly()) {
+                String formattedXml = prettyPrint(doc);
+                fixesApplied.add("Cleanly formatted XML hierarchy with standard 4-space indentation.");
+                ValidationReportDto report = validationEngine.validate(formattedXml, messageType);
+                return XmlAutoFixResponseDto.builder()
+                        .success(true)
+                        .detectedMessageType(def != null ? def.getKey() : messageType)
+                        .fixedXml(formattedXml)
+                        .fixesApplied(fixesApplied)
+                        .validationReport(report)
+                        .build();
+            }
+
+            if (initialReport.isValid()) {
+                // Already valid! Do not mutate data, just clean format/indent
+                String formattedXml = prettyPrint(doc);
+                fixesApplied.add("XML payload is already fully valid and compliant. Re-formatted with clean 4-space indentation.");
+                ValidationReportDto report = validationEngine.validate(formattedXml, messageType);
+                return XmlAutoFixResponseDto.builder()
+                        .success(true)
+                        .detectedMessageType(def != null ? def.getKey() : messageType)
+                        .fixedXml(formattedXml)
+                        .fixesApplied(fixesApplied)
+                        .validationReport(report)
+                        .build();
+            }
+
             // 1. Fix Root Tag and Namespace if needed
             if (def != null) {
                 Element root = doc.getDocumentElement();
-                if (!"Document".equalsIgnoreCase(root.getTagName()) && !"Document".equalsIgnoreCase(root.getLocalName())) {
+                String rootName = root.getLocalName() != null ? root.getLocalName() : root.getTagName();
+                if (!"Document".equalsIgnoreCase(rootName)) {
                     // Re-wrap in Document
                     Element newRoot = doc.createElement("Document");
                     if (def.getNamespace() != null) {
@@ -72,24 +100,26 @@ public class XmlAutoFixEngine {
                     doc.appendChild(newRoot);
                     fixesApplied.add("Enclosed main message inside standard ISO 20022 <Document> wrapper.");
                 } else {
-                    if (def.getNamespace() != null && root.getAttribute("xmlns").isEmpty()) {
+                    String existingNs = root.getAttribute("xmlns");
+                    if (def.getNamespace() != null && (existingNs == null || existingNs.isEmpty())) {
                         root.setAttribute("xmlns", def.getNamespace());
                         fixesApplied.add("Injected official ISO namespace xmlns=\"" + def.getNamespace() + "\" on <Document>.");
                     }
                 }
             }
 
-            // 2. Recursively fix all elements
-            fixElementsRecursive(doc.getDocumentElement(), def, fixesApplied);
+            // 2. Recursively fix elements (casing, enums, dates, etc.)
+            fixElementsRecursive(doc.getDocumentElement(), def, request, fixesApplied);
 
-            // 3. Inject Missing Mandatory Supplementary Data if needed
-            if (def != null && isSupplementaryDataRequired(def.getKey())) {
+            // 3. Inject Missing Mandatory Supplementary Data if enabled and required
+            boolean shouldFixSupp = request.isFixSupplementaryData();
+            if (shouldFixSupp && def != null && isSupplementaryDataRequired(def.getKey())) {
                 injectSupplementaryDataIfNeeded(doc, def, fixesApplied);
             }
 
-            // 4. Format and Pretty Print XML
+            // 4. Format and Pretty Print XML (with DOM whitespace stripping to prevent extra indentation/spaces)
             String fixedXml = prettyPrint(doc);
-            fixesApplied.add("Re-formatted and beautified XML hierarchy with standard UTF-8 indentation.");
+            fixesApplied.add("Formatted XML hierarchy with clean 4-space indentation.");
 
             // 5. Re-run validation report
             ValidationReportDto report = validationEngine.validate(fixedXml, messageType);
@@ -118,7 +148,7 @@ public class XmlAutoFixEngine {
         }
     }
 
-    private void fixElementsRecursive(Element element, IsoMessageDefinition def, List<String> fixesApplied) {
+    private void fixElementsRecursive(Element element, IsoMessageDefinition def, XmlAutoFixRequestDto request, List<String> fixesApplied) {
         String tagName = element.getLocalName() != null ? element.getLocalName() : element.getTagName();
 
         // 1. Tag Name Casing Correction (e.g. <iban> -> <IBAN>, <grphdr> -> <GrpHdr>, <idtype> -> <IdType>)
@@ -179,7 +209,7 @@ public class XmlAutoFixEngine {
             }
 
             // B. Date-Time normalization to UTC+1 WAT (+01:00)
-            if (tagName.contains("DtTm") || "CreDtTm".equalsIgnoreCase(tagName) || "OrgnlCreDtTm".equalsIgnoreCase(tagName)) {
+            if (request.isFixDates() && (tagName.contains("DtTm") || "CreDtTm".equalsIgnoreCase(tagName) || "OrgnlCreDtTm".equalsIgnoreCase(tagName))) {
                 String fixedDt = normalizeToWatDateTime(text);
                 if (!fixedDt.equals(text)) {
                     element.setTextContent(fixedDt);
@@ -188,7 +218,7 @@ public class XmlAutoFixEngine {
             }
 
             // C. Date normalization (YYYY-MM-DD)
-            if (tagName.contains("Dt") && !tagName.contains("DtTm") && !tagName.contains("Dtls")) {
+            if (request.isFixDates() && tagName.contains("Dt") && !tagName.contains("DtTm") && !tagName.contains("Dtls")) {
                 String fixedDate = normalizeToIsoDate(text);
                 if (!fixedDate.equals(text)) {
                     element.setTextContent(fixedDate);
@@ -196,16 +226,7 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // D. NPS ID Auto-Repair / Format to 35 chars
-            if ("MsgId".equalsIgnoreCase(tagName) || "TxId".equalsIgnoreCase(tagName) || "EndToEndId".equalsIgnoreCase(tagName) || "InstrId".equalsIgnoreCase(tagName) || "StsReqId".equalsIgnoreCase(tagName) || "RtrId".equalsIgnoreCase(tagName)) {
-                if (text.length() != 35) {
-                    String repairedId = generateCompliantNpsId(text, tagName);
-                    element.setTextContent(repairedId);
-                    fixesApplied.add("Regenerated compliant 35-character NPS ID for <" + tagName + ">: '" + text + "' -> '" + repairedId + "'");
-                }
-            }
-
-            // E. Channel Code Fix
+            // D. Channel Code Fix
             if ("ChannelCode".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.CHANNEL_CODES.containsKey(text)) {
                     element.setTextContent("1");
@@ -213,7 +234,7 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // F. Account Designation Fix
+            // E. Account Designation Fix
             if ("AccountDesignation".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.ACCOUNT_DESIGNATIONS.containsKey(text)) {
                     element.setTextContent("1");
@@ -221,7 +242,7 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // G. Account Tier Fix
+            // F. Account Tier Fix
             if ("AccountTier".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.ACCOUNT_TIERS.containsKey(text)) {
                     element.setTextContent("1");
@@ -229,20 +250,11 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // H. ID Type check
+            // G. ID Type check
             if ("IdType".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.ID_TYPES.contains(text.toUpperCase())) {
                     element.setTextContent("BVN");
                     fixesApplied.add("Defaulted invalid IdType '" + text + "' to 'BVN'.");
-                }
-            }
-
-            // I. Currency Attribute fix (e.g. Ccy="USD" -> Ccy="NGN")
-            if (element.hasAttribute("Ccy")) {
-                String ccy = element.getAttribute("Ccy");
-                if (!"NGN".equalsIgnoreCase(ccy)) {
-                    element.setAttribute("Ccy", "NGN");
-                    fixesApplied.add("Set transaction currency attribute Ccy=\"NGN\" on <" + tagName + ">");
                 }
             }
         }
@@ -250,7 +262,7 @@ public class XmlAutoFixEngine {
         // Recurse children
         for (int i = 0; i < children.getLength(); i++) {
             if (children.item(i) instanceof Element child) {
-                fixElementsRecursive(child, def, fixesApplied);
+                fixElementsRecursive(child, def, request, fixesApplied);
             }
         }
     }
@@ -343,18 +355,19 @@ public class XmlAutoFixEngine {
 
     private String normalizeToWatDateTime(String dt) {
         if (dt == null || dt.trim().isEmpty()) {
-            return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS+01:00"));
+            return dt;
         }
         String clean = dt.trim();
+        if (NibssValidationRules.isValidIsoDateTime(clean) && NibssValidationRules.hasWatOrUtcOffset(clean)) {
+            return clean;
+        }
         if (clean.endsWith("Z")) {
-            // Replace trailing Z with +01:00
             return clean.substring(0, clean.length() - 1) + "+01:00";
         }
-        if (!clean.endsWith("+01:00") && !clean.endsWith("+0100") && !clean.endsWith("+01")) {
-            if (clean.contains("T")) {
+        if (clean.contains("T")) {
+            int tIdx = clean.indexOf('T');
+            if (!clean.contains("+") && (tIdx == -1 || clean.indexOf('-', tIdx) == -1)) {
                 return clean + "+01:00";
-            } else {
-                return clean + "T12:00:00.000+01:00";
             }
         }
         return clean;
@@ -362,9 +375,12 @@ public class XmlAutoFixEngine {
 
     private String normalizeToIsoDate(String d) {
         if (d == null || d.trim().isEmpty()) {
-            return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            return d;
         }
         String clean = d.trim();
+        if (NibssValidationRules.isValidIsoDate(clean)) {
+            return clean;
+        }
         if (clean.contains("T")) {
             return clean.substring(0, clean.indexOf('T'));
         }
@@ -385,17 +401,59 @@ public class XmlAutoFixEngine {
         return instId + timestamp + rand;
     }
 
-    private String prettyPrint(Document doc) throws Exception {
+    /**
+     * Strips whitespace text nodes and leaf text margins before formatting to ensure
+     * strictly clean, non-accumulating 4-space indentation with zero blank lines.
+     */
+    public static void cleanDomForFormatting(Node node) {
+        if (node == null) return;
+        NodeList children = node.getChildNodes();
+        boolean hasChildElements = false;
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i).getNodeType() == Node.ELEMENT_NODE) {
+                hasChildElements = true;
+                break;
+            }
+        }
+
+        for (int i = children.getLength() - 1; i >= 0; i--) {
+            Node child = children.item(i);
+            short type = child.getNodeType();
+            if (type == Node.TEXT_NODE) {
+                String val = child.getNodeValue();
+                if (hasChildElements) {
+                    // Container element: text node is whitespace between tags; remove it
+                    if (val == null || val.trim().isEmpty()) {
+                        node.removeChild(child);
+                    }
+                } else {
+                    // Leaf element: normalize text value by trimming surrounding whitespace
+                    if (val != null) {
+                        child.setNodeValue(val.trim());
+                    }
+                }
+            } else if (type == Node.ELEMENT_NODE) {
+                cleanDomForFormatting(child);
+            }
+        }
+    }
+
+    public static String prettyPrint(Document doc) throws Exception {
+        cleanDomForFormatting(doc);
+
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer transformer = tf.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty(OutputKeys.METHOD, "xml");
         transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
         transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 
         StringWriter sw = new StringWriter();
         transformer.transform(new DOMSource(doc), new StreamResult(sw));
-        return sw.toString().trim();
+        String result = sw.toString().trim();
+        // Remove any superfluous blank lines
+        return result.replaceAll("(?m)^[ \t]*\r?\n", "");
     }
 
     private String attemptTextFixes(String rawXml, List<String> fixesApplied) {
