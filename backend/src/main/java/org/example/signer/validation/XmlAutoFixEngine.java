@@ -120,6 +120,42 @@ public class XmlAutoFixEngine {
 
     private void fixElementsRecursive(Element element, IsoMessageDefinition def, List<String> fixesApplied) {
         String tagName = element.getLocalName() != null ? element.getLocalName() : element.getTagName();
+
+        // 1. Tag Name Casing Correction (e.g. <iban> -> <IBAN>, <grphdr> -> <GrpHdr>, <idtype> -> <IdType>)
+        String canonicalTag = NibssValidationRules.getCanonicalTagName(tagName);
+        if (canonicalTag != null && !canonicalTag.equals(tagName)) {
+            try {
+                element.getOwnerDocument().renameNode(element, element.getNamespaceURI(), canonicalTag);
+                fixesApplied.add("Corrected XML tag casing: <" + tagName + "> -> <" + canonicalTag + ">");
+                tagName = canonicalTag;
+            } catch (Exception e) {
+                log.debug("Could not rename node: {}", e.getMessage());
+            }
+        }
+
+        // 2. Attributes Casing and Values (e.g. ccy="ngn" -> Ccy="NGN")
+        NamedNodeMap attrs = element.getAttributes();
+        if (attrs != null) {
+            List<Node> attrsList = new ArrayList<>();
+            for (int i = 0; i < attrs.getLength(); i++) {
+                attrsList.add(attrs.item(i));
+            }
+            for (Node attr : attrsList) {
+                String aName = attr.getNodeName();
+                String aVal = attr.getNodeValue();
+                if ("Ccy".equalsIgnoreCase(aName)) {
+                    if (!"Ccy".equals(aName)) {
+                        element.removeAttribute(aName);
+                        element.setAttribute("Ccy", aVal != null ? aVal.toUpperCase() : "NGN");
+                        fixesApplied.add("Corrected attribute name casing: @" + aName + " -> @Ccy");
+                    } else if (aVal != null && !aVal.equals(aVal.toUpperCase())) {
+                        element.setAttribute("Ccy", aVal.toUpperCase());
+                        fixesApplied.add("Normalized currency attribute value to UPPERCASE: Ccy=\"" + aVal.toUpperCase() + "\"");
+                    }
+                }
+            }
+        }
+
         String text = element.getTextContent() != null ? element.getTextContent().trim() : "";
 
         // Check only leaf elements with text
@@ -133,7 +169,16 @@ public class XmlAutoFixEngine {
         }
 
         if (isLeaf && !text.isEmpty()) {
-            // A. Date-Time normalization to UTC+1 WAT (+01:00)
+            // A. Strict UPPERCASE value normalization for codes/enums (e.g., BVN, NIN, RC, CLRG, RTNS, NGN, ACSC, CRDT)
+            if (NibssValidationRules.isUppercaseField(tagName) || "IdType".equalsIgnoreCase(tagName)) {
+                if (!text.equals(text.toUpperCase())) {
+                    element.setTextContent(text.toUpperCase());
+                    fixesApplied.add("Normalized <" + tagName + "> value to UPPERCASE: '" + text + "' -> '" + text.toUpperCase() + "'");
+                    text = text.toUpperCase();
+                }
+            }
+
+            // B. Date-Time normalization to UTC+1 WAT (+01:00)
             if (tagName.contains("DtTm") || "CreDtTm".equalsIgnoreCase(tagName) || "OrgnlCreDtTm".equalsIgnoreCase(tagName)) {
                 String fixedDt = normalizeToWatDateTime(text);
                 if (!fixedDt.equals(text)) {
@@ -142,7 +187,7 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // B. Date normalization (YYYY-MM-DD)
+            // C. Date normalization (YYYY-MM-DD)
             if (tagName.contains("Dt") && !tagName.contains("DtTm") && !tagName.contains("Dtls")) {
                 String fixedDate = normalizeToIsoDate(text);
                 if (!fixedDate.equals(text)) {
@@ -151,7 +196,7 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // C. NPS ID Auto-Repair / Format to 35 chars
+            // D. NPS ID Auto-Repair / Format to 35 chars
             if ("MsgId".equalsIgnoreCase(tagName) || "TxId".equalsIgnoreCase(tagName) || "EndToEndId".equalsIgnoreCase(tagName) || "InstrId".equalsIgnoreCase(tagName) || "StsReqId".equalsIgnoreCase(tagName) || "RtrId".equalsIgnoreCase(tagName)) {
                 if (text.length() != 35) {
                     String repairedId = generateCompliantNpsId(text, tagName);
@@ -160,7 +205,7 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // D. Channel Code Fix
+            // E. Channel Code Fix
             if ("ChannelCode".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.CHANNEL_CODES.containsKey(text)) {
                     element.setTextContent("1");
@@ -168,7 +213,7 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // E. Account Designation Fix
+            // F. Account Designation Fix
             if ("AccountDesignation".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.ACCOUNT_DESIGNATIONS.containsKey(text)) {
                     element.setTextContent("1");
@@ -176,7 +221,7 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // F. Account Tier Fix
+            // G. Account Tier Fix
             if ("AccountTier".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.ACCOUNT_TIERS.containsKey(text)) {
                     element.setTextContent("1");
@@ -184,18 +229,15 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // G. ID Type uppercase
+            // H. ID Type check
             if ("IdType".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.ID_TYPES.contains(text.toUpperCase())) {
                     element.setTextContent("BVN");
                     fixesApplied.add("Defaulted invalid IdType '" + text + "' to 'BVN'.");
-                } else if (!text.equals(text.toUpperCase())) {
-                    element.setTextContent(text.toUpperCase());
-                    fixesApplied.add("Normalized IdType casing: '" + text + "' -> '" + text.toUpperCase() + "'");
                 }
             }
 
-            // H. Currency Attribute fix (e.g. Ccy="USD" -> Ccy="NGN")
+            // I. Currency Attribute fix (e.g. Ccy="USD" -> Ccy="NGN")
             if (element.hasAttribute("Ccy")) {
                 String ccy = element.getAttribute("Ccy");
                 if (!"NGN".equalsIgnoreCase(ccy)) {

@@ -255,6 +255,249 @@ public class NibssValidationRules {
         private String description;
     }
 
+    // 20. Fields whose values must strictly be UPPERCASE in NIBSS / ISO 20022
+    public static final Set<String> UPPERCASE_CODE_FIELDS = new HashSet<>(Arrays.asList(
+            "IdType", "Ccy", "SttlmMtd", "ClrChanl", "LclInstrm", "ChrgBr", "SeqTp", "Frqcy",
+            "GrpSts", "TxSts", "CdtDbtInd", "Sts", "Domn", "Fmly", "SubFmlyCd", "Cd", "BICFI",
+            "IBAN", "UETR", "ClrSys", "SvcLvl", "CtgyPurp", "Purp"
+    ));
+
+    // 21. Canonical ISO 20022 and NIBSS Tag Names Dictionary (PascalCase / CamelCase / Uppercase)
+    public static final Map<String, String> CANONICAL_TAGS = new LinkedHashMap<>();
+    static {
+        // Root & Message Wrapper Elements
+        addTag("Document");
+        addTag("FIToFICstmrCdtTrf");
+        addTag("FIToFIPmtStsRpt");
+        addTag("FIToFIPmtStsReq");
+        addTag("PmtRtr");
+        addTag("FIToFICstmrDrctDbt");
+        addTag("CdtrPmtActvtnReq");
+        addTag("CdtrPmtActvtnStsRpt");
+        addTag("CstmrCdtTrfInitn");
+        addTag("CstmrPmtStsRpt");
+        addTag("CstmrDrctDbtInitn");
+        addTag("MndtInitnReq");
+        addTag("MndtAmdmntReq");
+        addTag("MndtCxlReq");
+        addTag("MndtAccptncRpt");
+        addTag("IdVrfctnReq");
+        addTag("IdVrfctnRpt");
+        addTag("AcctRptgReq");
+        addTag("BkToCstmrAcctRpt");
+        addTag("BkToCstmrStmt");
+
+        // Group Header & General Elements
+        addTag("GrpHdr");
+        addTag("MsgId");
+        addTag("CreDtTm");
+        addTag("BtchBookg");
+        addTag("NbOfTxs");
+        addTag("CtrlSum");
+        addTag("SttlmInf");
+        addTag("SttlmMtd");
+        addTag("SttlmAcct");
+        addTag("ClrSys");
+        addTag("InstgAgt");
+        addTag("InstdAgt");
+        addTag("FinInstnId");
+        addTag("ClrSysMmbId");
+        addTag("MmbId");
+        addTag("BICFI");
+        addTag("Nm");
+        addTag("PstlAdr");
+        addTag("OrgId");
+        addTag("PrvtId");
+        addTag("Othr");
+        addTag("Id");
+        addTag("SchemeNm");
+        addTag("Prtry");
+        addTag("Cd");
+        addTag("Issr");
+
+        // Transactions & Payments
+        addTag("CdtTrfTxInf");
+        addTag("PmtId");
+        addTag("InstrId");
+        addTag("EndToEndId");
+        addTag("TxId");
+        addTag("UETR");
+        addTag("PmtTpInf");
+        addTag("LclInstrm");
+        addTag("CtgyPurp");
+        addTag("IntrBkSttlmAmt");
+        addTag("IntrBkSttlmDt");
+        addTag("InstdAmt");
+        addTag("XchgRate");
+        addTag("ChrgBr");
+        addTag("ChrgsInf");
+        addTag("Amt");
+        addTag("Agt");
+        addTag("Dbtr");
+        addTag("DbtrAcct");
+        addTag("DbtrAgt");
+        addTag("CdtrAgt");
+        addTag("Cdtr");
+        addTag("CdtrAcct");
+        addTag("UltmtDbtr");
+        addTag("UltmtCdtr");
+        addTag("Purp");
+        addTag("RmtInf");
+        addTag("Ustrd");
+        addTag("Strd");
+        addTag("IBAN");
+        addTag("BBAN");
+        addTag("Ccy");
+        addTag("Tp");
+        addTag("PmtInf");
+        addTag("PmtInfId");
+        addTag("PmtMtd");
+        addTag("ReqdExctnDt");
+        addTag("ReqdColltnDt");
+
+        // Status, Return, & Cancellation
+        addTag("OrgnlGrpInfAndSts");
+        addTag("OrgnlMsgId");
+        addTag("OrgnlMsgNmId");
+        addTag("OrgnlCreDtTm");
+        addTag("OrgnlNbOfTxs");
+        addTag("OrgnlCtrlSum");
+        addTag("GrpSts");
+        addTag("StsRsnInf");
+        addTag("Rsn");
+        addTag("AddtlInf");
+        addTag("TxInfAndSts");
+        addTag("StsId");
+        addTag("OrgnlInstrId");
+        addTag("OrgnlEndToEndId");
+        addTag("OrgnlTxId");
+        addTag("OrgnlUETR");
+        addTag("TxSts");
+        addTag("OrgnlTxRef");
+        addTag("StsReqId");
+        addTag("RtrId");
+        addTag("OrgnlGrpInf");
+        addTag("OrgnlPmtInfId");
+        addTag("RtrRsnInf");
+        addTag("RtrdIntrBkSttlmAmt");
+        addTag("RtrdInstdAmt");
+        addTag("CompstnAmt");
+
+        // Mandates & Direct Debits
+        addTag("Mndt");
+        addTag("MndtId");
+        addTag("MndtReqId");
+        addTag("SvcLvl");
+        addTag("Ocrncs");
+        addTag("SeqTp");
+        addTag("Frqcy");
+        addTag("FrstColltnDt");
+        addTag("FnlColltnDt");
+        addTag("ColltnAmt");
+        addTag("MaxAmt");
+        addTag("CdtrSchmeId");
+        addTag("UndrlygAccptncDtls");
+        addTag("AccptncRslt");
+        addTag("Accptd");
+        addTag("OrgnlMsgInf");
+        addTag("OrgnlMndt");
+        addTag("OrgnlMndtId");
+        addTag("MndtAmdmntRsn");
+        addTag("AmdmntRsn");
+        addTag("MndtCxlRsn");
+        addTag("CxlRsn");
+        addTag("DrctDbtTx");
+        addTag("MndtRltdInf");
+        addTag("DtOfSgntr");
+        addTag("DrctDbtTxInf");
+
+        // Name Verification
+        addTag("Assgnmt");
+        addTag("Assgnr");
+        addTag("Assgne");
+        addTag("Pty");
+        addTag("OrgnlAssgnmt");
+        addTag("Rpt");
+        addTag("OrgnlId");
+        addTag("Vrfctn");
+        addTag("OrgnlPtyAndAcctId");
+        addTag("UpdtdPtyAndAcctId");
+        addTag("Acct");
+        addTag("AcctId");
+
+        // Account Reporting & Statements
+        addTag("RptgReq");
+        addTag("ReqdMsgNmId");
+        addTag("RptgPrd");
+        addTag("FrToDt");
+        addTag("FrDt");
+        addTag("ToDt");
+        addTag("FrToTm");
+        addTag("FrTm");
+        addTag("ToTm");
+        addTag("Stmt");
+        addTag("AcctRpt");
+        addTag("ElctrncSeqNb");
+        addTag("LglSeqNb");
+        addTag("CpyDplctInd");
+        addTag("Bal");
+        addTag("CdtDbtInd");
+        addTag("Dt");
+        addTag("DtTm");
+        addTag("Ntry");
+        addTag("AmtDtls");
+        addTag("BkTxCd");
+        addTag("Domn");
+        addTag("Fmly");
+        addTag("SubFmlyCd");
+        addTag("BookgDt");
+        addTag("ValDt");
+        addTag("AcctSvcr");
+        addTag("ClrChanl");
+        addTag("Sts");
+
+        // NIBSS Supplementary Data Block
+        addTag("SplmtryData");
+        addTag("PlcAndNm");
+        addTag("Envlp");
+        addTag("CustomData");
+        addTag("DebtorInfo");
+        addTag("CreditorInfo");
+        addTag("TransactionInfo");
+        addTag("MandateInfo");
+        addTag("AccountDesignation");
+        addTag("IdType");
+        addTag("IdValue");
+        addTag("AccountTier");
+        addTag("TransactionLocation");
+        addTag("NameEnquiryMsgId");
+        addTag("ChannelCode");
+        addTag("RiskRating");
+        addTag("MandateType");
+        addTag("Amount");
+        addTag("OriginalMsgId");
+        addTag("OriginalCreDtTm");
+        addTag("ReasonCode");
+        addTag("ReasonProprietary");
+        addTag("VerifiedAccountNumber");
+        addTag("VerifiedAccountName");
+    }
+
+    private static void addTag(String tag) {
+        CANONICAL_TAGS.put(tag.toLowerCase(), tag);
+    }
+
+    public static String getCanonicalTagName(String tag) {
+        if (tag == null) return null;
+        return CANONICAL_TAGS.get(tag.toLowerCase());
+    }
+
+    public static boolean isUppercaseField(String tag) {
+        if (tag == null) return false;
+        return UPPERCASE_CODE_FIELDS.contains(tag) ||
+                UPPERCASE_CODE_FIELDS.stream().anyMatch(f -> f.equalsIgnoreCase(tag));
+    }
+
     /**
      * Checks if a DateTime string is a valid ISO 8601 with WAT (UTC+1) or UTC timezone.
      */
@@ -299,3 +542,4 @@ public class NibssValidationRules {
         }
     }
 }
+

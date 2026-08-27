@@ -698,27 +698,117 @@ public class XmlValidationEngine {
         int col = getNodeCol(element);
         String text = element.getTextContent() != null ? element.getTextContent().trim() : "";
 
-        // Check attributes (e.g. Ccy)
+        // 1. Tag Name Case Validation (Check exact PascalCase / Uppercase against canonical ISO 20022 & NIBSS dictionary)
+        String canonicalTag = NibssValidationRules.getCanonicalTagName(tagName);
+        if (canonicalTag != null && !canonicalTag.equals(tagName)) {
+            issues.add(ValidationIssueDto.builder()
+                    .id("ERR-TAG-CASE-" + line + "-" + sanitizeId(tagName))
+                    .severity("ERROR")
+                    .category("SCHEMA_STRUCTURE")
+                    .xpath(getElementXPath(element))
+                    .fieldPath(path)
+                    .fieldName(canonicalTag)
+                    .lineNumber(line)
+                    .columnNumber(col)
+                    .currentValue("<" + tagName + ">")
+                    .expected("<" + canonicalTag + ">")
+                    .message("XML tag <" + tagName + "> has invalid casing. Official ISO 20022 / NIBSS specification requires exact casing: <" + canonicalTag + ">.")
+                    .ruleCode("TAG_CASE_MISMATCH")
+                    .autoFixable(true)
+                    .build());
+        }
+
+        // 2. Leaf Element Uppercase Value Validation
+        boolean isLeaf = true;
+        NodeList children = element.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            if (children.item(i) instanceof Element) {
+                isLeaf = false;
+                break;
+            }
+        }
+
+        if (isLeaf && !text.isEmpty()) {
+            if (NibssValidationRules.isUppercaseField(tagName) || "IdType".equalsIgnoreCase(tagName)) {
+                if (!text.equals(text.toUpperCase())) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-UPPERCASE-" + line + "-" + sanitizeId(tagName))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName(tagName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected(text.toUpperCase())
+                            .message("Value '" + text + "' in <" + tagName + "> must be strictly UPPERCASE as required by NIBSS specification: '" + text.toUpperCase() + "'.")
+                            .ruleCode("VALUE_UPPERCASE_REQUIRED")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+        }
+
+        // 3. Check attributes (e.g. Ccy)
         NamedNodeMap attrs = element.getAttributes();
         if (attrs != null) {
             for (int i = 0; i < attrs.getLength(); i++) {
                 Node attr = attrs.item(i);
-                if ("Ccy".equalsIgnoreCase(attr.getNodeName()) && !"NGN".equalsIgnoreCase(attr.getNodeValue())) {
-                    issues.add(ValidationIssueDto.builder()
-                            .id("WARN-CCY-ATTR-" + line)
-                            .severity("WARNING")
-                            .category("BUSINESS_RULE")
-                            .xpath(getElementXPath(element) + "/@" + attr.getNodeName())
-                            .fieldPath(path + ".@" + attr.getNodeName())
-                            .fieldName("Currency Attribute")
-                            .lineNumber(line)
-                            .columnNumber(col)
-                            .currentValue(attr.getNodeValue())
-                            .expected("NGN")
-                            .message("Currency attribute should typically be 'NGN'.")
-                            .ruleCode("NIBSS_CURRENCY")
-                            .autoFixable(true)
-                            .build());
+                String aName = attr.getNodeName();
+                String aVal = attr.getNodeValue();
+                if ("Ccy".equalsIgnoreCase(aName)) {
+                    if (!"Ccy".equals(aName)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ATTR-CASE-" + line)
+                                .severity("ERROR")
+                                .category("SCHEMA_STRUCTURE")
+                                .xpath(getElementXPath(element) + "/@" + aName)
+                                .fieldPath(path + ".@" + aName)
+                                .fieldName("Ccy Attribute")
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue("@" + aName)
+                                .expected("@Ccy")
+                                .message("Currency attribute name '@" + aName + "' has invalid casing. Expected '@Ccy'.")
+                                .ruleCode("TAG_CASE_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    }
+                    if (aVal != null && !aVal.equals(aVal.toUpperCase())) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-CCY-UPPERCASE-" + line)
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(element) + "/@" + aName)
+                                .fieldPath(path + ".@" + aName)
+                                .fieldName("Currency Value")
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(aVal)
+                                .expected(aVal.toUpperCase())
+                                .message("Currency code '" + aVal + "' must be uppercase: '" + aVal.toUpperCase() + "'.")
+                                .ruleCode("VALUE_UPPERCASE_REQUIRED")
+                                .autoFixable(true)
+                                .build());
+                    }
+                    if (aVal != null && !"NGN".equalsIgnoreCase(aVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("WARN-CCY-ATTR-" + line)
+                                .severity("WARNING")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(element) + "/@" + aName)
+                                .fieldPath(path + ".@" + aName)
+                                .fieldName("Currency Attribute")
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(aVal)
+                                .expected("NGN")
+                                .message("Currency attribute should typically be 'NGN'.")
+                                .ruleCode("NIBSS_CURRENCY")
+                                .autoFixable(true)
+                                .build());
+                    }
                 }
             }
         }
@@ -805,10 +895,9 @@ public class XmlValidationEngine {
         }
 
         // Recurse children
-        NodeList children = element.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
-            if (children.item(i) instanceof Element) {
-                scanAllElementsForRules((Element) children.item(i), path, issues, passedRules);
+            if (children.item(i) instanceof Element child) {
+                scanAllElementsForRules(child, path, issues, passedRules);
             }
         }
     }
