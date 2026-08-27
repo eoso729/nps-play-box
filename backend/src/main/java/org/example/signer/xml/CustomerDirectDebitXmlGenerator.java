@@ -18,8 +18,7 @@ public class CustomerDirectDebitXmlGenerator {
         // --- Group Header ---
         CustomerDirectDebit.GrpHdr grpHdr = new CustomerDirectDebit.GrpHdr();
         grpHdr.setMsgId(msgId);
-        LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String creDtTm = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
         grpHdr.setNbOfTxs(1);
         BigDecimal amount = requestDto.getAmount() != null ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("2200.00");

@@ -19,7 +19,7 @@ public class TransferXmlGenerator {
 
         // --- Timestamps ---
         LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String creDtTm = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         String intrBkSttlmDt = now.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
 
         // --- Group Header ---

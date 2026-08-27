@@ -139,6 +139,13 @@ public class MessagePipelineService {
         return buildXmlGenerationResponse("camt.060", msgId, model);
     }
 
+    public XmlGenerationResponseDto generatePaymentStatusReportPacs002(TransferResponseDto requestDto) throws Exception {
+        String srcId = requestDto.getSendingInstitutionId() != null ? requestDto.getSendingInstitutionId() : "090004";
+        String msgId = generateMsgId(srcId);
+        TransferResponse model = TransferResponseXmlGenerator.generate(requestDto);
+        return buildXmlGenerationResponse("pacs.002", msgId, model);
+    }
+
     // ==========================================
     // GROUP B: SEND FULL PIPELINE
     // ==========================================

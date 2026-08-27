@@ -14,6 +14,7 @@ const GENERATE_ENDPOINTS: Partial<Record<MessageKey, string>> = {
   'acmt.023': '/api/generate/name-verification-acmt023',
   'acmt.024': '/api/generate/name-verification-report-acmt024',
   'camt.060': '/api/generate/balance-enquiry-camt060',
+  'pacs.002': '/api/generate/payment-status-report-pacs002',
 };
 
 const SEND_ENDPOINTS: Partial<Record<MessageKey, string>> = {

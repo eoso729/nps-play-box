@@ -17,8 +17,7 @@ public class PaymentActivationXmlGenerator {
         // --- Group Header ---
         PaymentActivation.GrpHdr grpHdr = new PaymentActivation.GrpHdr();
         grpHdr.setMsgId(msgId);
-        LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String creDtTm = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
 
         PaymentActivation.InitgPty initgPty = new PaymentActivation.InitgPty();

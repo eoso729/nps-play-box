@@ -151,4 +151,15 @@ public class XmlGenerationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+    @PostMapping("/payment-status-report-pacs002")
+    public ResponseEntity<XmlGenerationResponseDto> generatePaymentStatusReportPacs002(@RequestBody TransferResponseDto requestDto) {
+        try {
+            XmlGenerationResponseDto response = messagePipelineService.generatePaymentStatusReportPacs002(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating pacs.002", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
