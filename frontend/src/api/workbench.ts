@@ -15,6 +15,12 @@ const GENERATE_ENDPOINTS: Partial<Record<MessageKey, string>> = {
   'acmt.024': '/api/generate/name-verification-report-acmt024',
   'camt.060': '/api/generate/balance-enquiry-camt060',
   'pacs.002': '/api/generate/payment-status-report-pacs002',
+  'pacs.028': '/api/generate/payment-status-request-pacs028',
+  'pain.012': '/api/generate/mandate-acceptance-pain012',
+  'pain.014': '/api/generate/activation-status-report-pain014',
+  'camt.052': '/api/generate/bank-account-report-camt052',
+  'camt.053': '/api/generate/bank-statement-camt053',
+  'pain.002': '/api/generate/customer-payment-status-pain002',
 };
 
 const SEND_ENDPOINTS: Partial<Record<MessageKey, string>> = {
@@ -24,9 +30,13 @@ const SEND_ENDPOINTS: Partial<Record<MessageKey, string>> = {
   'pain.009': '/api/mandate-creation-pain009',
   'pain.010': '/api/mandate-amendment-pain010',
   'pain.011': '/api/mandate-cancellation-pain011',
+  'pain.012': '/api/mandate-acceptance-pain012',
+  'pain.014': '/api/activation-status-report-pain014',
   'pacs.008': '/api/transfer-pacs008',
   'pacs.003': '/api/customer-direct-debit-pacs003',
   'pacs.004': '/api/payment-return-pacs004',
+  'pacs.002': '/api/payment-status-report-pacs002',
+  'pacs.028': '/api/payment-status-request-pacs028',
   'acmt.023': '/api/name-verification-acmt023',
   'camt.060': '/api/balance-enquiry-camt060',
 };

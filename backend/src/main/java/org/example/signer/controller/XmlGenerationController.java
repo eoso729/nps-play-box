@@ -162,4 +162,70 @@ public class XmlGenerationController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+    @PostMapping("/payment-status-request-pacs028")
+    public ResponseEntity<XmlGenerationResponseDto> generatePaymentStatusRequestPacs028(@RequestBody PaymentStatusRequestDto requestDto) {
+        try {
+            XmlGenerationResponseDto response = messagePipelineService.generatePaymentStatusRequestPacs028(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating pacs.028", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/mandate-acceptance-pain012")
+    public ResponseEntity<XmlGenerationResponseDto> generateMandateAcceptancePain012(@RequestBody MandateAcceptanceReportDto requestDto) {
+        try {
+            XmlGenerationResponseDto response = messagePipelineService.generateMandateAcceptancePain012(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating pain.012", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/activation-status-report-pain014")
+    public ResponseEntity<XmlGenerationResponseDto> generateActivationStatusReportPain014(@RequestBody PaymentActivationStatusReportDto requestDto) {
+        try {
+            XmlGenerationResponseDto response = messagePipelineService.generateActivationStatusReportPain014(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating pain.014", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/bank-account-report-camt052")
+    public ResponseEntity<XmlGenerationResponseDto> generateBankAccountReportCamt052(@RequestBody BankAccountReportDto requestDto) {
+        try {
+            XmlGenerationResponseDto response = messagePipelineService.generateBankAccountReportCamt052(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating camt.052", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/bank-statement-camt053")
+    public ResponseEntity<XmlGenerationResponseDto> generateBankStatementCamt053(@RequestBody BankStatementDto requestDto) {
+        try {
+            XmlGenerationResponseDto response = messagePipelineService.generateBankStatementCamt053(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating camt.053", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/customer-payment-status-pain002")
+    public ResponseEntity<XmlGenerationResponseDto> generateCustomerPaymentStatusPain002(@RequestBody CustomerPaymentStatusReportDto requestDto) {
+        try {
+            XmlGenerationResponseDto response = messagePipelineService.generateCustomerPaymentStatusPain002(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error generating pain.002", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

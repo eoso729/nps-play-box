@@ -17,7 +17,8 @@ public class PaymentActivationXmlGenerator {
         // --- Group Header ---
         PaymentActivation.GrpHdr grpHdr = new PaymentActivation.GrpHdr();
         grpHdr.setMsgId(msgId);
-        String creDtTm = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        java.time.ZonedDateTime nowWat = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos"));
+        String creDtTm = nowWat.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
 
         PaymentActivation.InitgPty initgPty = new PaymentActivation.InitgPty();
@@ -40,7 +41,7 @@ public class PaymentActivationXmlGenerator {
         pmtInf.setPmtMtd("TRF");
 
         PaymentActivation.ReqdExctnDt reqdExctnDt = new PaymentActivation.ReqdExctnDt();
-        reqdExctnDt.setDtTm(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
+        reqdExctnDt.setDtTm(nowWat.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
         pmtInf.setReqdExctnDt(reqdExctnDt);
 
         PaymentActivation.Dbtr dbtr = new PaymentActivation.Dbtr();

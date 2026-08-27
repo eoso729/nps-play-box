@@ -140,4 +140,48 @@ public class PushController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
+    @PostMapping("/payment-status-request-pacs028")
+    public ResponseEntity<MessageSendResponseDto> sendPaymentStatusRequestPacs028(@RequestBody PaymentStatusRequestDto requestDto) {
+        try {
+            MessageSendResponseDto response = messagePipelineService.sendPaymentStatusRequestPacs028(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error sending pacs.028", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/mandate-acceptance-pain012")
+    public ResponseEntity<MessageSendResponseDto> sendMandateAcceptancePain012(@RequestBody MandateAcceptanceReportDto requestDto) {
+        try {
+            MessageSendResponseDto response = messagePipelineService.sendMandateAcceptancePain012(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error sending pain.012", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/activation-status-report-pain014")
+    public ResponseEntity<MessageSendResponseDto> sendActivationStatusReportPain014(@RequestBody PaymentActivationStatusReportDto requestDto) {
+        try {
+            MessageSendResponseDto response = messagePipelineService.sendActivationStatusReportPain014(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error sending pain.014", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/payment-status-report-pacs002")
+    public ResponseEntity<MessageSendResponseDto> sendTransferResponsePacs002(@RequestBody TransferResponseDto requestDto) {
+        try {
+            MessageSendResponseDto response = messagePipelineService.sendTransferResponsePacs002(requestDto);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error sending pacs.002", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

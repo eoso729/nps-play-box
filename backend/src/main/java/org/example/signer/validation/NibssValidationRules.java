@@ -274,6 +274,7 @@ public class NibssValidationRules {
         addTag("FIToFICstmrDrctDbt");
         addTag("CdtrPmtActvtnReq");
         addTag("CdtrPmtActvtnStsRpt");
+        addTag("CdtrPmtActvtnReqStsRpt");
         addTag("CstmrCdtTrfInitn");
         addTag("CstmrPmtStsRpt");
         addTag("CstmrDrctDbtInitn");
@@ -286,6 +287,21 @@ public class NibssValidationRules {
         addTag("AcctRptgReq");
         addTag("BkToCstmrAcctRpt");
         addTag("BkToCstmrStmt");
+        addTag("MsgRcpt");
+        addTag("OrgnlBizQry");
+        addTag("FrDtTm");
+        addTag("ToDtTm");
+        addTag("AcctSvcrRef");
+        addTag("CdOrPrtry");
+        addTag("Ownr");
+        addTag("Svcr");
+        addTag("SchmeNm");
+        addTag("AnyBIC");
+        addTag("NtryDtls");
+        addTag("TxDtls");
+        addTag("RltdAgts");
+        addTag("TrckgInd");
+        addTag("InitgPty");
 
         // Group Header & General Elements
         addTag("GrpHdr");
