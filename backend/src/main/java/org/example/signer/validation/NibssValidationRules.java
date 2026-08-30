@@ -499,6 +499,118 @@ public class NibssValidationRules {
         addTag("VerifiedAccountName");
     }
 
+    // Universal Tag Character Length Limits according to ISO 20022 and NIBSS NPS Specifications
+    public static final Map<String, Integer> TAG_MAX_LENGTHS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    public static final Map<String, Integer> TAG_EXACT_LENGTHS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    public static final Map<String, Integer> TAG_MIN_LENGTHS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+    static {
+        // IDs and Identifiers (35 chars)
+        setLengthRule("MsgId", 35, 35, 1);
+        setLengthRule("TxId", 35, 35, 1);
+        setLengthRule("EndToEndId", 35, null, 1);
+        setLengthRule("InstrId", 35, null, 1);
+        setLengthRule("OrgnlMsgId", 35, 35, 1);
+        setLengthRule("OrgnlTxId", 35, 35, 1);
+        setLengthRule("OrgnlEndToEndId", 35, null, 1);
+        setLengthRule("OrgnlInstrId", 35, null, 1);
+        setLengthRule("OrgnlUETR", 36, null, 1);
+        setLengthRule("MndtId", 35, null, 1);
+        setLengthRule("OrgnlMndtId", 35, null, 1);
+        setLengthRule("MndtReqId", 35, null, 1);
+        setLengthRule("StsId", 35, null, 1);
+        setLengthRule("StsReqId", 35, null, 1);
+        setLengthRule("PmtInfId", 35, null, 1);
+        setLengthRule("OrgnlPmtInfId", 35, null, 1);
+        setLengthRule("RptId", 35, null, 1);
+        setLengthRule("StmtId", 35, null, 1);
+        setLengthRule("RtrId", 35, null, 1);
+        setLengthRule("Id", 35, null, 1);
+        setLengthRule("OrgnlId", 35, null, 1);
+        setLengthRule("NameEnquiryMsgId", 35, 35, 1);
+        setLengthRule("OriginalMsgId", 35, 35, 1);
+        setLengthRule("MsgNmId", 35, null, 4);
+        setLengthRule("OrgnlMsgNmId", 35, null, 4);
+        setLengthRule("ReqdMsgNmId", 35, null, 4);
+        setLengthRule("PlcAndNm", 35, null, 1);
+
+        // Account & Member Identifiers
+        setLengthRule("IBAN", 10, 10, 10); // NUBAN account number (exact 10 digits)
+        setLengthRule("MmbId", 11, null, 3); // Clearing System Member ID (6-11 chars)
+        setLengthRule("BICFI", 11, null, 6);
+        setLengthRule("BIC", 11, null, 6);
+        setLengthRule("IdValue", 35, null, 1); // 11 if BVN/NIN, up to 35 for others
+
+        // Names & Addresses
+        setLengthRule("Nm", 140, null, 1);
+        setLengthRule("AdrLine", 70, null, 1);
+        setLengthRule("Ustrd", 140, null, 1);
+        setLengthRule("AddtlInf", 140, null, 1);
+        setLengthRule("PhneNb", 15, null, 10);
+        setLengthRule("EmailAdr", 100, null, 5);
+        setLengthRule("TransactionLocation", 30, null, 12);
+
+        // Codes & Enumerations
+        setLengthRule("Ccy", 3, 3, 3);
+        setLengthRule("ClrChanl", 4, 4, 4);
+        setLengthRule("SttlmMtd", 4, 4, 4);
+        setLengthRule("SeqTp", 4, 4, 4);
+        setLengthRule("Tp", 4, null, 1);
+        setLengthRule("ChrgBr", 4, 4, 4);
+        setLengthRule("GrpSts", 4, 4, 4);
+        setLengthRule("TxSts", 4, 4, 4);
+        setLengthRule("Sts", 4, 4, 4);
+        setLengthRule("CdtDbtInd", 4, 4, 4);
+        setLengthRule("Cd", 35, null, 1);
+        setLengthRule("Prtry", 35, null, 1);
+        setLengthRule("PmtMtd", 3, null, 2);
+        setLengthRule("IdType", 10, null, 1);
+        setLengthRule("AccountDesignation", 1, 1, 1);
+        setLengthRule("AccountTier", 1, 1, 1);
+        setLengthRule("ChannelCode", 2, null, 1);
+        setLengthRule("RiskRating", 35, null, 1);
+        setLengthRule("MandateCategory", 2, null, 1);
+
+        // Date/Time & Numbers
+        setLengthRule("NbOfTxs", 15, null, 1);
+        setLengthRule("CtrlSum", 18, null, 1);
+        setLengthRule("IntrBkSttlmAmt", 18, null, 1);
+        setLengthRule("InstdAmt", 18, null, 1);
+        setLengthRule("Amt", 18, null, 1);
+        setLengthRule("ColltnAmt", 18, null, 1);
+        setLengthRule("MaxAmt", 18, null, 1);
+        setLengthRule("BtchBookg", 5, null, 4);
+        setLengthRule("TrckgInd", 5, null, 4);
+        setLengthRule("Accptd", 5, null, 4);
+        setLengthRule("Vrfctn", 5, null, 4);
+        setLengthRule("CpyDplctInd", 5, null, 4);
+    }
+
+    private static void setLengthRule(String tag, int max, Integer exact, Integer min) {
+        TAG_MAX_LENGTHS.put(tag, max);
+        if (exact != null) {
+            TAG_EXACT_LENGTHS.put(tag, exact);
+        }
+        if (min != null) {
+            TAG_MIN_LENGTHS.put(tag, min);
+        }
+    }
+
+    public static Integer getMaxTagLength(String tag) {
+        if (tag == null) return null;
+        return TAG_MAX_LENGTHS.get(tag);
+    }
+
+    public static Integer getExactTagLength(String tag) {
+        if (tag == null) return null;
+        return TAG_EXACT_LENGTHS.get(tag);
+    }
+
+    public static Integer getMinTagLength(String tag) {
+        if (tag == null) return null;
+        return TAG_MIN_LENGTHS.get(tag);
+    }
+
     private static void addTag(String tag) {
         CANONICAL_TAGS.put(tag.toLowerCase(), tag);
     }

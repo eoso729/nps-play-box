@@ -313,4 +313,80 @@ public class XmlValidationEngineTest {
         assertTrue(fixResp.getFixedXml().contains("Ccy=\"NGN\""));
         assertTrue(fixResp.getValidationReport().isValid());
     }
+
+    @Test
+    public void testTagCharacterLengthExceededDetected() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.008");
+        String sampleXml = def.getSampleXml();
+
+        // 1. ChannelCode exceeds max length of 2 (e.g. 123)
+        String badChannel = sampleXml.replace("<ChannelCode>1</ChannelCode>", "<ChannelCode>12345</ChannelCode>");
+        ValidationReportDto rep1 = validationEngine.validate(badChannel, "pacs.008");
+        assertFalse(rep1.isValid());
+        assertTrue(rep1.getIssues().stream().anyMatch(i -> "FIELD_LENGTH_EXCEEDED".equals(i.getRuleCode()) && (i.getMessage().contains("ChannelCode") || i.getMessage().contains("Channel Code"))),
+                "Should flag FIELD_LENGTH_EXCEEDED for ChannelCode > 2 chars");
+
+        // 2. Member ID exceeds 11 characters
+        String badMmbId = sampleXml.replace("<MmbId>999058</MmbId>", "<MmbId>999058123456789</MmbId>");
+        ValidationReportDto rep2 = validationEngine.validate(badMmbId, "pacs.008");
+        assertFalse(rep2.isValid());
+        assertTrue(rep2.getIssues().stream().anyMatch(i -> "FIELD_LENGTH_EXCEEDED".equals(i.getRuleCode()) && (i.getMessage().contains("MmbId") || i.getMessage().contains("Member ID"))),
+                "Should flag FIELD_LENGTH_EXCEEDED for MmbId > 11 chars");
+
+        // 3. TransactionLocation exceeds 30 characters
+        String badTxLoc = sampleXml.replace("<TransactionLocation>01080652440N020900337921E</TransactionLocation>",
+                "<TransactionLocation>01080652440N020900337921E_EXCESSIVE_LENGTH_STRING_123456789</TransactionLocation>");
+        ValidationReportDto rep3 = validationEngine.validate(badTxLoc, "pacs.008");
+        assertFalse(rep3.isValid());
+        assertTrue(rep3.getIssues().stream().anyMatch(i -> "FIELD_LENGTH_EXCEEDED".equals(i.getRuleCode()) && (i.getMessage().contains("TransactionLocation") || i.getMessage().contains("Transaction Location"))),
+                "Should flag FIELD_LENGTH_EXCEEDED for TransactionLocation > 30 chars");
+    }
+
+    @Test
+    public void testTagExactCharacterLengthMismatchDetected() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.008");
+        String sampleXml = def.getSampleXml();
+
+        // 1. IBAN / NUBAN not exactly 10 digits (e.g. 7 digits)
+        String shortIban = sampleXml.replace("<IBAN>0177136558</IBAN>", "<IBAN>1234567</IBAN>");
+        ValidationReportDto rep1 = validationEngine.validate(shortIban, "pacs.008");
+        assertFalse(rep1.isValid());
+        assertTrue(rep1.getIssues().stream().anyMatch(i -> i.getMessage().contains("IBAN") || i.getMessage().contains("NUBAN")),
+                "Should flag invalid length for IBAN != 10 digits");
+
+        // 2. MsgId not exactly 35 characters
+        String shortMsgId = sampleXml.replace("<MsgId>99905820250801205622930239203831721</MsgId>", "<MsgId>99905812345</MsgId>");
+        ValidationReportDto rep2 = validationEngine.validate(shortMsgId, "pacs.008");
+        assertFalse(rep2.isValid());
+        assertTrue(rep2.getIssues().stream().anyMatch(i -> i.getMessage().contains("MsgId") || "FIELD_LENGTH_MISMATCH".equals(i.getRuleCode()) || "NPS_ID_FORMAT".equals(i.getRuleCode())),
+                "Should flag length mismatch for MsgId != 35 chars");
+    }
+
+    @Test
+    public void testAutoFixCharacterLengthTruncationAndPadding() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.008");
+        String xmlWithLongFields = def.getSampleXml()
+                .replace("<ChannelCode>1</ChannelCode>", "<ChannelCode>12345</ChannelCode>")
+                .replace("<MmbId>999058</MmbId>", "<MmbId>999058123456789</MmbId>")
+                .replace("<IBAN>0177136558</IBAN>", "<IBAN>136558</IBAN>"); // 6 digits, needs zero-padding to 10
+
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(xmlWithLongFields)
+                .messageType("pacs.008")
+                .fixDates(true)
+                .fixIds(true)
+                .fixSupplementaryData(true)
+                .build();
+
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertNotNull(fixResp.getFixedXml());
+
+        // ChannelCode truncated to 2 chars max
+        assertTrue(fixResp.getFixedXml().contains("<ChannelCode>12</ChannelCode>") || fixResp.getFixedXml().contains("<ChannelCode>1</ChannelCode>"));
+        // MmbId truncated to 11 chars max
+        assertTrue(fixResp.getFixedXml().contains("<MmbId>99905812345</MmbId>"));
+        // IBAN padded to 10 digits
+        assertTrue(fixResp.getFixedXml().contains("<IBAN>0000136558</IBAN>"));
+    }
 }

@@ -214,6 +214,7 @@ public class XmlAutoFixEngine {
                 if (!fixedDt.equals(text)) {
                     element.setTextContent(fixedDt);
                     fixesApplied.add("Normalized " + tagName + " to ISO 8601 UTC+1 (WAT): '" + text + "' -> '" + fixedDt + "'");
+                    text = fixedDt;
                 }
             }
 
@@ -223,6 +224,7 @@ public class XmlAutoFixEngine {
                 if (!fixedDate.equals(text)) {
                     element.setTextContent(fixedDate);
                     fixesApplied.add("Normalized " + tagName + " date format: '" + text + "' -> '" + fixedDate + "'");
+                    text = fixedDate;
                 }
             }
 
@@ -231,6 +233,7 @@ public class XmlAutoFixEngine {
                 if (!NibssValidationRules.CHANNEL_CODES.containsKey(text)) {
                     element.setTextContent("1");
                     fixesApplied.add("Corrected ChannelCode from '" + text + "' to standard code '1' (Bank Teller).");
+                    text = "1";
                 }
             }
 
@@ -239,6 +242,7 @@ public class XmlAutoFixEngine {
                 if (!NibssValidationRules.ACCOUNT_DESIGNATIONS.containsKey(text)) {
                     element.setTextContent("1");
                     fixesApplied.add("Corrected AccountDesignation from '" + text + "' to standard '1' (Corporate).");
+                    text = "1";
                 }
             }
 
@@ -247,6 +251,7 @@ public class XmlAutoFixEngine {
                 if (!NibssValidationRules.ACCOUNT_TIERS.containsKey(text)) {
                     element.setTextContent("1");
                     fixesApplied.add("Corrected AccountTier from '" + text + "' to standard '1' (Tier 1).");
+                    text = "1";
                 }
             }
 
@@ -255,7 +260,56 @@ public class XmlAutoFixEngine {
                 if (!NibssValidationRules.ID_TYPES.contains(text.toUpperCase())) {
                     element.setTextContent("BVN");
                     fixesApplied.add("Defaulted invalid IdType '" + text + "' to 'BVN'.");
+                    text = "BVN";
                 }
+            }
+
+            // H. IBAN / NUBAN (10 numeric digits)
+            if ("IBAN".equalsIgnoreCase(tagName)) {
+                String digitsOnly = text.replaceAll("\\D", "");
+                if (digitsOnly.length() > 10) {
+                    String fixedIban = digitsOnly.substring(digitsOnly.length() - 10);
+                    element.setTextContent(fixedIban);
+                    fixesApplied.add("Truncated <" + tagName + "> from " + text.length() + " chars to 10-digit NUBAN: '" + fixedIban + "'");
+                    text = fixedIban;
+                } else if (digitsOnly.length() < 10 && !digitsOnly.isEmpty() && request.isFixIds()) {
+                    String fixedIban = String.format("%010d", Long.parseLong(digitsOnly));
+                    element.setTextContent(fixedIban);
+                    fixesApplied.add("Formatted <" + tagName + "> with leading zeros to 10-digit NUBAN: '" + fixedIban + "'");
+                    text = fixedIban;
+                }
+            }
+
+            // I. NPS ID Character Length & Format Fix (MsgId, TxId, EndToEndId, InstrId, etc.)
+            boolean isIdField = "MsgId".equalsIgnoreCase(tagName) || "TxId".equalsIgnoreCase(tagName)
+                    || "EndToEndId".equalsIgnoreCase(tagName) || "InstrId".equalsIgnoreCase(tagName)
+                    || "OrgnlMsgId".equalsIgnoreCase(tagName) || "OrgnlTxId".equalsIgnoreCase(tagName)
+                    || "OrgnlEndToEndId".equalsIgnoreCase(tagName) || "OrgnlInstrId".equalsIgnoreCase(tagName)
+                    || "MndtId".equalsIgnoreCase(tagName) || "OrgnlMndtId".equalsIgnoreCase(tagName)
+                    || "PmtInfId".equalsIgnoreCase(tagName) || "StsId".equalsIgnoreCase(tagName)
+                    || "NameEnquiryMsgId".equalsIgnoreCase(tagName) || "OriginalMsgId".equalsIgnoreCase(tagName);
+
+            if (isIdField) {
+                if (text.length() > 35) {
+                    String truncatedId = text.substring(0, 35);
+                    element.setTextContent(truncatedId);
+                    fixesApplied.add("Truncated <" + tagName + "> length from " + text.length() + " to allowed 35 characters: '" + truncatedId + "'");
+                    text = truncatedId;
+                } else if (text.length() < 35 && request.isFixIds() && ("MsgId".equalsIgnoreCase(tagName) || "TxId".equalsIgnoreCase(tagName) || "EndToEndId".equalsIgnoreCase(tagName) || "InstrId".equalsIgnoreCase(tagName) || "NameEnquiryMsgId".equalsIgnoreCase(tagName))) {
+                    String fixedId = generateCompliantNpsId(text, tagName);
+                    element.setTextContent(fixedId);
+                    fixesApplied.add("Regenerated valid 35-character NPS ID for <" + tagName + ">: '" + fixedId + "'");
+                    text = fixedId;
+                }
+            }
+
+            // J. General Tag Character Length Truncation
+            Integer maxLen = NibssValidationRules.getMaxTagLength(tagName);
+            if (maxLen != null && text.length() > maxLen) {
+                String truncated = text.substring(0, maxLen);
+                element.setTextContent(truncated);
+                fixesApplied.add("Truncated <" + tagName + "> character length from " + text.length() + " to maximum allowed " + maxLen + " characters: '" + truncated + "'");
+                text = truncated;
             }
         }
 

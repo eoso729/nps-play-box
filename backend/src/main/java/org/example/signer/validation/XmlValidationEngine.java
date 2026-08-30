@@ -739,6 +739,138 @@ public class XmlValidationEngine {
                 }
                 break;
 
+            case "GROUP_STATUS":
+                if (!NibssValidationRules.STATUS_CODES.contains(text.toUpperCase())) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-GRP-STS-" + line)
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(xpath)
+                            .fieldPath(elem.getNodeName())
+                            .fieldName(fieldName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected("ACSC, RJCT, ACCP, AUTH, BOOK, PDNG, ACTC, or PART")
+                            .message("Invalid Status Code '" + text + "'. Supported: ACSC, RJCT, ACCP, AUTH, etc.")
+                            .ruleCode("NIBSS_GROUP_STATUS")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Valid Status Code: " + text);
+                }
+                break;
+
+            case "CREDIT_DEBIT":
+                if (!NibssValidationRules.CREDIT_DEBIT_INDICATORS.contains(text.toUpperCase())) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-CDT-DBT-" + line)
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(xpath)
+                            .fieldPath(elem.getNodeName())
+                            .fieldName(fieldName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected("CRDT or DBIT")
+                            .message("Invalid Credit/Debit Indicator '" + text + "'. Must be CRDT or DBIT.")
+                            .ruleCode("NIBSS_CREDIT_DEBIT")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Valid Credit/Debit Indicator: " + text);
+                }
+                break;
+
+            case "LOCAL_INSTRUMENT":
+                if (!NibssValidationRules.LOCAL_INSTRUMENTS.contains(text.toUpperCase())) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-LCL-INSTRM-" + line)
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(xpath)
+                            .fieldPath(elem.getNodeName())
+                            .fieldName(fieldName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected("CTAA, CSDC, CTAW, CTWA, or NPSDD")
+                            .message("Invalid Local Instrument '" + text + "'.")
+                            .ruleCode("NIBSS_LOCAL_INSTRUMENT")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Valid Local Instrument: " + text);
+                }
+                break;
+
+            case "PHONE":
+                if (!NibssValidationRules.PHONE_PATTERN.matcher(text).matches()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PHONE-" + line)
+                            .severity("ERROR")
+                            .category("DATA_TYPE")
+                            .xpath(xpath)
+                            .fieldPath(elem.getNodeName())
+                            .fieldName(fieldName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected("10 to 15 digits (e.g. +2348012345678 or 08012345678)")
+                            .message("Invalid Phone Number format in '" + fieldName + "'.")
+                            .ruleCode("INVALID_PHONE_FORMAT")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Valid Phone Number in " + fieldName);
+                }
+                break;
+
+            case "EMAIL":
+                if (!NibssValidationRules.EMAIL_PATTERN.matcher(text).matches()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-EMAIL-" + line)
+                            .severity("ERROR")
+                            .category("DATA_TYPE")
+                            .xpath(xpath)
+                            .fieldPath(elem.getNodeName())
+                            .fieldName(fieldName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected("Valid email address (e.g. user@domain.com)")
+                            .message("Invalid Email Address format in '" + fieldName + "'.")
+                            .ruleCode("INVALID_EMAIL_FORMAT")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Valid Email Address in " + fieldName);
+                }
+                break;
+
+            case "MEMBER_ID":
+                if (text.length() < 3 || text.length() > 11) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-MMB-ID-" + line)
+                            .severity("ERROR")
+                            .category("FIELD_LENGTH")
+                            .xpath(xpath)
+                            .fieldPath(elem.getNodeName())
+                            .fieldName(fieldName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text + " (" + text.length() + " chars)")
+                            .expected("3 to 11 characters (6-digit standard institution code)")
+                            .message("Clearing System Member ID must be 3 to 11 characters.")
+                            .ruleCode("FIELD_LENGTH_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Valid Member ID: " + text);
+                }
+                break;
+
             case "REASON_CODE":
                 if (NibssValidationRules.REJECT_REASON_CODES.containsKey(text.toUpperCase())) {
                     NibssValidationRules.ReasonCodeDetail r = NibssValidationRules.REJECT_REASON_CODES.get(text.toUpperCase());
@@ -786,23 +918,127 @@ public class XmlValidationEngine {
         }
 
         if (isLeaf && !text.isEmpty()) {
+            // A. Uppercase normalization checks
             if (NibssValidationRules.isUppercaseField(tagName) || "IdType".equalsIgnoreCase(tagName)) {
                 if (!text.equals(text.toUpperCase())) {
                     issues.add(ValidationIssueDto.builder()
-                    .id("ERR-UPPERCASE-" + line + "-" + sanitizeId(tagName))
-                    .severity("ERROR")
-                    .category("BUSINESS_RULE")
-                    .xpath(getElementXPath(element))
-                    .fieldPath(path)
-                    .fieldName(tagName)
-                    .lineNumber(line)
-                    .columnNumber(col)
-                    .currentValue(text)
-                    .expected(text.toUpperCase())
-                    .message("Value '" + text + "' in <" + tagName + "> must be strictly UPPERCASE as required by NIBSS specification: '" + text.toUpperCase() + "'.")
-                    .ruleCode("VALUE_UPPERCASE_REQUIRED")
-                    .autoFixable(true)
-                    .build());
+                            .id("ERR-UPPERCASE-" + line + "-" + sanitizeId(tagName))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName(tagName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected(text.toUpperCase())
+                            .message("Value '" + text + "' in <" + tagName + "> must be strictly UPPERCASE as required by NIBSS specification: '" + text.toUpperCase() + "'.")
+                            .ruleCode("VALUE_UPPERCASE_REQUIRED")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+
+            // B. Universal Tag Maximum Character Length Validation
+            Integer maxLen = NibssValidationRules.getMaxTagLength(tagName);
+            if (maxLen != null && text.length() > maxLen) {
+                issues.add(ValidationIssueDto.builder()
+                        .id("ERR-TAG-MAXLEN-" + line + "-" + sanitizeId(tagName))
+                        .severity("ERROR")
+                        .category("FIELD_LENGTH")
+                        .xpath(getElementXPath(element))
+                        .fieldPath(path)
+                        .fieldName(canonicalTag != null ? canonicalTag : tagName)
+                        .lineNumber(line)
+                        .columnNumber(col)
+                        .currentValue(text + " (" + text.length() + " chars)")
+                        .expected("Maximum " + maxLen + " characters")
+                        .message("Tag <" + tagName + "> character length (" + text.length() + ") exceeds maximum allowed limit of " + maxLen + " characters.")
+                        .ruleCode("FIELD_LENGTH_EXCEEDED")
+                        .autoFixable(true)
+                        .build());
+            }
+
+            // C. Universal Tag Exact Character Length Validation
+            Integer exactLen = NibssValidationRules.getExactTagLength(tagName);
+            if (exactLen != null && text.length() != exactLen) {
+                issues.add(ValidationIssueDto.builder()
+                        .id("ERR-TAG-EXACTLEN-" + line + "-" + sanitizeId(tagName))
+                        .severity("ERROR")
+                        .category("FIELD_LENGTH")
+                        .xpath(getElementXPath(element))
+                        .fieldPath(path)
+                        .fieldName(canonicalTag != null ? canonicalTag : tagName)
+                        .lineNumber(line)
+                        .columnNumber(col)
+                        .currentValue(text + " (" + text.length() + " chars)")
+                        .expected("Exactly " + exactLen + " characters")
+                        .message("Tag <" + tagName + "> character length (" + text.length() + ") does not match required exact length of " + exactLen + " characters.")
+                        .ruleCode("FIELD_LENGTH_MISMATCH")
+                        .autoFixable(true)
+                        .build());
+            }
+
+            // D. Channel Code check
+            if ("ChannelCode".equalsIgnoreCase(tagName)) {
+                if (!NibssValidationRules.CHANNEL_CODES.containsKey(text)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-CHAN-SCAN-" + line)
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName("Channel Code")
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected("Valid Channel Code (1-11)")
+                            .message("Invalid Channel Code '" + text + "'.")
+                            .ruleCode("NIBSS_CHANNEL_CODE")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+
+            // E. Account Designation check
+            if ("AccountDesignation".equalsIgnoreCase(tagName)) {
+                if (!NibssValidationRules.ACCOUNT_DESIGNATIONS.containsKey(text)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-ACCT-DESIG-SCAN-" + line)
+                            .severity("ERROR")
+                            .category("NIBSS_METADATA")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName("Account Designation")
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected("1 to 6")
+                            .message("Invalid Account Designation '" + text + "'.")
+                            .ruleCode("NIBSS_ACCOUNT_DESIGNATION")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+
+            // F. Account Tier check
+            if ("AccountTier".equalsIgnoreCase(tagName)) {
+                if (!NibssValidationRules.ACCOUNT_TIERS.containsKey(text)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-ACCT-TIER-SCAN-" + line)
+                            .severity("ERROR")
+                            .category("NIBSS_METADATA")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName("Account Tier")
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text)
+                            .expected("1, 2, or 3")
+                            .message("Invalid Account Tier '" + text + "'.")
+                            .ruleCode("NIBSS_ACCOUNT_TIER")
+                            .autoFixable(true)
+                            .build());
                 }
             }
         }
@@ -867,87 +1103,6 @@ public class XmlValidationEngine {
                                 .build());
                     }
                 }
-            }
-        }
-
-        // Automatic Tag Name Heuristics for non-schema XML
-        if ("MsgId".equalsIgnoreCase(tagName) || "TxId".equalsIgnoreCase(tagName) || "EndToEndId".equalsIgnoreCase(tagName) || "InstrId".equalsIgnoreCase(tagName)) {
-            if (!text.isEmpty() && text.length() != 35) {
-                issues.add(ValidationIssueDto.builder()
-                        .id("WARN-ID-LEN-" + line)
-                        .severity("WARNING")
-                        .category("BUSINESS_RULE")
-                        .xpath(getElementXPath(element))
-                        .fieldPath(path)
-                        .fieldName(tagName)
-                        .lineNumber(line)
-                        .columnNumber(col)
-                        .currentValue(text + " (" + text.length() + " chars)")
-                        .expected("35 characters")
-                        .message(tagName + " length is " + text.length() + " chars; NIBSS standard is 35 chars.")
-                        .ruleCode("NPS_ID_FORMAT")
-                        .autoFixable(true)
-                        .build());
-            }
-        }
-
-        if ("ChannelCode".equalsIgnoreCase(tagName) && !text.isEmpty()) {
-            if (!NibssValidationRules.CHANNEL_CODES.containsKey(text)) {
-                issues.add(ValidationIssueDto.builder()
-                        .id("ERR-CHAN-SCAN-" + line)
-                        .severity("ERROR")
-                        .category("BUSINESS_RULE")
-                        .xpath(getElementXPath(element))
-                        .fieldPath(path)
-                        .fieldName("Channel Code")
-                        .lineNumber(line)
-                        .columnNumber(col)
-                        .currentValue(text)
-                        .expected("Valid Channel Code (1-11)")
-                        .message("Invalid Channel Code '" + text + "'.")
-                        .ruleCode("NIBSS_CHANNEL_CODE")
-                        .autoFixable(true)
-                        .build());
-            }
-        }
-
-        if ("AccountDesignation".equalsIgnoreCase(tagName) && !text.isEmpty()) {
-            if (!NibssValidationRules.ACCOUNT_DESIGNATIONS.containsKey(text)) {
-                issues.add(ValidationIssueDto.builder()
-                        .id("ERR-ACCT-DESIG-SCAN-" + line)
-                        .severity("ERROR")
-                        .category("NIBSS_METADATA")
-                        .xpath(getElementXPath(element))
-                        .fieldPath(path)
-                        .fieldName("Account Designation")
-                        .lineNumber(line)
-                        .columnNumber(col)
-                        .currentValue(text)
-                        .expected("1 to 6")
-                        .message("Invalid Account Designation '" + text + "'.")
-                        .ruleCode("NIBSS_ACCOUNT_DESIGNATION")
-                        .autoFixable(true)
-                        .build());
-            }
-        }
-
-        if ("AccountTier".equalsIgnoreCase(tagName) && !text.isEmpty()) {
-            if (!NibssValidationRules.ACCOUNT_TIERS.containsKey(text)) {
-                issues.add(ValidationIssueDto.builder()
-                        .id("ERR-ACCT-TIER-SCAN-" + line)
-                        .severity("ERROR")
-                        .category("NIBSS_METADATA")
-                        .xpath(getElementXPath(element))
-                        .fieldPath(path)
-                        .fieldName("Account Tier")
-                        .lineNumber(line)
-                        .columnNumber(col)
-                        .currentValue(text)
-                        .expected("1, 2, or 3")
-                        .message("Invalid Account Tier '" + text + "'.")
-                        .ruleCode("NIBSS_ACCOUNT_TIER")
-                        .autoFixable(true)
-                        .build());
             }
         }
 

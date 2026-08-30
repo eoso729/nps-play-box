@@ -151,10 +151,10 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Message ID", "GrpHdr.MsgId", "//GrpHdr/MsgId", "99905820250801205622930239203831721", "String", 35, true, false, "NPS_ID", "Point to point message identifier"),
                 new IsoFieldDef("Creation DateTime", "GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2025-08-01T08:08:12.954+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Message creation timestamp in UTC+1"),
                 new IsoFieldDef("Batch Booking", "GrpHdr.BtchBookg", "//GrpHdr/BtchBookg", "false", "Boolean", 5, true, false, null, "Batch booking flag"),
-                new IsoFieldDef("Number of Transactions", "GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 1, true, false, null, "Total number of transactions"),
+                new IsoFieldDef("Number of Transactions", "GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 15, true, false, null, "Total number of transactions"),
                 new IsoFieldDef("Settlement Method", "GrpHdr.SttlmInf.SttlmMtd", "//GrpHdr/SttlmInf/SttlmMtd", "CLRG", "String", 4, true, false, "SETTLEMENT_METHOD", "Settlement method (CLRG)"),
-                new IsoFieldDef("Instructing Agent Member ID", "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Instructing Agent Member ID"),
-                new IsoFieldDef("Instructed Agent Member ID", "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Instructed Agent Member ID"),
+                new IsoFieldDef("Instructing Agent Member ID", "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Instructing Agent Member ID"),
+                new IsoFieldDef("Instructed Agent Member ID", "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Instructed Agent Member ID"),
                 new IsoFieldDef("Instruction ID", "CdtTrfTxInf.PmtId.InstrId", "//CdtTrfTxInf/PmtId/InstrId", "99905899905720250801205722893090687", "String", 35, true, false, "NPS_ID", "Instruction ID"),
                 new IsoFieldDef("End-to-End ID", "CdtTrfTxInf.PmtId.EndToEndId", "//CdtTrfTxInf/PmtId/EndToEndId", "99905899905798653637383920281615142", "String", 35, true, false, "NPS_ID", "End-to-End ID"),
                 new IsoFieldDef("Transaction ID", "CdtTrfTxInf.PmtId.TxId", "//CdtTrfTxInf/PmtId/TxId", "99905820250801205622930239203831721", "String", 35, true, false, "NPS_ID", "Transaction ID"),
@@ -166,23 +166,23 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Debtor Name", "CdtTrfTxInf.Dbtr.Nm", "//CdtTrfTxInf/Dbtr/Nm", "James", "String", 100, true, false, null, "Debtor name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "CdtTrfTxInf.DbtrAcct.Id.IBAN", "//CdtTrfTxInf/DbtrAcct/Id/IBAN", "0177136558", "String", 10, true, false, "NUBAN", "10-digit Debtor account number"),
                 new IsoFieldDef("Debtor Account Name", "CdtTrfTxInf.DbtrAcct.Nm", "//CdtTrfTxInf/DbtrAcct/Nm", "James", "String", 100, true, false, null, "Debtor account name"),
-                new IsoFieldDef("Debtor Agent Member ID", "CdtTrfTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTxInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Debtor Agent Member ID"),
-                new IsoFieldDef("Creditor Agent Member ID", "CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTxInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Creditor Agent Member ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "CdtTrfTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTxInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Debtor Agent Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTxInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
                 new IsoFieldDef("Creditor Name", "CdtTrfTxInf.Cdtr.Nm", "//CdtTrfTxInf/Cdtr/Nm", "Musa", "String", 100, true, false, null, "Creditor name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "CdtTrfTxInf.CdtrAcct.Id.IBAN", "//CdtTrfTxInf/CdtrAcct/Id/IBAN", "0177136558", "String", 10, true, false, "NUBAN", "10-digit Creditor account number"),
                 new IsoFieldDef("Creditor Account Name", "CdtTrfTxInf.CdtrAcct.Nm", "//CdtTrfTxInf/CdtrAcct/Nm", "Musa", "String", 100, true, false, null, "Creditor account name"),
                 new IsoFieldDef("Place and Name", "SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary Data descriptor"),
                 new IsoFieldDef("Debtor Account Designation", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountDesignation", "//DebtorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Debtor ID Type", "SplmtryData.Envlp.CustomData.DebtorInfo.IdType", "//DebtorInfo/IdType", "BVN", "Enum", 7, true, false, "ID_TYPE", "ID Type (BVN/NIN/RC/FIRSTIN/JTBTIN)"),
-                new IsoFieldDef("Debtor ID Value", "SplmtryData.Envlp.CustomData.DebtorInfo.IdValue", "//DebtorInfo/IdValue", "22112323440", "String", 12, true, false, "BVN", "11-digit BVN or ID Value"),
+                new IsoFieldDef("Debtor ID Value", "SplmtryData.Envlp.CustomData.DebtorInfo.IdValue", "//DebtorInfo/IdValue", "22112323440", "String", 11, true, false, "BVN", "11-digit BVN or ID Value"),
                 new IsoFieldDef("Debtor Account Tier", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountTier", "//DebtorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
                 new IsoFieldDef("Creditor Account Designation", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountDesignation", "//CreditorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Creditor ID Type", "SplmtryData.Envlp.CustomData.CreditorInfo.IdType", "//CreditorInfo/IdType", "BVN", "Enum", 7, true, false, "ID_TYPE", "ID Type"),
-                new IsoFieldDef("Creditor ID Value", "SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22112323460", "String", 12, true, false, "BVN", "11-digit BVN"),
+                new IsoFieldDef("Creditor ID Value", "SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22112323460", "String", 11, true, false, "BVN", "11-digit BVN"),
                 new IsoFieldDef("Creditor Account Tier", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
-                new IsoFieldDef("Transaction Location", "SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 25, true, false, null, "Transaction Location Coordinates"),
+                new IsoFieldDef("Transaction Location", "SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 30, true, false, null, "Transaction Location Coordinates"),
                 new IsoFieldDef("Name Enquiry Msg ID", "SplmtryData.Envlp.CustomData.TransactionInfo.NameEnquiryMsgId", "//TransactionInfo/NameEnquiryMsgId", "99905820250801205622930239203831720", "String", 35, true, false, "NPS_ID", "Name Enquiry Message ID"),
-                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "1", "Integer", 1, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
+                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "1", "Integer", 2, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
         );
 
         String sampleXml = """
@@ -313,8 +313,8 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "FIToFIPmtStsRpt.GrpHdr.MsgId", "//GrpHdr/MsgId", "09000420260402112316902158352242175", "String", 35, true, false, "NPS_ID", "Status Report Msg ID"),
                 new IsoFieldDef("Creation Date Time", "FIToFIPmtStsRpt.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-04-02T10:30:00.000+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
-                new IsoFieldDef("Instructing Agent Member ID", "FIToFIPmtStsRpt.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "090004", "String", 6, true, false, null, "Instructing agent ID"),
-                new IsoFieldDef("Instructed Agent Member ID", "FIToFIPmtStsRpt.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "100022", "String", 6, true, false, null, "Instructed agent ID"),
+                new IsoFieldDef("Instructing Agent Member ID", "FIToFIPmtStsRpt.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "090004", "String", 11, true, false, "MEMBER_ID", "Instructing agent ID"),
+                new IsoFieldDef("Instructed Agent Member ID", "FIToFIPmtStsRpt.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "100022", "String", 11, true, false, "MEMBER_ID", "Instructed agent ID"),
                 new IsoFieldDef("Original Message ID", "FIToFIPmtStsRpt.OrgnlGrpInfAndSts.OrgnlMsgId", "//OrgnlGrpInfAndSts/OrgnlMsgId", "10002220260402170095982371426577881", "String", 35, true, false, "NPS_ID", "Original message ID"),
                 new IsoFieldDef("Original Message Name ID", "FIToFIPmtStsRpt.OrgnlGrpInfAndSts.OrgnlMsgNmId", "//OrgnlGrpInfAndSts/OrgnlMsgNmId", "pacs.008.001.12", "String", 35, true, false, null, "Original message name"),
                 new IsoFieldDef("Original Creation Date Time", "FIToFIPmtStsRpt.OrgnlGrpInfAndSts.OrgnlCreDtTm", "//OrgnlGrpInfAndSts/OrgnlCreDtTm", "2026-03-27T16:30:35.072+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
@@ -323,8 +323,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Original Instruction ID", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlInstrId", "//TxInfAndSts/OrgnlInstrId", "10002299905720260331122123453011923", "String", 35, true, false, "NPS_ID", "Original instruction ID"),
                 new IsoFieldDef("Original End-to-End ID", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlEndToEndId", "//TxInfAndSts/OrgnlEndToEndId", "10002221234519115702293163242525113", "String", 35, true, false, "NPS_ID", "Original EndToEnd ID"),
                 new IsoFieldDef("Original Transaction ID", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlTxId", "//TxInfAndSts/OrgnlTxId", "10002220260331170095982371426577885", "String", 35, true, false, "NPS_ID", "Original Transaction ID"),
-                new IsoFieldDef("Tx Instructing Agent Member ID", "FIToFIPmtStsRpt.TxInfAndSts.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInfAndSts/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "090004", "String", 6, true, false, null, "Tx Instructing Agent Member ID"),
-                new IsoFieldDef("Tx Instructed Agent Member ID", "FIToFIPmtStsRpt.TxInfAndSts.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInfAndSts/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "100022", "String", 6, true, false, null, "Tx Instructed Agent Member ID"),
+                new IsoFieldDef("Tx Instructing Agent Member ID", "FIToFIPmtStsRpt.TxInfAndSts.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInfAndSts/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "090004", "String", 11, true, false, "MEMBER_ID", "Tx Instructing Agent Member ID"),
+                new IsoFieldDef("Tx Instructed Agent Member ID", "FIToFIPmtStsRpt.TxInfAndSts.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInfAndSts/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "100022", "String", 11, true, false, "MEMBER_ID", "Tx Instructed Agent Member ID"),
                 new IsoFieldDef("Original Transaction Settlement Date", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlTxRef.IntrBkSttlmDt", "//OrgnlTxRef/IntrBkSttlmDt", "2026-04-02Z", "Date", 10, true, false, "DATE", "Settlement date")
         );
 
@@ -387,14 +387,14 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "FIToFIPmtStsReq.GrpHdr.MsgId", "//GrpHdr/MsgId", "99999920250829174941709740087747292", "String", 35, true, false, "NPS_ID", "Status Request Message ID"),
                 new IsoFieldDef("Creation Date Time", "FIToFIPmtStsReq.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2025-08-18T09:05:46.973+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation date time"),
-                new IsoFieldDef("Instructing Agent Member ID", "FIToFIPmtStsReq.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Instructing Agent Member ID"),
+                new IsoFieldDef("Instructing Agent Member ID", "FIToFIPmtStsReq.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Instructing Agent Member ID"),
                 new IsoFieldDef("Original Message ID", "FIToFIPmtStsReq.OrgnlGrpInf.OrgnlMsgId", "//OrgnlGrpInf/OrgnlMsgId", "99905820250802112346977904433112345", "String", 35, true, false, "NPS_ID", "Original message ID"),
-                new IsoFieldDef("Original Message Name ID", "FIToFIPmtStsReq.OrgnlGrpInf.OrgnlMsgNmId", "//OrgnlGrpInf/OrgnlMsgNmId", "pacs.008.001.12", "String", 15, true, false, null, "Original message name"),
+                new IsoFieldDef("Original Message Name ID", "FIToFIPmtStsReq.OrgnlGrpInf.OrgnlMsgNmId", "//OrgnlGrpInf/OrgnlMsgNmId", "pacs.008.001.12", "String", 35, true, false, null, "Original message name"),
                 new IsoFieldDef("Original Creation Date Time", "FIToFIPmtStsReq.OrgnlGrpInf.OrgnlCreDtTm", "//OrgnlGrpInf/OrgnlCreDtTm", "2025-02-25T00:02:35.072+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
                 new IsoFieldDef("Status Request ID", "FIToFIPmtStsReq.TxInf.StsReqId", "//TxInf/StsReqId", "99999920250829174941709740087747292", "String", 35, true, false, "NPS_ID", "Status request ID"),
                 new IsoFieldDef("Original Transaction ID", "FIToFIPmtStsReq.TxInf.OrgnlTxId", "//TxInf/OrgnlTxId", "99905820250802112346977904433112345", "String", 35, true, false, "NPS_ID", "Original Transaction ID"),
-                new IsoFieldDef("Tx Instructing Agent Member ID", "FIToFIPmtStsReq.TxInf.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Tx Instructing Agent Member ID"),
-                new IsoFieldDef("Tx Instructed Agent Member ID", "FIToFIPmtStsReq.TxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 6, true, false, null, "Tx Instructed Agent Member ID"),
+                new IsoFieldDef("Tx Instructing Agent Member ID", "FIToFIPmtStsReq.TxInf.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Tx Instructing Agent Member ID"),
+                new IsoFieldDef("Tx Instructed Agent Member ID", "FIToFIPmtStsReq.TxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 11, true, false, "MEMBER_ID", "Tx Instructed Agent Member ID"),
                 new IsoFieldDef("Original Transaction Settlement Date", "FIToFIPmtStsReq.TxInf.OrgnlTxRef.IntrBkSttlmDt", "//OrgnlTxRef/IntrBkSttlmDt", "2025-02-25", "Date", 10, true, false, "DATE", "Settlement date")
         );
 
@@ -453,8 +453,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creation DateTime", "IdVrfctnReq.Assgnmt.CreDtTm", "//Assgnmt/CreDtTm", "2025-08-29T15:05:04.954+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp in UTC+1"),
                 new IsoFieldDef("Creator Name", "IdVrfctnReq.Assgnmt.Cretr.Pty.Nm", "//Cretr/Pty/Nm", "Crystal Bank", "String", 100, true, false, null, "Creator Name"),
                 new IsoFieldDef("Assigner Name", "IdVrfctnReq.Assgnmt.Assgnr.Pty.Nm", "//Assgnr/Pty/Nm", "Oso International Bank", "String", 100, true, false, null, "Assigner Name"),
-                new IsoFieldDef("Assigner Agent Member ID", "IdVrfctnReq.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgnr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999999", "String", 6, true, false, null, "Assigner Member ID"),
-                new IsoFieldDef("Assignee Agent Member ID", "IdVrfctnReq.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgne/Agt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 6, true, false, null, "Assignee Member ID"),
+                new IsoFieldDef("Assigner Agent Member ID", "IdVrfctnReq.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgnr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999999", "String", 11, true, false, "MEMBER_ID", "Assigner Member ID"),
+                new IsoFieldDef("Assignee Agent Member ID", "IdVrfctnReq.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgne/Agt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 11, true, false, "MEMBER_ID", "Assignee Member ID"),
                 new IsoFieldDef("Verification ID", "IdVrfctnReq.Vrfctn.Id", "//Vrfctn/Id", "99999920250829150504887742643314693", "String", 35, true, false, "NPS_ID", "Verification ID"),
                 new IsoFieldDef("Party Name (to be verified)", "IdVrfctnReq.Vrfctn.PtyAndAcctId.Pty.Nm", "//Vrfctn/PtyAndAcctId/Pty/Nm", "Israel Kayole", "String", 100, true, false, null, "Party Name"),
                 new IsoFieldDef("Account Number (IBAN)", "IdVrfctnReq.Vrfctn.PtyAndAcctId.Acct.Id.IBAN", "//Vrfctn/PtyAndAcctId/Acct/Id/IBAN", "1029384756", "String", 10, true, false, "NUBAN", "10-digit NUBAN")
@@ -507,19 +507,19 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "IdVrfctnRpt.Assgnmt.MsgId", "//Assgnmt/MsgId", "99901220250829140722546736145961156", "String", 35, true, false, "NPS_ID", "Report Message ID"),
                 new IsoFieldDef("Creation DateTime", "IdVrfctnRpt.Assgnmt.CreDtTm", "//Assgnmt/CreDtTm", "2025-08-29T14:07:22.357+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp in UTC+1"),
-                new IsoFieldDef("Assigner Agent Member ID", "IdVrfctnRpt.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgnr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 6, true, false, null, "Assigner Member ID"),
+                new IsoFieldDef("Assigner Agent Member ID", "IdVrfctnRpt.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgnr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 11, true, false, "MEMBER_ID", "Assigner Member ID"),
                 new IsoFieldDef("Assignee Party Name", "IdVrfctnRpt.Assgnmt.Assgne.Pty.Nm", "//Assgne/Pty/Nm", "Oso International Bank", "String", 100, true, false, null, "Assignee Party Name"),
-                new IsoFieldDef("Assignee Agent Member ID", "IdVrfctnRpt.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgne/Agt/FinInstnId/ClrSysMmbId/MmbId", "999999", "String", 6, true, false, null, "Assignee Member ID"),
+                new IsoFieldDef("Assignee Agent Member ID", "IdVrfctnRpt.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgne/Agt/FinInstnId/ClrSysMmbId/MmbId", "999999", "String", 11, true, false, "MEMBER_ID", "Assignee Member ID"),
                 new IsoFieldDef("Original Assignment Message ID", "IdVrfctnRpt.OrgnlAssgnmt.MsgId", "//OrgnlAssgnmt/MsgId", "99999920250829150504887742643314693", "String", 35, true, false, "NPS_ID", "Original request Msg ID"),
                 new IsoFieldDef("Original Assignment Creation DateTime", "IdVrfctnRpt.OrgnlAssgnmt.CreDtTm", "//OrgnlAssgnmt/CreDtTm", "2025-08-29T15:05:04.347+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
                 new IsoFieldDef("Report Original ID", "IdVrfctnRpt.Rpt.OrgnlId", "//Rpt/OrgnlId", "99999920250829150504887742643314693", "String", 35, true, false, "NPS_ID", "Original ID"),
                 new IsoFieldDef("Verification Result", "IdVrfctnRpt.Rpt.Vrfctn", "//Rpt/Vrfctn", "true", "Boolean", 5, true, false, null, "Verification result flag (true/false)"),
                 new IsoFieldDef("Original Account Number (IBAN)", "IdVrfctnRpt.Rpt.OrgnlPtyAndAcctId.Acct.Id.IBAN", "//OrgnlPtyAndAcctId/Acct/Id/IBAN", "1029384756", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Updated Party Name", "IdVrfctnRpt.Rpt.UpdtdPtyAndAcctId.Pty.Nm", "//UpdtdPtyAndAcctId/Pty/Nm", "Israel Kayole", "String", 100, true, false, null, "Verified Name"),
-                new IsoFieldDef("Supplementary Data Type", "IdVrfctnRpt.SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 100, true, false, null, "Supplementary descriptor"),
+                new IsoFieldDef("Supplementary Data Type", "IdVrfctnRpt.SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Creditor Account Designation", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.AccountDesignation", "//CreditorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Creditor ID Type", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.IdType", "//CreditorInfo/IdType", "BVN", "Enum", 7, true, false, "ID_TYPE", "ID Type"),
-                new IsoFieldDef("Creditor ID Value", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22112323460", "String", 12, true, false, "BVN", "11-digit BVN"),
+                new IsoFieldDef("Creditor ID Value", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22112323460", "String", 11, true, false, "BVN", "11-digit BVN"),
                 new IsoFieldDef("Creditor Account Tier", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)")
         );
 
@@ -556,16 +556,16 @@ public class IsoMessageRegistry {
                             <PlcAndNm>AdditionalVerificationDetails</PlcAndNm>
                             <Envlp>
                                 <CustomData>
-                                    <CreditorInfo>
-                                        <AccountDesignation>1</AccountDesignation>
-                                        <IdType>BVN</IdType>
-                                        <IdValue>22112323460</IdValue>
-                                        <AccountTier>1</AccountTier>
-                                    </CreditorInfo>
-                                    <TransactionInfo>
-                                        <RiskRating>R000000000000000000B9</RiskRating>
-                                    </TransactionInfo>
-                                </CustomData>
+                                     <CreditorInfo>
+                                         <AccountDesignation>1</AccountDesignation>
+                                         <IdType>BVN</IdType>
+                                         <IdValue>22112323460</IdValue>
+                                         <AccountTier>1</AccountTier>
+                                     </CreditorInfo>
+                                     <TransactionInfo>
+                                         <RiskRating>R000000000000000000B9</RiskRating>
+                                     </TransactionInfo>
+                                 </CustomData>
                             </Envlp>
                         </SplmtryData>
                     </IdVrfctnRpt>
@@ -603,25 +603,25 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creditor Name", "Mndt.Cdtr.Nm", "//Mndt/Cdtr/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "Mndt.CdtrAcct.Id.IBAN", "//Mndt/CdtrAcct/Id/IBAN", "3829837329", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "Mndt.CdtrAcct.Nm", "//Mndt/CdtrAcct/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor Account Name"),
-                new IsoFieldDef("Creditor Agent Member ID", "Mndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//Mndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Creditor Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "Mndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//Mndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Creditor Member ID"),
                 new IsoFieldDef("Debtor Name", "Mndt.Dbtr.Nm", "//Mndt/Dbtr/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "Mndt.DbtrAcct.Id.IBAN", "//Mndt/DbtrAcct/Id/IBAN", "3829736273", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "Mndt.DbtrAcct.Nm", "//Mndt/DbtrAcct/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "Mndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//Mndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Debtor Member ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "Mndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//Mndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Member ID"),
                 new IsoFieldDef("Supplementary Data Place & Name", "SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Debtor Account Designation", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountDesignation", "//DebtorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Debtor ID Type", "SplmtryData.Envlp.CustomData.DebtorInfo.IdType", "//DebtorInfo/IdType", "BVN", "Enum", 7, true, false, "ID_TYPE", "ID Type"),
-                new IsoFieldDef("Debtor ID Value", "SplmtryData.Envlp.CustomData.DebtorInfo.IdValue", "//DebtorInfo/IdValue", "22222222222", "String", 12, true, false, "BVN", "11-digit BVN"),
+                new IsoFieldDef("Debtor ID Value", "SplmtryData.Envlp.CustomData.DebtorInfo.IdValue", "//DebtorInfo/IdValue", "22222222222", "String", 11, true, false, "BVN", "11-digit BVN"),
                 new IsoFieldDef("Debtor Account Tier", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountTier", "//DebtorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
                 new IsoFieldDef("Debtor Address Line", "SplmtryData.Envlp.CustomData.DebtorMetadata.AdrLine", "//DebtorMetadata/AdrLine", "12 Adeola Ode Street, Victoria Island", "String", 100, true, false, null, "Debtor Address"),
                 new IsoFieldDef("Debtor Phone Number", "SplmtryData.Envlp.CustomData.DebtorMetadata.PhneNb", "//DebtorMetadata/PhneNb", "09038472264", "String", 15, true, false, null, "Debtor Phone"),
                 new IsoFieldDef("Debtor Email Address", "SplmtryData.Envlp.CustomData.DebtorMetadata.EmailAdr", "//DebtorMetadata/EmailAdr", "mt@nibss.com", "String", 100, true, false, null, "Debtor Email"),
                 new IsoFieldDef("Creditor Account Designation", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountDesignation", "//CreditorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Creditor ID Type", "SplmtryData.Envlp.CustomData.CreditorInfo.IdType", "//CreditorInfo/IdType", "BVN", "Enum", 7, true, false, "ID_TYPE", "ID Type"),
-                new IsoFieldDef("Creditor ID Value", "SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22222222222", "String", 12, true, false, "BVN", "11-digit BVN"),
+                new IsoFieldDef("Creditor ID Value", "SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22222222222", "String", 11, true, false, "BVN", "11-digit BVN"),
                 new IsoFieldDef("Creditor Account Tier", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
-                new IsoFieldDef("Transaction Location", "SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 25, true, false, null, "Location Coordinates"),
-                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "4", "Integer", 1, true, false, "CHANNEL_CODE", "Channel Code (1-11)"),
+                new IsoFieldDef("Transaction Location", "SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 30, true, false, null, "Location Coordinates"),
+                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "4", "Integer", 2, true, false, "CHANNEL_CODE", "Channel Code (1-11)"),
                 new IsoFieldDef("Mandate Category", "SplmtryData.Envlp.CustomData.TransactionInfo.MandateCategory", "//TransactionInfo/MandateCategory", "0", "Integer", 1, true, false, null, "Mandate Category"),
                 new IsoFieldDef("Fixed Collection Amount Indicator", "SplmtryData.Envlp.CustomData.TransactionInfo.FixedCollectionAmount", "//TransactionInfo/FixedCollectionAmount", "false", "Boolean", 5, true, false, null, "Fixed amount indicator")
         );
@@ -718,11 +718,11 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creditor Name", "UndrlygAmdmntDtls.Mndt.Cdtr.Nm", "//UndrlygAmdmntDtls/Mndt/Cdtr/Nm", "ABC Tech Pvt Ltd", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "UndrlygAmdmntDtls.Mndt.CdtrAcct.Id.IBAN", "//UndrlygAmdmntDtls/Mndt/CdtrAcct/Id/IBAN", "3232444422", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "UndrlygAmdmntDtls.Mndt.CdtrAcct.Nm", "//UndrlygAmdmntDtls/Mndt/CdtrAcct/Nm", "ABC Tech Pvt Ltd", "String", 100, true, false, null, "Creditor Account Name"),
-                new IsoFieldDef("Creditor Agent Member ID", "UndrlygAmdmntDtls.Mndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//UndrlygAmdmntDtls/Mndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Creditor Agent Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "UndrlygAmdmntDtls.Mndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//UndrlygAmdmntDtls/Mndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
                 new IsoFieldDef("Debtor Name", "UndrlygAmdmntDtls.Mndt.Dbtr.Nm", "//UndrlygAmdmntDtls/Mndt/Dbtr/Nm", "Mr. Fred", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "UndrlygAmdmntDtls.Mndt.DbtrAcct.Id.IBAN", "//UndrlygAmdmntDtls/Mndt/DbtrAcct/Id/IBAN", "4343211111", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "UndrlygAmdmntDtls.Mndt.DbtrAcct.Nm", "//UndrlygAmdmntDtls/Mndt/DbtrAcct/Nm", "Mr. Fred", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "UndrlygAmdmntDtls.Mndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//UndrlygAmdmntDtls/Mndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Debtor Agent Member ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "UndrlygAmdmntDtls.Mndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//UndrlygAmdmntDtls/Mndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Agent Member ID"),
                 new IsoFieldDef("Original Mandate ID", "UndrlygAmdmntDtls.OrgnlMndt.OrgnlMndtId", "//OrgnlMndt/OrgnlMndtId", "MNDT-RCUR-00001", "String", 35, true, false, null, "Original Mandate ID")
         );
 
@@ -854,14 +854,15 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Frequency Type", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.Frqcy.Tp", "//OrgnlMndt/Ocrncs/Frqcy/Tp", "WEEK", "Enum", 4, true, false, "FREQUENCY_TYPE", "Frequency Type"),
                 new IsoFieldDef("First Collection Date", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.FrstColltnDt", "//OrgnlMndt/Ocrncs/FrstColltnDt", "2025-09-08", "Date", 10, true, false, "DATE", "First collection date"),
                 new IsoFieldDef("Final Collection Date", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.FnlColltnDt", "//OrgnlMndt/Ocrncs/FnlColltnDt", "2025-12-31", "Date", 10, true, false, "DATE", "Final collection date"),
+                new IsoFieldDef("Tracking Indicator", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.TrckgInd", "//OrgnlMndt/TrckgInd", "false", "Boolean", 5, true, false, null, "Tracking indicator"),
                 new IsoFieldDef("Creditor Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Cdtr.Nm", "//OrgnlMndt/Cdtr/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAcct.Id.IBAN", "//OrgnlMndt/CdtrAcct/Id/IBAN", "5555544443", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAcct.Nm", "//OrgnlMndt/CdtrAcct/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor Account Name"),
-                new IsoFieldDef("Creditor Agent Member ID", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlMndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Creditor Agent Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlMndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
                 new IsoFieldDef("Debtor Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Dbtr.Nm", "//OrgnlMndt/Dbtr/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.DbtrAcct.Id.IBAN", "//OrgnlMndt/DbtrAcct/Id/IBAN", "8888899999", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.DbtrAcct.Nm", "//OrgnlMndt/DbtrAcct/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlMndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Debtor Agent Member ID")
+                new IsoFieldDef("Debtor Agent Member ID", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlMndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Agent Member ID")
         );
 
         String sampleXml = """
@@ -916,16 +917,17 @@ public class IsoMessageRegistry {
     }
 
     // ==========================================
+    // ==========================================
     // 10. pacs.003: Direct Debit Transfer
     // ==========================================
     private static void registerPacs003() {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "GrpHdr.MsgId", "//GrpHdr/MsgId", "99999820260127101256312032527582141", "String", 35, true, false, "NPS_ID", "Direct Debit Msg ID"),
                 new IsoFieldDef("Creation DateTime", "GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-01-27T10:12:56+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
-                new IsoFieldDef("Number of Transactions", "GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 1, true, false, null, "Nb of transactions"),
+                new IsoFieldDef("Number of Transactions", "GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 15, true, false, null, "Nb of transactions"),
                 new IsoFieldDef("Control Sum", "GrpHdr.CtrlSum", "//GrpHdr/CtrlSum", "1000.00", "Decimal", 18, true, false, "AMOUNT", "Control Sum"),
-                new IsoFieldDef("Instructing Agent Member ID", "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Instructing Agent Member ID"),
-                new IsoFieldDef("Instructed Agent Member ID", "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Instructed Agent Member ID"),
+                new IsoFieldDef("Instructing Agent Member ID", "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Instructing Agent Member ID"),
+                new IsoFieldDef("Instructed Agent Member ID", "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Instructed Agent Member ID"),
                 new IsoFieldDef("Instruction ID", "DrctDbtTxInf.PmtId.InstrId", "//DrctDbtTxInf/PmtId/InstrId", "99999899999920260127101256532309267", "String", 35, true, false, "NPS_ID", "Instruction ID"),
                 new IsoFieldDef("End-to-End ID", "DrctDbtTxInf.PmtId.EndToEndId", "//DrctDbtTxInf/PmtId/EndToEndId", "99999813263863598554981095085144921", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
                 new IsoFieldDef("Transaction ID", "DrctDbtTxInf.PmtId.TxId", "//DrctDbtTxInf/PmtId/TxId", "99999820260127101256312032527582141", "String", 35, true, false, "NPS_ID", "Transaction ID"),
@@ -937,18 +939,23 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creditor Name", "DrctDbtTxInf.Cdtr.Nm", "//DrctDbtTxInf/Cdtr/Nm", "KaYole", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account IBAN", "DrctDbtTxInf.CdtrAcct.Id.IBAN", "//DrctDbtTxInf/CdtrAcct/Id/IBAN", "2210664433", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "DrctDbtTxInf.CdtrAcct.Nm", "//DrctDbtTxInf/CdtrAcct/Nm", "KaYole", "String", 100, true, false, null, "Creditor Account Name"),
-                new IsoFieldDef("Creditor Agent Member ID", "DrctDbtTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Creditor Agent Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "DrctDbtTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
                 new IsoFieldDef("Debtor Name", "DrctDbtTxInf.Dbtr.Nm", "//DrctDbtTxInf/Dbtr/Nm", "Musa", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account IBAN", "DrctDbtTxInf.DbtrAcct.Id.IBAN", "//DrctDbtTxInf/DbtrAcct/Id/IBAN", "2110334983", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "DrctDbtTxInf.DbtrAcct.Nm", "//DrctDbtTxInf/DbtrAcct/Nm", "Musa", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "DrctDbtTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Debtor Agent Member ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "DrctDbtTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Debtor Agent Member ID"),
+                new IsoFieldDef("Place and Name", "SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Debtor Account Designation", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountDesignation", "//DebtorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Debtor ID Type", "SplmtryData.Envlp.CustomData.DebtorInfo.IdType", "//DebtorInfo/IdType", "BVN", "String", 7, true, false, "ID_TYPE", "ID Type"),
                 new IsoFieldDef("Debtor ID Value", "SplmtryData.Envlp.CustomData.DebtorInfo.IdValue", "//DebtorInfo/IdValue", "22222222222", "String", 11, true, false, "BVN", "11-digit BVN"),
+                new IsoFieldDef("Debtor Account Tier", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountTier", "//DebtorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
                 new IsoFieldDef("Creditor Account Designation", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountDesignation", "//CreditorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Creditor ID Type", "SplmtryData.Envlp.CustomData.CreditorInfo.IdType", "//CreditorInfo/IdType", "BVN", "String", 7, true, false, "ID_TYPE", "ID Type"),
                 new IsoFieldDef("Creditor ID Value", "SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22222222222", "String", 11, true, false, "BVN", "11-digit BVN"),
-                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "1", "String", 1, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
+                new IsoFieldDef("Creditor Account Tier", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
+                new IsoFieldDef("Transaction Location", "SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 30, true, false, null, "Location Coordinates"),
+                new IsoFieldDef("Name Enquiry Msg ID", "SplmtryData.Envlp.CustomData.TransactionInfo.NameEnquiryMsgId", "//TransactionInfo/NameEnquiryMsgId", "99999820260127101157171722205219993", "String", 35, true, false, "NPS_ID", "Name Enquiry Message ID"),
+                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "1", "String", 2, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
         );
 
         String sampleXml = """
@@ -1048,21 +1055,25 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Debtor Account IBAN", "PmtInf.DbtrAcct.Id.IBAN", "//PmtInf/DbtrAcct/Id/IBAN", "3293827192", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Currency", "PmtInf.DbtrAcct.Ccy", "//PmtInf/DbtrAcct/Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Debtor Account Name", "PmtInf.DbtrAcct.Nm", "//PmtInf/DbtrAcct/Nm", "Test Account", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Debtor Member ID"),
-                new IsoFieldDef("End-to-End ID", "PmtInf.CdtTrfTx.PmtId.EndToEndId", "//CdtTrfTx/PmtId/EndToEndId", "GSF035985837-E2E", "String", 35, true, false, null, "EndToEnd ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Member ID"),
+                new IsoFieldDef("End-to-End ID", "PmtInf.CdtTrfTx.PmtId.EndToEndId", "//CdtTrfTx/PmtId/EndToEndId", "GSF035985837-E2E", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
                 new IsoFieldDef("Instructed Amount", "PmtInf.CdtTrfTx.Amt.InstdAmt", "//CdtTrfTx/Amt/InstdAmt", "100.00", "Decimal", 18, true, false, "AMOUNT", "Instructed amount"),
                 new IsoFieldDef("Instructed Amount Currency", "PmtInf.CdtTrfTx.Amt.InstdAmt@Ccy", "//CdtTrfTx/Amt/InstdAmt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
-                new IsoFieldDef("Creditor Agent Member ID", "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTx/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Creditor Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTx/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Creditor Member ID"),
                 new IsoFieldDef("Creditor Name", "PmtInf.CdtTrfTx.Cdtr.Nm", "//CdtTrfTx/Cdtr/Nm", "Client Name", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account IBAN", "PmtInf.CdtTrfTx.CdtrAcct.Id.IBAN", "//CdtTrfTx/CdtrAcct/Id/IBAN", "1119384738", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "PmtInf.CdtTrfTx.CdtrAcct.Nm", "//CdtTrfTx/CdtrAcct/Nm", "Client Name", "String", 100, true, false, null, "Creditor Account Name"),
+                new IsoFieldDef("Place and Name", "SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Debtor Account Designation", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountDesignation", "//DebtorInfo/AccountDesignation", "1", "Numeric", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Debtor ID Type", "SplmtryData.Envlp.CustomData.DebtorInfo.IdType", "//DebtorInfo/IdType", "BVN", "String", 7, true, false, "ID_TYPE", "ID Type"),
                 new IsoFieldDef("Debtor ID Value", "SplmtryData.Envlp.CustomData.DebtorInfo.IdValue", "//DebtorInfo/IdValue", "22222222222", "String", 11, true, false, "BVN", "11-digit BVN"),
+                new IsoFieldDef("Debtor Account Tier", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountTier", "//DebtorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
                 new IsoFieldDef("Creditor Account Designation", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountDesignation", "//CreditorInfo/AccountDesignation", "1", "Numeric", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Creditor ID Type", "SplmtryData.Envlp.CustomData.CreditorInfo.IdType", "//CreditorInfo/IdType", "BVN", "String", 7, true, false, "ID_TYPE", "ID Type"),
                 new IsoFieldDef("Creditor ID Value", "SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22222222222", "String", 11, true, false, "BVN", "11-digit BVN"),
-                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "4", "String", 1, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
+                new IsoFieldDef("Creditor Account Tier", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
+                new IsoFieldDef("Transaction Location", "SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 30, true, false, null, "Location Coordinates"),
+                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "4", "String", 2, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
         );
 
         String sampleXml = """
@@ -1152,8 +1163,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Debtor Name", "GrpHdr.Dbtr.Nm", "//GrpHdr/Dbtr/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account IBAN", "GrpHdr.DbtrAcct.Id.IBAN", "//GrpHdr/DbtrAcct/Id/IBAN", "8888899999", "String", 10, true, false, "NUBAN", "10-digit Debtor NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "GrpHdr.DbtrAcct.Nm", "//GrpHdr/DbtrAcct/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Debtor Agent Member ID"),
-                new IsoFieldDef("Creditor Agent Member ID", "GrpHdr.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Creditor Agent Member ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Debtor Agent Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "GrpHdr.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
                 new IsoFieldDef("Original Message ID", "OrgnlGrpInfAndSts.OrgnlMsgId", "//OrgnlGrpInfAndSts/OrgnlMsgId", "99905820260105102349998878725905163", "String", 35, true, false, "NPS_ID", "Original pain.013 Msg ID"),
                 new IsoFieldDef("Original Message Name ID", "OrgnlGrpInfAndSts.OrgnlMsgNmId", "//OrgnlGrpInfAndSts/OrgnlMsgNmId", "pain.013.001.11", "String", 35, true, false, null, "Original Message Name ID"),
                 new IsoFieldDef("Original Creation Date Time", "OrgnlGrpInfAndSts.OrgnlCreDtTm", "//OrgnlGrpInfAndSts/OrgnlCreDtTm", "2026-01-05T10:27:26.737+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original Creation DateTime"),
@@ -1215,7 +1226,7 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "AcctRptgReq.GrpHdr.MsgId", "//GrpHdr/MsgId", "99905720260302123735603795909182287", "String", 35, true, false, "NPS_ID", "Message ID"),
                 new IsoFieldDef("Creation DateTime", "AcctRptgReq.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-03-02T12:37:35.352+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp in UTC+1"),
-                new IsoFieldDef("Sender Agent Member ID", "AcctRptgReq.GrpHdr.MsgSndr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//MsgSndr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Sender Member ID"),
+                new IsoFieldDef("Sender Agent Member ID", "AcctRptgReq.GrpHdr.MsgSndr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//MsgSndr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Sender Member ID"),
                 new IsoFieldDef("Reporting Request ID", "AcctRptgReq.RptgReq.Id", "//RptgReq/Id", "99905720260302123735603795909182287", "String", 35, true, false, "NPS_ID", "Reporting Request ID"),
                 new IsoFieldDef("Requested Message Name ID", "AcctRptgReq.RptgReq.ReqdMsgNmId", "//RptgReq/ReqdMsgNmId", "camt.052.001.08", "String", 35, true, false, null, "Requested Message Type"),
                 new IsoFieldDef("Account Number (IBAN)", "AcctRptgReq.RptgReq.Acct.Id.IBAN", "//RptgReq/Acct/Id/IBAN", "4488447166", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
@@ -1225,10 +1236,10 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Supplementary Place & Name", "AcctRptgReq.SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Creditor Account Designation", "AcctRptgReq.SplmtryData.Envlp.CustomData.CreditorInfo.AccountDesignation", "//CreditorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Creditor ID Type", "AcctRptgReq.SplmtryData.Envlp.CustomData.CreditorInfo.IdType", "//CreditorInfo/IdType", "BVN", "Enum", 7, true, false, "ID_TYPE", "ID Type"),
-                new IsoFieldDef("Creditor ID Value", "AcctRptgReq.SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22112323460", "String", 12, true, false, "BVN", "11-digit BVN"),
+                new IsoFieldDef("Creditor ID Value", "AcctRptgReq.SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22112323460", "String", 11, true, false, "BVN", "11-digit BVN"),
                 new IsoFieldDef("Creditor Account Tier", "AcctRptgReq.SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
-                new IsoFieldDef("Transaction Location", "AcctRptgReq.SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 25, true, false, null, "Location Coordinates"),
-                new IsoFieldDef("Channel Code", "AcctRptgReq.SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "1", "Integer", 1, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
+                new IsoFieldDef("Transaction Location", "AcctRptgReq.SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 30, true, false, null, "Location Coordinates"),
+                new IsoFieldDef("Channel Code", "AcctRptgReq.SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "1", "Integer", 2, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
         );
 
         String sampleXml = """
@@ -1294,8 +1305,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("To DateTime", "BkToCstmrAcctRpt.Rpt.FrToDt.ToDtTm", "//Rpt/FrToDt/ToDtTm", "2026-02-24T09:03:07.000+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Report To DateTime"),
                 new IsoFieldDef("Account Number (IBAN)", "BkToCstmrAcctRpt.Rpt.Acct.Id.IBAN", "//Rpt/Acct/Id/IBAN", "4488447166", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Account Currency", "BkToCstmrAcctRpt.Rpt.Acct.Ccy", "//Rpt/Acct/Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
-                new IsoFieldDef("Account Servicer Member ID", "BkToCstmrAcctRpt.Rpt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId", "//Rpt/Acct/Svcr/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Servicer Member ID"),
-                new IsoFieldDef("Balance Type", "BkToCstmrAcctRpt.Rpt.Bal.Tp.CdOrPrtry.Prtry", "//Rpt/Bal/Tp/CdOrPrtry/Prtry", "CLRG", "String", 4, true, false, null, "Balance Type"),
+                new IsoFieldDef("Account Servicer Member ID", "BkToCstmrAcctRpt.Rpt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId", "//Rpt/Acct/Svcr/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Servicer Member ID"),
+                new IsoFieldDef("Balance Type", "BkToCstmrAcctRpt.Rpt.Bal.Tp.CdOrPrtry.Prtry", "//Rpt/Bal/Tp/CdOrPrtry/Prtry", "CLRG", "String", 35, true, false, null, "Balance Type"),
                 new IsoFieldDef("Balance Amount", "BkToCstmrAcctRpt.Rpt.Bal.Amt", "//Rpt/Bal/Amt", "500000.00", "Decimal", 18, true, false, "AMOUNT", "Balance amount"),
                 new IsoFieldDef("Balance Currency", "BkToCstmrAcctRpt.Rpt.Bal.Amt@Ccy", "//Rpt/Bal/Amt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Credit/Debit Indicator", "BkToCstmrAcctRpt.Rpt.Bal.CdtDbtInd", "//Rpt/Bal/CdtDbtInd", "CRDT", "Enum", 4, true, false, "CREDIT_DEBIT", "Credit/Debit (CRDT/DBIT)"),
@@ -1303,7 +1314,7 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Entry Amount", "BkToCstmrAcctRpt.Rpt.Ntry.Amt", "//Rpt/Ntry/Amt", "30000.00", "Decimal", 18, true, false, "AMOUNT", "Entry amount"),
                 new IsoFieldDef("Entry Currency", "BkToCstmrAcctRpt.Rpt.Ntry.Amt@Ccy", "//Rpt/Ntry/Amt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Entry currency code"),
                 new IsoFieldDef("Entry Credit/Debit Indicator", "BkToCstmrAcctRpt.Rpt.Ntry.CdtDbtInd", "//Rpt/Ntry/CdtDbtInd", "CRDT", "Enum", 4, true, false, "CREDIT_DEBIT", "Entry Credit/Debit"),
-                new IsoFieldDef("Entry Status", "BkToCstmrAcctRpt.Rpt.Ntry.Sts.Prtry", "//Rpt/Ntry/Sts/Prtry", "BOOK", "String", 4, true, false, null, "Entry status"),
+                new IsoFieldDef("Entry Status", "BkToCstmrAcctRpt.Rpt.Ntry.Sts.Prtry", "//Rpt/Ntry/Sts/Prtry", "BOOK", "String", 35, true, false, null, "Entry status"),
                 new IsoFieldDef("Booking Date", "BkToCstmrAcctRpt.Rpt.Ntry.BookgDt.Dt", "//Rpt/Ntry/BookgDt/Dt", "2026-03-02Z", "Date", 10, true, false, "DATE", "Booking date"),
                 new IsoFieldDef("Value Date", "BkToCstmrAcctRpt.Rpt.Ntry.ValDt.Dt", "//Rpt/Ntry/ValDt/Dt", "2026-03-02Z", "Date", 10, true, false, "DATE", "Value date")
         );
@@ -1370,7 +1381,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("To DateTime", "BkToCstmrStmt.Stmt.FrToDt.ToDtTm", "//Stmt/FrToDt/ToDtTm", "2026-02-27T05:59:59.000+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Statement To DateTime"),
                 new IsoFieldDef("Account Number (IBAN)", "BkToCstmrStmt.Stmt.Acct.Id.IBAN", "//Stmt/Acct/Id/IBAN", "8887788778", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Account Currency", "BkToCstmrStmt.Stmt.Acct.Ccy", "//Stmt/Acct/Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
-                new IsoFieldDef("Account Servicer Member ID", "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId", "//Stmt/Acct/Svcr/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Servicer Member ID"),
+                new IsoFieldDef("Account Servicer Member ID", "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId", "//Stmt/Acct/Svcr/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Servicer Member ID"),
+                new IsoFieldDef("Balance Type", "BkToCstmrStmt.Stmt.Bal.Tp.CdOrPrtry.Prtry", "//Stmt/Bal/Tp/CdOrPrtry/Prtry", "CLRG", "String", 35, true, false, null, "Balance Type"),
                 new IsoFieldDef("Opening Balance Amount", "BkToCstmrStmt.Stmt.Bal.Amt", "//Stmt/Bal/Amt", "482000.00", "Decimal", 18, true, false, "AMOUNT", "Balance amount"),
                 new IsoFieldDef("Balance Currency", "BkToCstmrStmt.Stmt.Bal.Amt@Ccy", "//Stmt/Bal/Amt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Balance currency code"),
                 new IsoFieldDef("Balance Credit/Debit Indicator", "BkToCstmrStmt.Stmt.Bal.CdtDbtInd", "//Stmt/Bal/CdtDbtInd", "CRDT", "Enum", 4, true, false, "CREDIT_DEBIT", "Credit/Debit (CRDT/DBIT)"),
@@ -1434,23 +1446,23 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "CstmrCdtTrfInitn.GrpHdr.MsgId", "//GrpHdr/MsgId", "99905720260225144722037299534778744", "String", 35, true, false, "NPS_ID", "Message ID"),
                 new IsoFieldDef("Creation DateTime", "CstmrCdtTrfInitn.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-02-25T14:47:22.637+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
-                new IsoFieldDef("Number of Transactions (Group)", "CstmrCdtTrfInitn.GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 1, true, false, null, "Number of transactions"),
+                new IsoFieldDef("Number of Transactions (Group)", "CstmrCdtTrfInitn.GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 15, true, false, null, "Number of transactions"),
                 new IsoFieldDef("Control Sum (Group)", "CstmrCdtTrfInitn.GrpHdr.CtrlSum", "//GrpHdr/CtrlSum", "120.51", "Decimal", 18, true, false, "AMOUNT", "Control Sum"),
                 new IsoFieldDef("Initiating Party Name", "CstmrCdtTrfInitn.GrpHdr.InitgPty.Nm", "//GrpHdr/InitgPty/Nm", "Musa", "String", 100, true, false, null, "Initiator Name"),
                 new IsoFieldDef("Payment Information ID", "CstmrCdtTrfInitn.PmtInf.PmtInfId", "//PmtInf/PmtInfId", "PMT-20251016-001-SINGLE", "String", 35, true, false, null, "PmtInf ID"),
                 new IsoFieldDef("Payment Method", "CstmrCdtTrfInitn.PmtInf.PmtMtd", "//PmtInf/PmtMtd", "TRF", "String", 3, true, false, null, "Payment Method (TRF)"),
                 new IsoFieldDef("Batch Booking", "CstmrCdtTrfInitn.PmtInf.BtchBookg", "//PmtInf/BtchBookg", "false", "Boolean", 5, true, false, null, "Batch booking flag"),
-                new IsoFieldDef("Payment Number of Transactions", "CstmrCdtTrfInitn.PmtInf.NbOfTxs", "//PmtInf/NbOfTxs", "1", "Numeric", 1, true, false, null, "Transactions in payment"),
+                new IsoFieldDef("Payment Number of Transactions", "CstmrCdtTrfInitn.PmtInf.NbOfTxs", "//PmtInf/NbOfTxs", "1", "Numeric", 15, true, false, null, "Transactions in payment"),
                 new IsoFieldDef("Payment Control Sum", "CstmrCdtTrfInitn.PmtInf.CtrlSum", "//PmtInf/CtrlSum", "120.51", "Decimal", 18, true, false, "AMOUNT", "Payment Control Sum"),
                 new IsoFieldDef("Required Execution Date", "CstmrCdtTrfInitn.PmtInf.ReqdExctnDt.Dt", "//PmtInf/ReqdExctnDt/Dt", "2026-02-17Z", "Date", 10, true, false, "DATE", "Execution Date"),
                 new IsoFieldDef("Debtor Name", "CstmrCdtTrfInitn.PmtInf.Dbtr.Nm", "//PmtInf/Dbtr/Nm", "Musa", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "CstmrCdtTrfInitn.PmtInf.DbtrAcct.Id.IBAN", "//PmtInf/DbtrAcct/Id/IBAN", "0177136558", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "CstmrCdtTrfInitn.PmtInf.DbtrAcct.Nm", "//PmtInf/DbtrAcct/Nm", "Musa", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "CstmrCdtTrfInitn.PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Debtor Member ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "CstmrCdtTrfInitn.PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Member ID"),
                 new IsoFieldDef("End-to-End ID", "CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.PmtId.EndToEndId", "//CdtTrfTxInf/PmtId/EndToEndId", "99905746102951471838787625821100514", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
                 new IsoFieldDef("Instructed Amount", "CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.Amt.InstdAmt", "//CdtTrfTxInf/Amt/InstdAmt", "120.51", "Decimal", 18, true, false, "AMOUNT", "Instructed amount"),
                 new IsoFieldDef("Instructed Amount Currency", "CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.Amt.InstdAmt.@Ccy", "//CdtTrfTxInf/Amt/InstdAmt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
-                new IsoFieldDef("Creditor Agent Member ID", "CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTxInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Creditor Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTxInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Creditor Member ID"),
                 new IsoFieldDef("Creditor Name", "CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.Cdtr.Nm", "//CdtTrfTxInf/Cdtr/Nm", "James", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.CdtrAcct.Id.IBAN", "//CdtTrfTxInf/CdtrAcct/Id/IBAN", "3157417712", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "CstmrCdtTrfInitn.PmtInf.CdtTrfTxInf.CdtrAcct.Nm", "//CdtTrfTxInf/CdtrAcct/Nm", "James", "String", 100, true, false, null, "Creditor Account Name"),
@@ -1460,8 +1472,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creditor ID Type", "CstmrCdtTrfInitn.SplmtryData.Envlp.CustomData.CreditorInfo.IdType", "//CreditorInfo/IdType", "BVN", "String", 7, true, false, "ID_TYPE", "ID Type"),
                 new IsoFieldDef("Creditor ID Value", "CstmrCdtTrfInitn.SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22298546518", "String", 11, true, false, "BVN", "11-digit BVN"),
                 new IsoFieldDef("Creditor Account Tier", "CstmrCdtTrfInitn.SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
-                new IsoFieldDef("Transaction Location", "CstmrCdtTrfInitn.SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "013223231333", "String", 25, true, false, null, "Location Coordinates"),
-                new IsoFieldDef("Channel Code", "CstmrCdtTrfInitn.SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "2", "String", 1, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
+                new IsoFieldDef("Transaction Location", "CstmrCdtTrfInitn.SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "013223231333", "String", 30, true, false, null, "Location Coordinates"),
+                new IsoFieldDef("Channel Code", "CstmrCdtTrfInitn.SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "2", "String", 2, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
         );
 
         String sampleXml = """
@@ -1541,6 +1553,7 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Message ID", "CstmrPmtStsRpt.GrpHdr.MsgId", "//GrpHdr/MsgId", "99999920260225192657029842136833211", "String", 35, true, false, "NPS_ID", "Status Report Msg ID"),
                 new IsoFieldDef("Creation DateTime", "CstmrPmtStsRpt.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-02-25T18:26:57.390+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
                 new IsoFieldDef("Initiating Party Name", "CstmrPmtStsRpt.GrpHdr.InitgPty.Nm", "//GrpHdr/InitgPty/Nm", "Musa", "String", 100, true, false, null, "Initiator Name"),
+                new IsoFieldDef("Debtor Agent Member ID", "CstmrPmtStsRpt.GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Member ID"),
                 new IsoFieldDef("Original Message ID", "CstmrPmtStsRpt.OrgnlGrpInfAndSts.OrgnlMsgId", "//OrgnlGrpInfAndSts/OrgnlMsgId", "99905720260225192650869851166984847", "String", 35, true, false, "NPS_ID", "Original pain.001 Msg ID"),
                 new IsoFieldDef("Original Message Name ID", "CstmrPmtStsRpt.OrgnlGrpInfAndSts.OrgnlMsgNmId", "//OrgnlGrpInfAndSts/OrgnlMsgNmId", "pain.001.001.12", "String", 35, true, false, null, "Original Message Name ID"),
                 new IsoFieldDef("Group Status", "CstmrPmtStsRpt.OrgnlGrpInfAndSts.GrpSts", "//OrgnlGrpInfAndSts/GrpSts", "ACSC", "String", 4, true, false, "GROUP_STATUS", "Group status code"),
@@ -1601,17 +1614,18 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "CstmrDrctDbtInitn.GrpHdr.MsgId", "//GrpHdr/MsgId", "99905720260312195134657916589823152", "String", 35, true, false, "NPS_ID", "Message ID"),
                 new IsoFieldDef("Creation DateTime", "CstmrDrctDbtInitn.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-03-12T19:51:35.192+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
-                new IsoFieldDef("Number of Transactions (Group)", "CstmrDrctDbtInitn.GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 1, true, false, null, "Nb of transactions"),
+                new IsoFieldDef("Number of Transactions (Group)", "CstmrDrctDbtInitn.GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 15, true, false, null, "Nb of transactions"),
                 new IsoFieldDef("Control Sum (Group)", "CstmrDrctDbtInitn.GrpHdr.CtrlSum", "//GrpHdr/CtrlSum", "100.00", "Decimal", 18, true, false, "AMOUNT", "Control Sum"),
                 new IsoFieldDef("Initiating Party Name", "CstmrDrctDbtInitn.GrpHdr.InitgPty.Nm", "//GrpHdr/InitgPty/Nm", "ACME BILLING LIMITED", "String", 100, true, false, null, "Initiator Name"),
                 new IsoFieldDef("Payment Information ID", "CstmrDrctDbtInitn.PmtInf.PmtInfId", "//PmtInf/PmtInfId", "026-071-67895-001-00022", "String", 35, true, false, null, "PmtInf ID"),
                 new IsoFieldDef("Payment Method", "CstmrDrctDbtInitn.PmtInf.PmtMtd", "//PmtInf/PmtMtd", "DD", "String", 2, true, false, null, "Payment Method (DD)"),
                 new IsoFieldDef("Sequence Type", "CstmrDrctDbtInitn.PmtInf.PmtTpInf.SeqTp", "//PmtInf/PmtTpInf/SeqTp", "FRST", "String", 4, true, false, "SEQUENCE_TYPE", "Sequence Type"),
+                new IsoFieldDef("Payment Number of Transactions", "CstmrDrctDbtInitn.PmtInf.NbOfTxs", "//PmtInf/NbOfTxs", "1", "Numeric", 15, true, false, null, "Nb of transactions"),
                 new IsoFieldDef("Required Collection Date", "CstmrDrctDbtInitn.PmtInf.ReqdColltnDt", "//PmtInf/ReqdColltnDt", "2025-02-16Z", "Date", 10, true, false, "DATE", "Collection date"),
                 new IsoFieldDef("Creditor Name", "CstmrDrctDbtInitn.PmtInf.Cdtr.Nm", "//PmtInf/Cdtr/Nm", "ACME BILLING LIMITED", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "CstmrDrctDbtInitn.PmtInf.CdtrAcct.Id.IBAN", "//PmtInf/CdtrAcct/Id/IBAN", "3157417712", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Currency", "CstmrDrctDbtInitn.PmtInf.CdtrAcct.Ccy", "//PmtInf/CdtrAcct/Ccy", "NGN", "String", 3, true, false, "CURRENCY", "Currency code"),
-                new IsoFieldDef("Creditor Agent Member ID", "CstmrDrctDbtInitn.PmtInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Creditor Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "CstmrDrctDbtInitn.PmtInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Creditor Member ID"),
                 new IsoFieldDef("Instruction ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.PmtId.InstrId", "//DrctDbtTxInf/PmtId/InstrId", "DD-INSTR-0001", "String", 35, true, false, "NPS_ID", "Instruction ID"),
                 new IsoFieldDef("End-to-End ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.PmtId.EndToEndId", "//DrctDbtTxInf/PmtId/EndToEndId", "DD-E2E-0001", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
                 new IsoFieldDef("Instructed Amount", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.InstdAmt", "//DrctDbtTxInf/InstdAmt", "100.00", "Decimal", 18, true, false, "AMOUNT", "Instructed amount"),
@@ -1621,7 +1635,7 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("First Collection Date", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.DrctDbtTx.MndtRltdInf.FrstColltnDt", "//MndtRltdInf/FrstColltnDt", "2025-02-16Z", "Date", 10, true, false, "DATE", "First collection date"),
                 new IsoFieldDef("Final Collection Date", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.DrctDbtTx.MndtRltdInf.FnlColltnDt", "//MndtRltdInf/FnlColltnDt", "2025-12-31Z", "Date", 10, true, false, "DATE", "Final collection date"),
                 new IsoFieldDef("Frequency Type", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.DrctDbtTx.MndtRltdInf.Frqcy.Tp", "//MndtRltdInf/Frqcy/Tp", "MNTH", "Enum", 4, true, false, "FREQUENCY_TYPE", "Frequency Type"),
-                new IsoFieldDef("Debtor Agent Member ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Debtor Member ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Member ID"),
                 new IsoFieldDef("Debtor Name", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.Dbtr.Nm", "//DrctDbtTxInf/Dbtr/Nm", "JOHN DOE", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.DbtrAcct.Id.IBAN", "//DrctDbtTxInf/DbtrAcct/Id/IBAN", "0177136558", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Currency", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.DbtrAcct.Ccy", "//DrctDbtTxInf/DbtrAcct/Ccy", "NGN", "String", 3, true, false, "CURRENCY", "Currency code"),
@@ -1691,8 +1705,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Message ID", "PmtRtr.GrpHdr.MsgId", "//GrpHdr/MsgId", "99905720260512232654907247853431392", "String", 35, true, false, "NPS_ID", "Return Msg ID"),
                 new IsoFieldDef("Creation DateTime", "PmtRtr.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-05-12T22:26:54.944+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp in UTC+1"),
                 new IsoFieldDef("Settlement Method", "PmtRtr.GrpHdr.SttlmInf.SttlmMtd", "//GrpHdr/SttlmInf/SttlmMtd", "CLRG", "String", 4, true, false, "SETTLEMENT_METHOD", "Settlement Method"),
-                new IsoFieldDef("Instructing Agent Member ID", "PmtRtr.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Instructing Member ID"),
-                new IsoFieldDef("Instructed Agent Member ID", "PmtRtr.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999998", "String", 6, true, false, null, "Instructed Member ID"),
+                new IsoFieldDef("Instructing Agent Member ID", "PmtRtr.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Instructing Member ID"),
+                new IsoFieldDef("Instructed Agent Member ID", "PmtRtr.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999998", "String", 11, true, false, "MEMBER_ID", "Instructed Member ID"),
                 new IsoFieldDef("Original Message ID", "PmtRtr.OrgnlGrpInf.OrgnlMsgId", "//OrgnlGrpInf/OrgnlMsgId", "99999820260512232125820145868685089", "String", 35, true, false, "NPS_ID", "Original message ID"),
                 new IsoFieldDef("Original Message Name", "PmtRtr.OrgnlGrpInf.OrgnlMsgNmId", "//OrgnlGrpInf/OrgnlMsgNmId", "pacs.008.001.12", "String", 35, true, false, null, "Original message name"),
                 new IsoFieldDef("Original Creation DateTime", "PmtRtr.OrgnlGrpInf.OrgnlCreDtTm", "//OrgnlGrpInf/OrgnlCreDtTm", "2026-05-12T22:21:25.719+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
@@ -1704,14 +1718,14 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Returned Amount Currency", "PmtRtr.TxInf.RtrdIntrBkSttlmAmt.@Ccy", "//TxInf/RtrdIntrBkSttlmAmt/@Ccy", "NGN", "String", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Interbank Settlement Date (Return)", "PmtRtr.TxInf.IntrBkSttlmDt", "//TxInf/IntrBkSttlmDt", "2026-05-12Z", "Date", 10, true, false, "DATE", "Return settlement date"),
                 new IsoFieldDef("Charge Bearer", "PmtRtr.TxInf.ChrgBr", "//TxInf/ChrgBr", "SLEV", "String", 4, true, false, null, "Charge bearer (SLEV)"),
-                new IsoFieldDef("Tx Instructing Agent Member ID", "PmtRtr.TxInf.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Tx Instructing Member ID"),
-                new IsoFieldDef("Tx Instructed Agent Member ID", "PmtRtr.TxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999998", "String", 6, true, false, null, "Tx Instructed Member ID"),
-                new IsoFieldDef("Return Reason Code", "PmtRtr.TxInf.RtrRsnInf.Rsn.Prtry", "//RtrRsnInf/Rsn/Prtry", "AC04", "String", 4, true, false, "REASON_CODE", "Return Reason Code"),
+                new IsoFieldDef("Tx Instructing Agent Member ID", "PmtRtr.TxInf.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Tx Instructing Member ID"),
+                new IsoFieldDef("Tx Instructed Agent Member ID", "PmtRtr.TxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999998", "String", 11, true, false, "MEMBER_ID", "Tx Instructed Member ID"),
+                new IsoFieldDef("Return Reason Code", "PmtRtr.TxInf.RtrRsnInf.Rsn.Prtry", "//RtrRsnInf/Rsn/Prtry", "AC04", "String", 35, true, false, "REASON_CODE", "Return Reason Code"),
                 new IsoFieldDef("Debtor Name", "PmtRtr.TxInf.OrgnlTxRef.Dbtr.Pty.Nm", "//OrgnlTxRef/Dbtr/Pty/Nm", "KaYole", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "PmtRtr.TxInf.OrgnlTxRef.DbtrAcct.Id.IBAN", "//OrgnlTxRef/DbtrAcct/Id/IBAN", "0177136558", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "PmtRtr.TxInf.OrgnlTxRef.DbtrAcct.Nm", "//OrgnlTxRef/DbtrAcct/Nm", "KaYole", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "PmtRtr.TxInf.OrgnlTxRef.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlTxRef/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999998", "String", 6, true, false, null, "Debtor Member ID"),
-                new IsoFieldDef("Creditor Agent Member ID", "PmtRtr.TxInf.OrgnlTxRef.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlTxRef/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, null, "Creditor Member ID"),
+                new IsoFieldDef("Debtor Agent Member ID", "PmtRtr.TxInf.OrgnlTxRef.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlTxRef/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999998", "String", 11, true, false, "MEMBER_ID", "Debtor Member ID"),
+                new IsoFieldDef("Creditor Agent Member ID", "PmtRtr.TxInf.OrgnlTxRef.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlTxRef/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Creditor Member ID"),
                 new IsoFieldDef("Creditor Name", "PmtRtr.TxInf.OrgnlTxRef.Cdtr.Pty.Nm", "//OrgnlTxRef/Cdtr/Pty/Nm", "Oge Best", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "PmtRtr.TxInf.OrgnlTxRef.CdtrAcct.Id.IBAN", "//OrgnlTxRef/CdtrAcct/Id/IBAN", "2222222221", "String", 10, true, false, "NUBAN", "10-digit NUBAN")
         );
