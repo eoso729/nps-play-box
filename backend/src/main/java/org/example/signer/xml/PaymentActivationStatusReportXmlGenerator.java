@@ -61,18 +61,18 @@ public class PaymentActivationStatusReportXmlGenerator {
 
         // --- Original Group Info & Status ---
         PaymentActivationStatusReport.OrgnlGrpInfAndSts orgnlGrpInf = new PaymentActivationStatusReport.OrgnlGrpInfAndSts();
-        orgnlGrpInf.setOrgnlMsgId(requestDto.getOriginalMsgId() != null ? requestDto.getOriginalMsgId() : "99905820260105102349998878725905163");
+        orgnlGrpInf.setOrgnlMsgId(requestDto.getOriginalMsgId() != null ? requestDto.getOriginalMsgId() : "99999820260129214037117325354651516");
         orgnlGrpInf.setOrgnlMsgNmId(requestDto.getOriginalMsgNmId() != null ? requestDto.getOriginalMsgNmId() : "pain.013.001.11");
-        orgnlGrpInf.setOrgnlCreDtTm(requestDto.getOriginalCreDtTm() != null ? requestDto.getOriginalCreDtTm() : "2026-01-05T10:27:26.737+01:00");
+        orgnlGrpInf.setOrgnlCreDtTm(requestDto.getOriginalCreDtTm() != null ? requestDto.getOriginalCreDtTm() : "2026-01-29T21:40:37.000Z");
         orgnlGrpInf.setGrpSts(requestDto.getGroupStatus() != null ? requestDto.getGroupStatus() : "ACCP");
         rpt.setOrgnlGrpInfAndSts(orgnlGrpInf);
 
         // --- Original Payment Info & Status ---
         PaymentActivationStatusReport.OrgnlPmtInfAndSts orgnlPmtInf = new PaymentActivationStatusReport.OrgnlPmtInfAndSts();
-        orgnlPmtInf.setOrgnlPmtInfId(requestDto.getOriginalPmtInfId() != null ? requestDto.getOriginalPmtInfId() : "GSFPMTINF035985837");
+        orgnlPmtInf.setOrgnlPmtInfId(requestDto.getOriginalPmtInfId() != null ? requestDto.getOriginalPmtInfId() : orgnlGrpInf.getOrgnlMsgId());
         
         PaymentActivationStatusReport.TxInfAndSts txInf = new PaymentActivationStatusReport.TxInfAndSts();
-        txInf.setOrgnlEndToEndId(requestDto.getOriginalEndToEndId() != null ? requestDto.getOriginalEndToEndId() : "GSF035985837-E2E");
+        txInf.setOrgnlEndToEndId(requestDto.getOriginalEndToEndId() != null ? requestDto.getOriginalEndToEndId() : orgnlGrpInf.getOrgnlMsgId());
         txInf.setTxSts(requestDto.getTransactionStatus() != null ? requestDto.getTransactionStatus() : orgnlGrpInf.getGrpSts());
         orgnlPmtInf.setTxInfAndSts(txInf);
         rpt.setOrgnlPmtInfAndSts(orgnlPmtInf);

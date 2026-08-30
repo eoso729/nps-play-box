@@ -16,6 +16,8 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -111,7 +113,12 @@ public class XmlAutoFixEngine {
             // 2. Recursively fix elements (casing, enums, dates, etc.)
             fixElementsRecursive(doc.getDocumentElement(), def, request, fixesApplied);
 
-            // 3. Inject Missing Mandatory Supplementary Data if enabled and required
+            // 3. Inject Missing Mandatory Dates / Headers if enabled
+            if (request.isFixDates()) {
+                injectMissingDatesAndHeadersIfNeeded(doc, def, fixesApplied);
+            }
+
+            // 4. Inject Missing Mandatory Supplementary Data if enabled and required
             boolean shouldFixSupp = request.isFixSupplementaryData();
             if (shouldFixSupp && def != null && isSupplementaryDataRequired(def.getKey())) {
                 injectSupplementaryDataIfNeeded(doc, def, fixesApplied);
@@ -396,6 +403,49 @@ public class XmlAutoFixEngine {
             }
             targetContainer.appendChild(splmtry);
             fixesApplied.add("Injected complete mandatory NIBSS Supplementary Data envelope (<SplmtryData>).");
+        }
+    }
+
+    private void injectMissingDatesAndHeadersIfNeeded(Document doc, IsoMessageDefinition def, List<String> fixesApplied) {
+        String nowWat = ZonedDateTime.now(ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+
+        // 1. Assgnmt / OrgnlAssgnmt in acmt.023 / acmt.024
+        ensureDateChild(doc, "Assgnmt", "CreDtTm", nowWat, fixesApplied);
+        ensureDateChild(doc, "OrgnlAssgnmt", "CreDtTm", nowWat, fixesApplied);
+
+        // 2. GrpHdr in pacs / pain messages
+        ensureDateChild(doc, "GrpHdr", "CreDtTm", nowWat, fixesApplied);
+
+        // 3. OrgnlGrpInfAndSts / OrgnlPmtInfAndSts
+        ensureDateChild(doc, "OrgnlGrpInfAndSts", "OrgnlCreDtTm", nowWat, fixesApplied);
+    }
+
+    private void ensureDateChild(Document doc, String parentTagName, String childTagName, String defaultVal, List<String> fixesApplied) {
+        NodeList parentList = doc.getElementsByTagName(parentTagName);
+        if (parentList.getLength() == 0) {
+            parentList = doc.getElementsByTagNameNS("*", parentTagName);
+        }
+        for (int i = 0; i < parentList.getLength(); i++) {
+            Element parent = (Element) parentList.item(i);
+            NodeList childList = parent.getElementsByTagName(childTagName);
+            boolean hasChild = false;
+            for (int j = 0; j < childList.getLength(); j++) {
+                if (childList.item(j).getParentNode() == parent) {
+                    hasChild = true;
+                    Element c = (Element) childList.item(j);
+                    if (c.getTextContent() == null || c.getTextContent().trim().isEmpty()) {
+                        c.setTextContent(defaultVal);
+                        fixesApplied.add("Populated empty <" + childTagName + "> inside <" + parentTagName + "> with WAT timestamp (" + defaultVal + ").");
+                    }
+                    break;
+                }
+            }
+            if (!hasChild) {
+                Element newChild = doc.createElement(childTagName);
+                newChild.setTextContent(defaultVal);
+                parent.appendChild(newChild);
+                fixesApplied.add("Injected missing mandatory <" + childTagName + "> (" + defaultVal + ") inside <" + parentTagName + ">.");
+            }
         }
     }
 

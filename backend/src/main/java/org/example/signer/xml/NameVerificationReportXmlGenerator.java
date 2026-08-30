@@ -34,7 +34,10 @@ public class NameVerificationReportXmlGenerator {
         // --- Original Assignment ---
         NameVerificationReport.OrgnlAssgnmt orgnlAssgnmt = new NameVerificationReport.OrgnlAssgnmt();
         orgnlAssgnmt.setMsgId(requestDto.getOriginalMsgId());
-        orgnlAssgnmt.setCreDtTm(requestDto.getOriginalCreDtTm());
+        String origCreDtTm = (requestDto.getOriginalCreDtTm() != null && !requestDto.getOriginalCreDtTm().trim().isEmpty())
+                ? requestDto.getOriginalCreDtTm().trim()
+                : ZonedDateTime.now(ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        orgnlAssgnmt.setCreDtTm(origCreDtTm);
 
         // --- Report ---
         NameVerificationReport.Rpt rpt = new NameVerificationReport.Rpt();

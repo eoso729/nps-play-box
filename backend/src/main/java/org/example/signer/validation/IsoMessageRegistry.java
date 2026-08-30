@@ -1056,7 +1056,7 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Debtor Account Currency", "PmtInf.DbtrAcct.Ccy", "//PmtInf/DbtrAcct/Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Debtor Account Name", "PmtInf.DbtrAcct.Nm", "//PmtInf/DbtrAcct/Nm", "Test Account", "String", 100, true, false, null, "Debtor Account Name"),
                 new IsoFieldDef("Debtor Agent Member ID", "PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Member ID"),
-                new IsoFieldDef("End-to-End ID", "PmtInf.CdtTrfTx.PmtId.EndToEndId", "//CdtTrfTx/PmtId/EndToEndId", "GSF035985837-E2E", "String", 35, true, false, null, "EndToEnd ID"),
+                new IsoFieldDef("End-to-End ID", "PmtInf.CdtTrfTx.PmtId.EndToEndId", "//CdtTrfTx/PmtId/EndToEndId", "GSF035985837-E2E", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
                 new IsoFieldDef("Instructed Amount", "PmtInf.CdtTrfTx.Amt.InstdAmt", "//CdtTrfTx/Amt/InstdAmt", "100.00", "Decimal", 18, true, false, "AMOUNT", "Instructed amount"),
                 new IsoFieldDef("Instructed Amount Currency", "PmtInf.CdtTrfTx.Amt.InstdAmt@Ccy", "//CdtTrfTx/Amt/InstdAmt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Creditor Agent Member ID", "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTx/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Creditor Member ID"),

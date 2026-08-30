@@ -667,9 +667,10 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       {
         title: '2. Target Account & Resolved Name',
         fields: [
-          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905720260113101903741123456789012', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'verifiedAccountNumber', label: 'Verified Account (IBAN)', type: 'text', required: true, placeholder: '1000000001', maxLength: 10, ruleType: 'NUBAN' },
-          { key: 'verifiedAccountName', label: 'Resolved Account Name', type: 'text', placeholder: 'JOHN DOE ENTERPRISES', maxLength: 100 },
+          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905720260113101903741123456789012', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: '35-character ID of the original acmt.023 request' },
+          { key: 'originalCreDtTm', label: 'Original Assignment Creation DateTime', type: 'text', required: true, placeholder: '2026-01-13T10:19:03.741+01:00', fullWidth: true, maxLength: 35, ruleType: 'DATETIME', helperText: 'Creation timestamp in UTC+1 (WAT), e.g. 2026-01-13T10:19:03.741+01:00' },
+          { key: 'verifiedAccountNumber', label: 'Verified Account (IBAN)', type: 'text', required: true, placeholder: '1000000001', maxLength: 10, ruleType: 'NUBAN', helperText: '10-digit NUBAN account number' },
+          { key: 'verifiedAccountName', label: 'Resolved Account Name', type: 'text', placeholder: 'JOHN DOE ENTERPRISES', maxLength: 100, fullWidth: true, helperText: 'Verified beneficiary name' },
         ],
       },
     ],
@@ -678,6 +679,7 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       receivingInstitutionId: '999057',
       receiverName: 'Assigned Org',
       originalMsgId: '99905720260113101903741123456789012',
+      originalCreDtTm: '2026-01-13T10:19:03.741+01:00',
       verificationResponse: 'true',
       verifiedAccountNumber: '1000000001',
       verifiedAccountName: 'JOHN DOE ENTERPRISES',
@@ -867,8 +869,8 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
         fields: [
           { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905820260105102349998878725905163', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
           { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', placeholder: 'pain.013.001.11', maxLength: 35 },
-          { key: 'originalPmtInfId', label: 'Original Payment Info ID', type: 'text', required: true, placeholder: 'GSFPMTINF035985837', maxLength: 35 },
-          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', required: true, placeholder: 'GSF035985837-E2E', maxLength: 35 },
+          { key: 'originalPmtInfId', label: 'Original Payment Info ID', type: 'text', required: true, placeholder: 'GSFPMTINF035985837', maxLength: 35, ruleType: 'NPS_ID' },
+          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', required: true, placeholder: 'GSF035985837-E2E', maxLength: 35, ruleType: 'NPS_ID' },
         ],
       },
       {

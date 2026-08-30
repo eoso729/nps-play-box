@@ -391,6 +391,30 @@ public class XmlValidationEngineTest {
     }
 
     @Test
+    public void testAcmt024MissingOriginalCreationDateTimeAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("acmt.024");
+        String sampleXml = def.getSampleXml();
+        
+        // Remove <CreDtTm> from <OrgnlAssgnmt>
+        String brokenXml = sampleXml.replace("<CreDtTm>2025-08-29T15:05:04.347+01:00</CreDtTm>", "");
+        ValidationReportDto report = validationEngine.validate(brokenXml, "acmt.024");
+        assertFalse(report.isValid());
+        assertTrue(report.getIssues().stream().anyMatch(i -> "MANDATORY_FIELD_MISSING".equals(i.getRuleCode()) && i.getMessage().contains("Original Assignment Creation DateTime")));
+
+        // Execute auto-fix
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(brokenXml)
+                .messageType("acmt.024")
+                .fixDates(true)
+                .fixSupplementaryData(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().contains("<CreDtTm>"));
+        assertTrue(fixResp.getValidationReport().isValid());
+    }
+
+    @Test
     public void testPain014SampleHasZeroWarningsAnd100PercentHealth() {
         IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.014");
         assertNotNull(def);
