@@ -389,4 +389,16 @@ public class XmlValidationEngineTest {
         // IBAN padded to 10 digits
         assertTrue(fixResp.getFixedXml().contains("<IBAN>0000136558</IBAN>"));
     }
+
+    @Test
+    public void testPain014SampleHasZeroWarningsAnd100PercentHealth() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.014");
+        assertNotNull(def);
+        ValidationReportDto report = validationEngine.validate(def.getSampleXml(), "pain.014");
+        assertTrue(report.isValid(), "pain.014 sample XML must be valid");
+        assertEquals(100, report.getHealthScore(), "pain.014 health score should be 100%");
+        assertEquals(0, report.getSummary().getTotalErrors(), "pain.014 error count should be 0");
+        assertEquals(0, report.getSummary().getTotalWarnings(), "pain.014 warning count should be 0");
+        assertTrue(report.getIssues().isEmpty(), "pain.014 should have 0 issues");
+    }
 }

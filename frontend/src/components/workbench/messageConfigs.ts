@@ -867,8 +867,8 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
         fields: [
           { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905820260105102349998878725905163', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
           { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', placeholder: 'pain.013.001.11', maxLength: 35 },
-          { key: 'originalPmtInfId', label: 'Original Payment Info ID', type: 'text', required: true, placeholder: 'GSFPMTINF035985837', maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', required: true, placeholder: 'GSF035985837-E2E', maxLength: 35, ruleType: 'NPS_ID' },
+          { key: 'originalPmtInfId', label: 'Original Payment Info ID', type: 'text', required: true, placeholder: 'GSFPMTINF035985837', maxLength: 35 },
+          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', required: true, placeholder: 'GSF035985837-E2E', maxLength: 35 },
         ],
       },
       {

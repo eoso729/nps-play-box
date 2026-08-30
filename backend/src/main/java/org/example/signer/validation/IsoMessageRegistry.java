@@ -1056,7 +1056,7 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Debtor Account Currency", "PmtInf.DbtrAcct.Ccy", "//PmtInf/DbtrAcct/Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Debtor Account Name", "PmtInf.DbtrAcct.Nm", "//PmtInf/DbtrAcct/Nm", "Test Account", "String", 100, true, false, null, "Debtor Account Name"),
                 new IsoFieldDef("Debtor Agent Member ID", "PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 11, true, false, "MEMBER_ID", "Debtor Member ID"),
-                new IsoFieldDef("End-to-End ID", "PmtInf.CdtTrfTx.PmtId.EndToEndId", "//CdtTrfTx/PmtId/EndToEndId", "GSF035985837-E2E", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
+                new IsoFieldDef("End-to-End ID", "PmtInf.CdtTrfTx.PmtId.EndToEndId", "//CdtTrfTx/PmtId/EndToEndId", "GSF035985837-E2E", "String", 35, true, false, null, "EndToEnd ID"),
                 new IsoFieldDef("Instructed Amount", "PmtInf.CdtTrfTx.Amt.InstdAmt", "//CdtTrfTx/Amt/InstdAmt", "100.00", "Decimal", 18, true, false, "AMOUNT", "Instructed amount"),
                 new IsoFieldDef("Instructed Amount Currency", "PmtInf.CdtTrfTx.Amt.InstdAmt@Ccy", "//CdtTrfTx/Amt/InstdAmt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Creditor Agent Member ID", "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTx/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 11, true, false, "MEMBER_ID", "Creditor Member ID"),
@@ -1170,7 +1170,7 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Original Creation Date Time", "OrgnlGrpInfAndSts.OrgnlCreDtTm", "//OrgnlGrpInfAndSts/OrgnlCreDtTm", "2026-01-05T10:27:26.737+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original Creation DateTime"),
                 new IsoFieldDef("Group Status", "OrgnlGrpInfAndSts.GrpSts", "//OrgnlGrpInfAndSts/GrpSts", "ACCP", "Code", 4, true, false, "GROUP_STATUS", "Status code (ACCP)"),
                 new IsoFieldDef("Original Payment Info ID", "OrgnlPmtInfAndSts.OrgnlPmtInfId", "//OrgnlPmtInfAndSts/OrgnlPmtInfId", "GSFPMTINF035985837", "String", 35, true, false, null, "Original PmtInfId"),
-                new IsoFieldDef("Original End-to-End ID", "OrgnlPmtInfAndSts.TxInfAndSts.OrgnlEndToEndId", "//OrgnlPmtInfAndSts/TxInfAndSts/OrgnlEndToEndId", "GSF035985837-E2E", "String", 35, true, false, "NPS_ID", "Original EndToEnd ID"),
+                new IsoFieldDef("Original End-to-End ID", "OrgnlPmtInfAndSts.TxInfAndSts.OrgnlEndToEndId", "//OrgnlPmtInfAndSts/TxInfAndSts/OrgnlEndToEndId", "GSF035985837-E2E", "String", 35, true, false, null, "Original EndToEnd ID"),
                 new IsoFieldDef("Transaction Status", "OrgnlPmtInfAndSts.TxInfAndSts.TxSts", "//TxInfAndSts/TxSts", "ACCP", "Code", 4, true, false, "GROUP_STATUS", "Transaction Status")
         );
 
