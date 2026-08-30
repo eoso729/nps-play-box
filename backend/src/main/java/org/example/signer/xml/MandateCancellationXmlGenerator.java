@@ -37,13 +37,10 @@ public class MandateCancellationXmlGenerator {
         cxlRsn.setRsn(rsn);
         details.setCxlRsn(cxlRsn);
 
-        // Original Mandate Container
-        MandateCancellation.OrgnlMndtContainer mndtContainer = new MandateCancellation.OrgnlMndtContainer();
-        String mndtId = requestDto.getOriginalMandateId() != null ? requestDto.getOriginalMandateId() : "MNDT-RCUR-00061";
-        mndtContainer.setOrgnlMndtId(mndtId);
-
         // Original Mandate Details
         MandateCancellation.OrgnlMndtDetails mndtDetails = new MandateCancellation.OrgnlMndtDetails();
+        String mndtId = requestDto.getOriginalMandateId() != null ? requestDto.getOriginalMandateId() : "MNDT-RCUR-00061";
+        mndtDetails.setOrgnlMndtId(mndtId);
         
         MandateCancellation.Ocrncs ocrncs = new MandateCancellation.Ocrncs();
         ocrncs.setSeqTp(requestDto.getSequenceType() != null ? requestDto.getSequenceType() : "RCUR");
@@ -98,8 +95,7 @@ public class MandateCancellationXmlGenerator {
         dbtrAgt.setFinInstnId(createFinInstnId(dbtrBic, dbtrMmbId));
         mndtDetails.setDbtrAgt(dbtrAgt);
 
-        mndtContainer.setOrgnlMndt(mndtDetails);
-        details.setOrgnlMndt(mndtContainer);
+        details.setOrgnlMndt(mndtDetails);
         
         req.setUndrlygCxlDtls(details);
         doc.setMndtCxlReq(req);

@@ -18,7 +18,7 @@ public class NameVerificationReportXmlGenerator {
         // --- Assignment ---
         NameVerificationReport.Assgnmt assgnmt = new NameVerificationReport.Assgnmt();
         assgnmt.setMsgId(generateMsgId(requestDto.getSendingInstitutionId()));
-        assgnmt.setCreDtTm(ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
+        assgnmt.setCreDtTm(ZonedDateTime.now(ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
 
         NameVerificationReport.Assgnr assgnr = new NameVerificationReport.Assgnr();
         assgnr.setAgt(createAgt(requestDto.getSendingInstitutionId()));
@@ -81,14 +81,14 @@ public class NameVerificationReportXmlGenerator {
         NameVerificationReport.CustomData customData = new NameVerificationReport.CustomData();
 
         NameVerificationReport.CreditorInfo creditorInfo = new NameVerificationReport.CreditorInfo();
-        creditorInfo.setAccountDesignation(requestDto.getCreditorAccountDesignation());
-        creditorInfo.setIdType(requestDto.getCreditorIdType());
-        creditorInfo.setIdValue(requestDto.getCreditorIdValue());
-        creditorInfo.setAccountTier(requestDto.getCreditorAccountTier());
+        creditorInfo.setAccountDesignation(requestDto.getCreditorAccountDesignation() != null ? requestDto.getCreditorAccountDesignation() : "1");
+        creditorInfo.setIdType(requestDto.getCreditorIdType() != null ? requestDto.getCreditorIdType() : "BVN");
+        creditorInfo.setIdValue(requestDto.getCreditorIdValue() != null ? requestDto.getCreditorIdValue() : "22112323460");
+        creditorInfo.setAccountTier(requestDto.getCreditorAccountTier() != null ? requestDto.getCreditorAccountTier() : "1");
         customData.setCreditorInfo(creditorInfo);
 
         NameVerificationReport.TransactionInfo transactionInfo = new NameVerificationReport.TransactionInfo();
-        transactionInfo.setRiskRating(requestDto.getTransactionRiskRating());
+        transactionInfo.setRiskRating(requestDto.getTransactionRiskRating() != null ? requestDto.getTransactionRiskRating() : "1");
         customData.setTransactionInfo(transactionInfo);
 
         envlp.setCustomData(customData);

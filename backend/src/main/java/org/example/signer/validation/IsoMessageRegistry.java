@@ -1166,7 +1166,7 @@ public class IsoMessageRegistry {
         String sampleXml = """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.014.001.11">
-                    <CdtrPmtActvtnStsRpt>
+                    <CdtrPmtActvtnReqStsRpt>
                         <GrpHdr>
                             <MsgId>99905820260105122349998878725905163</MsgId>
                             <CreDtTm>2026-01-13T10:19:03.741+01:00</CreDtTm>
@@ -1191,7 +1191,7 @@ public class IsoMessageRegistry {
                                 <TxSts>ACCP</TxSts>
                             </TxInfAndSts>
                         </OrgnlPmtInfAndSts>
-                    </CdtrPmtActvtnStsRpt>
+                    </CdtrPmtActvtnReqStsRpt>
                 </Document>
                 """.trim();
 
@@ -1201,7 +1201,7 @@ public class IsoMessageRegistry {
                 .isoCode("pain.014.001.11")
                 .category("Payment Activation")
                 .rootElement("Document")
-                .mainElement("CdtrPmtActvtnStsRpt")
+                .mainElement("CdtrPmtActvtnReqStsRpt")
                 .namespace("urn:iso:std:iso:20022:tech:xsd:pain.014.001.11")
                 .fields(fields)
                 .sampleXml(sampleXml)
@@ -1612,8 +1612,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creditor Account Number (IBAN)", "CstmrDrctDbtInitn.PmtInf.CdtrAcct.Id.IBAN", "//PmtInf/CdtrAcct/Id/IBAN", "3157417712", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Currency", "CstmrDrctDbtInitn.PmtInf.CdtrAcct.Ccy", "//PmtInf/CdtrAcct/Ccy", "NGN", "String", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Creditor Agent Member ID", "CstmrDrctDbtInitn.PmtInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, null, "Creditor Member ID"),
-                new IsoFieldDef("Instruction ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.PmtId.InstrId", "//DrctDbtTxInf/PmtId/InstrId", "DD-INSTR-0001", "String", 14, true, false, null, "Instruction ID"),
-                new IsoFieldDef("End-to-End ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.PmtId.EndToEndId", "//DrctDbtTxInf/PmtId/EndToEndId", "DD-E2E-0001", "String", 11, true, false, null, "EndToEnd ID"),
+                new IsoFieldDef("Instruction ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.PmtId.InstrId", "//DrctDbtTxInf/PmtId/InstrId", "DD-INSTR-0001", "String", 35, true, false, "NPS_ID", "Instruction ID"),
+                new IsoFieldDef("End-to-End ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.PmtId.EndToEndId", "//DrctDbtTxInf/PmtId/EndToEndId", "DD-E2E-0001", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
                 new IsoFieldDef("Instructed Amount", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.InstdAmt", "//DrctDbtTxInf/InstdAmt", "100.00", "Decimal", 18, true, false, "AMOUNT", "Instructed amount"),
                 new IsoFieldDef("Instructed Amount Currency", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.InstdAmt@Ccy", "//DrctDbtTxInf/InstdAmt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Mandate ID", "CstmrDrctDbtInitn.PmtInf.DrctDbtTxInf.DrctDbtTx.MndtRltdInf.MndtId", "//MndtRltdInf/MndtId", "0000004/001/0000070986", "String", 35, true, false, null, "Mandate ID"),

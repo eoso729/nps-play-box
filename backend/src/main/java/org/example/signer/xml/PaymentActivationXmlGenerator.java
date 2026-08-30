@@ -41,7 +41,12 @@ public class PaymentActivationXmlGenerator {
         pmtInf.setPmtMtd("TRF");
 
         PaymentActivation.ReqdExctnDt reqdExctnDt = new PaymentActivation.ReqdExctnDt();
-        reqdExctnDt.setDtTm(nowWat.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
+        String execDt = requestDto.getRequestedExecutionDate();
+        if (execDt != null && !execDt.trim().isEmpty()) {
+            reqdExctnDt.setDtTm(execDt.contains("T") ? execDt : execDt + "T00:00:00+01:00");
+        } else {
+            reqdExctnDt.setDtTm(nowWat.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
+        }
         pmtInf.setReqdExctnDt(reqdExctnDt);
 
         PaymentActivation.Dbtr dbtr = new PaymentActivation.Dbtr();

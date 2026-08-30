@@ -25,8 +25,7 @@ public class PaymentInitiationXmlGenerator {
         // --- Group Header ---
         PaymentInitiation.GrpHdr grpHdr = new PaymentInitiation.GrpHdr();
         grpHdr.setMsgId(msgId);
-        LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.atZone(ZoneId.systemDefault())
+        String creDtTm = java.time.ZonedDateTime.now(ZoneId.of("Africa/Lagos"))
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
         grpHdr.setNbOfTxs(1); // Fixed value
@@ -74,7 +73,7 @@ public class PaymentInitiationXmlGenerator {
         // Debtor Account
         PaymentInitiation.DbtrAcct dbtrAcct = new PaymentInitiation.DbtrAcct();
         PaymentInitiation.AcctId dbtrAcctId = new PaymentInitiation.AcctId();
-        dbtrAcctId.setIban("3157417712"); // Fixed value
+        dbtrAcctId.setIban("0177136558"); // Debtor account
         dbtrAcct.setId(dbtrAcctId);
         dbtrAcct.setNm("Musa"); // Fixed value
         pmtInf.setDbtrAcct(dbtrAcct);

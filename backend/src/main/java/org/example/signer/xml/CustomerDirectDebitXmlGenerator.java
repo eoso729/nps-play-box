@@ -24,8 +24,10 @@ public class CustomerDirectDebitXmlGenerator {
         BigDecimal amount = requestDto.getAmount() != null ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("2200.00");
         grpHdr.setCtrlSum(amount);
 
-        String instgAgtId = requestDto.getInstructingBankMemberId() != null ? requestDto.getInstructingBankMemberId() : "999998";
-        String instdAgtId = requestDto.getDebtorBankMemberId() != null ? requestDto.getDebtorBankMemberId() : "999999";
+        String instgAgtId = requestDto.getSourceId() != null ? requestDto.getSourceId() :
+                (requestDto.getInstructingBankMemberId() != null ? requestDto.getInstructingBankMemberId() : "999998");
+        String instdAgtId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() :
+                (requestDto.getDebtorBankMemberId() != null ? requestDto.getDebtorBankMemberId() : "999997");
 
         CustomerDirectDebit.Agent instgAgt = createAgent(instgAgtId);
         grpHdr.setInstgAgt(instgAgt);
@@ -139,7 +141,7 @@ public class CustomerDirectDebitXmlGenerator {
         transactionInfo.setNameEnquiryMsgId(requestDto.getNameEnquiryMsgId() != null ? requestDto.getNameEnquiryMsgId() : "99999820260127101157171722205219993");
         transactionInfo.setChannelCode(requestDto.getChannelCode() != null ? requestDto.getChannelCode() : "1");
         transactionInfo.setRiskRating(requestDto.getRiskRating() != null ? requestDto.getRiskRating() : "R000000000000000000B9");
-        transactionInfo.setFixedCollectionAmount(requestDto.getFixedCollectionAmount() != null ? requestDto.getFixedCollectionAmount() : "Yes");
+        transactionInfo.setFixedCollectionAmount(requestDto.getFixedCollectionAmount() != null ? requestDto.getFixedCollectionAmount() : "false");
         customData.setTransactionInfo(transactionInfo);
 
         envlp.setCustomData(customData);

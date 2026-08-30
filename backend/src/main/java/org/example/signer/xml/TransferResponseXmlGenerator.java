@@ -15,26 +15,39 @@ public class TransferResponseXmlGenerator {
         TransferResponse doc = new TransferResponse();
         TransferResponse.FIToFIPmtStsRpt fiToFIPmtStsRpt = new TransferResponse.FIToFIPmtStsRpt();
 
+        String srcId = requestDto.getSendingInstitutionId() != null && !requestDto.getSendingInstitutionId().isEmpty()
+                ? requestDto.getSendingInstitutionId() : "090004";
+        String destId = requestDto.getReceivingInstitutionId() != null && !requestDto.getReceivingInstitutionId().isEmpty()
+                ? requestDto.getReceivingInstitutionId() : "100022";
+
         // --- Group Header ---
         TransferResponse.GrpHdr grpHdr = new TransferResponse.GrpHdr();
-        grpHdr.setMsgId(generateMsgId(requestDto.getSendingInstitutionId()));
-        grpHdr.setCreDtTm(ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
-        grpHdr.setInstgAgt(createAgt(requestDto.getSendingInstitutionId()));
-        grpHdr.setInstdAgt(createAgt(requestDto.getReceivingInstitutionId()));
+        grpHdr.setMsgId(generateMsgId(srcId));
+        grpHdr.setCreDtTm(ZonedDateTime.now(ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
+        grpHdr.setInstgAgt(createAgt(srcId));
+        grpHdr.setInstdAgt(createAgt(destId));
 
         // --- Original Group Info and Status ---
         TransferResponse.OrgnlGrpInfAndSts orgnlGrpInfAndSts = new TransferResponse.OrgnlGrpInfAndSts();
-        orgnlGrpInfAndSts.setOrgnlMsgId(requestDto.getOriginalMsgId());
-        orgnlGrpInfAndSts.setOrgnlMsgNmId("pacs.008.001.12");
-        orgnlGrpInfAndSts.setOrgnlCreDtTm(requestDto.getOriginalCreDtTm());
-        orgnlGrpInfAndSts.setGrpSts(requestDto.getGroupStatus());
+        String origMsgId = requestDto.getOriginalMsgId() != null ? requestDto.getOriginalMsgId() : generateMsgId(destId);
+        orgnlGrpInfAndSts.setOrgnlMsgId(origMsgId);
+        orgnlGrpInfAndSts.setOrgnlMsgNmId(requestDto.getOriginalMsgNmId() != null ? requestDto.getOriginalMsgNmId() : "pacs.008.001.12");
+        orgnlGrpInfAndSts.setOrgnlCreDtTm(requestDto.getOriginalCreDtTm() != null ? requestDto.getOriginalCreDtTm() :
+                ZonedDateTime.now(ZoneId.of("Africa/Lagos")).minusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
+        orgnlGrpInfAndSts.setGrpSts(requestDto.getGroupStatus() != null ? requestDto.getGroupStatus() : "ACSC");
 
         // --- Transaction Info and Status ---
         TransferResponse.TxInfAndSts txInfAndSts = new TransferResponse.TxInfAndSts();
-        txInfAndSts.setInstgAgt(createAgt(requestDto.getSendingInstitutionId()));
-        txInfAndSts.setInstdAgt(createAgt(requestDto.getReceivingInstitutionId()));
+        txInfAndSts.setStsId(requestDto.getStatusId() != null ? requestDto.getStatusId() : "AUTH");
+        txInfAndSts.setOrgnlInstrId(requestDto.getOriginalInstrId() != null ? requestDto.getOriginalInstrId() : generateId(destId + srcId, 9));
+        txInfAndSts.setOrgnlEndToEndId(requestDto.getOriginalEndToEndId() != null ? requestDto.getOriginalEndToEndId() : generateId(destId, 15));
+        txInfAndSts.setOrgnlTxId(requestDto.getOriginalTxId() != null ? requestDto.getOriginalTxId() : origMsgId);
+        txInfAndSts.setInstgAgt(createAgt(srcId));
+        txInfAndSts.setInstdAgt(createAgt(destId));
         TransferResponse.OrgnlTxRef orgnlTxRef = new TransferResponse.OrgnlTxRef();
-        orgnlTxRef.setIntrBkSttlmDt(requestDto.getSettlementDate());
+        String sttlmDt = requestDto.getSettlementDate() != null ? requestDto.getSettlementDate() :
+                LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE) + "Z";
+        orgnlTxRef.setIntrBkSttlmDt(sttlmDt.endsWith("Z") ? sttlmDt : sttlmDt + "Z");
         txInfAndSts.setOrgnlTxRef(orgnlTxRef);
 
         // --- Assemble Document ---
@@ -56,6 +69,19 @@ public class TransferResponseXmlGenerator {
         return agt;
     }
 
+
+    private static String generateId(String prefix, int randomLength) {
+        Random random = new Random();
+        StringBuilder randomDigits = new StringBuilder();
+        for (int i = 0; i < randomLength; i++) {
+            randomDigits.append(random.nextInt(10));
+        }
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter msgIdFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        String msgIdTimestamp = now.format(msgIdFormatter);
+
+        return prefix + msgIdTimestamp + randomDigits.toString();
+    }
 
     private static String generateMsgId(String institutionId) {
         Random random = new Random();

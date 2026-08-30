@@ -24,8 +24,7 @@ public class DirectDebitXmlGenerator {
         // --- Group Header ---
         DirectDebit.GrpHdr grpHdr = new DirectDebit.GrpHdr();
         grpHdr.setMsgId(msgId);
-        LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.atZone(ZoneId.systemDefault())
+        String creDtTm = java.time.ZonedDateTime.now(ZoneId.of("Africa/Lagos"))
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
         grpHdr.setNbOfTxs(1);
@@ -84,7 +83,7 @@ public class DirectDebitXmlGenerator {
         DirectDebit.FinInstnId cdtrFinInstnId = new DirectDebit.FinInstnId();
         cdtrFinInstnId.setBicfi("AA123456");
         DirectDebit.ClrSysMmbId cdtrClrSysMmbId = new DirectDebit.ClrSysMmbId();
-        cdtrClrSysMmbId.setMmbId(requestDto.getDebtorId());
+        cdtrClrSysMmbId.setMmbId(requestDto.getCreditorId() != null ? requestDto.getCreditorId() : "000058");
         cdtrFinInstnId.setClrSysMmbId(cdtrClrSysMmbId);
         cdtrAgt.setFinInstnId(cdtrFinInstnId);
         pmtInf.setCdtrAgt(cdtrAgt);
@@ -110,7 +109,7 @@ public class DirectDebitXmlGenerator {
         mndtRltdInf.setMndtId(requestDto.getMandateId() != null ? requestDto.getMandateId() : "0000004/001/0000070986");
         mndtRltdInf.setDtOfSgntr(requestDto.getDtOfSgntr() != null ? requestDto.getDtOfSgntr() : "2025-02-01Z");
         mndtRltdInf.setFrstColltnDt(requestDto.getFrstColltnDt() != null ? requestDto.getFrstColltnDt() : "2026-04-16Z");
-        mndtRltdInf.setFnlColltnDt(requestDto.getFnlColltnDt() != null ? requestDto.getFnlColltnDt() : "2026-4-31Z");
+        mndtRltdInf.setFnlColltnDt(requestDto.getFnlColltnDt() != null ? requestDto.getFnlColltnDt() : "2026-12-31Z");
         DirectDebit.Frqcy frqcy = new DirectDebit.Frqcy();
         frqcy.setTp(requestDto.getFreqTp() != null ? requestDto.getFreqTp() : "MNTH");
         mndtRltdInf.setFrqcy(frqcy);
@@ -121,7 +120,7 @@ public class DirectDebitXmlGenerator {
         DirectDebit.DbtrAgt dbtrAgt = new DirectDebit.DbtrAgt();
         DirectDebit.FinInstnId dbtrFinInstnId = new DirectDebit.FinInstnId();
         DirectDebit.ClrSysMmbId dbtrClrSysMmbId = new DirectDebit.ClrSysMmbId();
-        dbtrClrSysMmbId.setMmbId(requestDto.getCreditorId());
+        dbtrClrSysMmbId.setMmbId(requestDto.getDebtorId() != null ? requestDto.getDebtorId() : "999997");
         dbtrFinInstnId.setClrSysMmbId(dbtrClrSysMmbId);
         dbtrAgt.setFinInstnId(dbtrFinInstnId);
         drctDbtTxInf.setDbtrAgt(dbtrAgt);
@@ -134,10 +133,7 @@ public class DirectDebitXmlGenerator {
         // Debtor Account
         DirectDebit.DbtrAcct dbtrAcct = new DirectDebit.DbtrAcct();
         DirectDebit.AcctId dbtrAcctId = new DirectDebit.AcctId();
-        dbtrAcctId.setIban(requestDto.getDebtorIban() != null ? requestDto.getDebtorIban() : "3157417712");
-        DirectDebit.Othr othr = new DirectDebit.Othr();
-        othr.setId(requestDto.getDebtorIban() != null ? requestDto.getDebtorIban() : "3157417712");
-        dbtrAcctId.setOthr(othr);
+        dbtrAcctId.setIban(requestDto.getDebtorIban() != null ? requestDto.getDebtorIban() : "0123456789");
         dbtrAcct.setId(dbtrAcctId);
         dbtrAcct.setCcy("NGN");
         drctDbtTxInf.setDbtrAcct(dbtrAcct);

@@ -30,10 +30,10 @@ class MandateCancellationXmlGeneratorTest {
         
         MandateCancellation.UndrlygCxlDtls details = result.getMndtCxlReq().getUndrlygCxlDtls();
         assertEquals("MNDT-CXL-001", details.getOrgnlMndt().getOrgnlMndtId());
-        assertEquals("Debtor Name", details.getOrgnlMndt().getOrgnlMndt().getDbtr().getNm());
-        assertEquals("0987654321", details.getOrgnlMndt().getOrgnlMndt().getDbtrAcct().getId().getIban());
-        assertEquals("999997", details.getOrgnlMndt().getOrgnlMndt().getDbtrAgt().getFinInstnId().getClrSysMmbId().getMmbId());
-        assertEquals("999998", details.getOrgnlMndt().getOrgnlMndt().getCdtrAgt().getFinInstnId().getClrSysMmbId().getMmbId());
+        assertEquals("Debtor Name", details.getOrgnlMndt().getDbtr().getNm());
+        assertEquals("0987654321", details.getOrgnlMndt().getDbtrAcct().getId().getIban());
+        assertEquals("999997", details.getOrgnlMndt().getDbtrAgt().getFinInstnId().getClrSysMmbId().getMmbId());
+        assertEquals("999998", details.getOrgnlMndt().getCdtrAgt().getFinInstnId().getClrSysMmbId().getMmbId());
     }
 
     @Test
@@ -51,6 +51,6 @@ class MandateCancellationXmlGeneratorTest {
         
         MandateCancellation.UndrlygCxlDtls details = result.getMndtCxlReq().getUndrlygCxlDtls();
         assertEquals("MNDT-RCUR-00061", details.getOrgnlMndt().getOrgnlMndtId());
-        assertEquals("999997", details.getOrgnlMndt().getOrgnlMndt().getDbtrAgt().getFinInstnId().getClrSysMmbId().getMmbId());
+        assertEquals("999997", details.getOrgnlMndt().getDbtrAgt().getFinInstnId().getClrSysMmbId().getMmbId());
     }
 }

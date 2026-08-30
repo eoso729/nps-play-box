@@ -37,7 +37,7 @@ public class MandateCancellation {
         @XmlElement(name = "CxlRsn")
         private CxlRsn cxlRsn;
         @XmlElement(name = "OrgnlMndt")
-        private OrgnlMndtContainer orgnlMndt;
+        private OrgnlMndtDetails orgnlMndt;
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)
@@ -69,16 +69,9 @@ public class MandateCancellation {
 
     @XmlAccessorType(XmlAccessType.FIELD)
     @Data
-    public static class OrgnlMndtContainer {
+    public static class OrgnlMndtDetails {
         @XmlElement(name = "OrgnlMndtId")
         private String orgnlMndtId;
-        @XmlElement(name = "OrgnlMndt")
-        private OrgnlMndtDetails orgnlMndt;
-    }
-
-    @XmlAccessorType(XmlAccessType.FIELD)
-    @Data
-    public static class OrgnlMndtDetails {
         @XmlElement(name = "Ocrncs")
         private Ocrncs ocrncs;
         @XmlElement(name = "TrckgInd")

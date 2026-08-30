@@ -215,6 +215,10 @@ public class XmlValidationEngine {
         // 1. Verify main message element inside Document
         String mainElemName = def.getMainElement();
         List<Element> mainElems = findElementsByPath(doc, mainElemName);
+        if (mainElems.isEmpty() && "pain.014".equals(def.getKey())) {
+            String alt = "CdtrPmtActvtnReqStsRpt".equals(mainElemName) ? "CdtrPmtActvtnStsRpt" : "CdtrPmtActvtnReqStsRpt";
+            mainElems = findElementsByPath(doc, alt);
+        }
         if (mainElems.isEmpty()) {
             issues.add(ValidationIssueDto.builder()
                     .id("ERR-MAIN-CONTAINER-MISSING")

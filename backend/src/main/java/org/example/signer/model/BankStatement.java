@@ -6,7 +6,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.util.List;
 
-@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:camt.053.001.12")
+@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:camt.053.001.08")
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
 public class BankStatement {

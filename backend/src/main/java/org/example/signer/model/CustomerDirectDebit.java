@@ -4,7 +4,7 @@ import jakarta.xml.bind.annotation.*;
 import lombok.Data;
 import java.math.BigDecimal;
 
-@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:pacs.003.001.11")
+@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:pacs.003.001.09")
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
 public class CustomerDirectDebit {
