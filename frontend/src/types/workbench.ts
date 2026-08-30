@@ -53,6 +53,30 @@ export type MessageKey =
   | 'pain.008'
   | 'pacs.004';
 
+export type ValidationRuleType =
+  | 'NUBAN'
+  | 'BVN'
+  | 'NPS_ID'
+  | 'MEMBER_ID'
+  | 'CHANNEL_CODE'
+  | 'ACCOUNT_DESIGNATION'
+  | 'ACCOUNT_TIER'
+  | 'ID_TYPE'
+  | 'SEQUENCE_TYPE'
+  | 'FREQUENCY_TYPE'
+  | 'SETTLEMENT_METHOD'
+  | 'CLEARING_CHANNEL'
+  | 'LOCAL_INSTRUMENT'
+  | 'CHARGE_BEARER'
+  | 'REASON_CODE'
+  | 'CURRENCY'
+  | 'AMOUNT'
+  | 'DATE'
+  | 'DATETIME'
+  | 'EMAIL'
+  | 'PHONE'
+  | 'UPPERCASE';
+
 export interface FieldDef {
   key: string;
   label: string;
@@ -60,6 +84,11 @@ export interface FieldDef {
   required?: boolean;
   placeholder?: string;
   fullWidth?: boolean;
+  maxLength?: number;
+  minLength?: number;
+  pattern?: string;
+  ruleType?: ValidationRuleType;
+  helperText?: string;
   options?: { value: string; label: string }[];
 }
 
