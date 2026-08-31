@@ -69,6 +69,7 @@ export type ValidationRuleType =
   | 'LOCAL_INSTRUMENT'
   | 'CHARGE_BEARER'
   | 'REASON_CODE'
+  | 'ID_VALUE'
   | 'CURRENCY'
   | 'AMOUNT'
   | 'DATE'
