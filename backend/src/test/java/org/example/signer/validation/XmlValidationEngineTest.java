@@ -384,8 +384,8 @@ public class XmlValidationEngineTest {
 
         // ChannelCode truncated to 2 chars max
         assertTrue(fixResp.getFixedXml().contains("<ChannelCode>12</ChannelCode>") || fixResp.getFixedXml().contains("<ChannelCode>1</ChannelCode>"));
-        // MmbId truncated to 11 chars max
-        assertTrue(fixResp.getFixedXml().contains("<MmbId>99905812345</MmbId>"));
+        // MmbId truncated to 6 digits max
+        assertTrue(fixResp.getFixedXml().contains("<MmbId>999058</MmbId>"));
         // IBAN padded to 10 digits
         assertTrue(fixResp.getFixedXml().contains("<IBAN>0000136558</IBAN>"));
     }
@@ -424,5 +424,93 @@ public class XmlValidationEngineTest {
         assertEquals(0, report.getSummary().getTotalErrors(), "pain.014 error count should be 0");
         assertEquals(0, report.getSummary().getTotalWarnings(), "pain.014 warning count should be 0");
         assertTrue(report.getIssues().isEmpty(), "pain.014 should have 0 issues");
+    }
+
+    @Test
+    public void testStrict6DigitInstitutionCodeValidation() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.008");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Invalid 3-digit institution code should fail validation
+        String invalidShortXml = sampleXml.replace("<MmbId>999058</MmbId>", "<MmbId>058</MmbId>");
+        ValidationReportDto shortReport = validationEngine.validate(invalidShortXml, "pacs.008");
+        assertFalse(shortReport.isValid());
+        assertTrue(shortReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("6 numeric digits")));
+
+        // 2. Non-numeric institution code should fail validation
+        String invalidAlphaXml = sampleXml.replace("<MmbId>999058</MmbId>", "<MmbId>ABCDEF</MmbId>");
+        ValidationReportDto alphaReport = validationEngine.validate(invalidAlphaXml, "pacs.008");
+        assertFalse(alphaReport.isValid());
+        assertTrue(alphaReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("6 numeric digits")));
+
+        // 3. Auto-fix should pad short institution code to 6 digits
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(invalidShortXml)
+                .messageType("pacs.008")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().contains("<MmbId>000058</MmbId>"));
+    }
+
+    @Test
+    public void testDynamicBeneficiaryKycIdValueValidation() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.008");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid 11-digit BVN passes
+        ValidationReportDto bvnReport = validationEngine.validate(sampleXml, "pacs.008");
+        assertTrue(bvnReport.isValid());
+
+        // 2. Invalid 8-digit BVN fails
+        String invalidBvnXml = sampleXml.replace("<IdValue>22112323460</IdValue>", "<IdValue>12345678</IdValue>");
+        ValidationReportDto shortBvnReport = validationEngine.validate(invalidBvnXml, "pacs.008");
+        assertFalse(shortBvnReport.isValid());
+        assertTrue(shortBvnReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("11 numeric digits")));
+
+        // 3. Corporate RC IdType with alphanumeric ID value (e.g. RC-987654) passes
+        String corporateKycXml = sampleXml
+                .replace("<IdType>BVN</IdType>", "<IdType>RC</IdType>")
+                .replace("<IdValue>22112323460</IdValue>", "<IdValue>RC-987654</IdValue>");
+        ValidationReportDto rcReport = validationEngine.validate(corporateKycXml, "pacs.008");
+        assertTrue(rcReport.isValid());
+    }
+
+    @Test
+    public void testSessionIdFormatAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.008");
+        String sampleXml = def.getSampleXml();
+        String brokenXml = sampleXml.replace("</GrpHdr>", "<SessionID>12345</SessionID></GrpHdr>");
+
+        // 1. Invalid short SessionID triggers error
+        ValidationReportDto report = validationEngine.validate(brokenXml, "pacs.008");
+        assertTrue(report.getIssues().stream().anyMatch(i -> i.getRuleCode().equals("FIELD_LENGTH_MISMATCH") && i.getMessage().contains("SessionID")));
+
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(brokenXml)
+                .messageType("pacs.008")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().matches("(?is).*<sessionid[^>]*>\\d{30}</sessionid>.*"), "Fixed XML was:\n" + fixResp.getFixedXml());
+    }
+
+    @Test
+    public void testCrossFieldSourceAndDestInstitutionCodeValidation() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.008");
+        String sampleXml = def.getSampleXml();
+
+        // Sample has DbtrAgt/MmbId = 999058 and MsgId starting with 999058 -> Valid with zero warnings
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pacs.008");
+        assertTrue(report.isValid());
+        assertEquals(0, report.getSummary().getTotalWarnings());
+
+        // Alter MsgId prefix to mismatched 999111 -> triggers SOURCE_INSTITUTION_MISMATCH warning
+        String mismatchedXml = sampleXml.replace("<MsgId>999058", "<MsgId>999111");
+        ValidationReportDto mismatchReport = validationEngine.validate(mismatchedXml, "pacs.008");
+        assertTrue(mismatchReport.isValid()); // warning does not invalidate XML
+        assertTrue(mismatchReport.getIssues().stream().anyMatch(i -> "SOURCE_INSTITUTION_MISMATCH".equals(i.getRuleCode())));
     }
 }

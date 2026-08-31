@@ -461,10 +461,25 @@ public class MessagePipelineService {
         return accessToken;
     }
 
-    private String generateMsgId(String sourceId) {
-        if (sourceId == null || sourceId.trim().isEmpty()) {
-            sourceId = "999998";
+    private String formatInstitutionCode(String code, String defaultCode) {
+        if (code == null || code.trim().isEmpty()) {
+            return defaultCode;
         }
+        String digits = code.replaceAll("\\D", "");
+        if (digits.length() == 6) {
+            return digits;
+        }
+        if (digits.length() < 6 && !digits.isEmpty()) {
+            return String.format("%06d", Long.parseLong(digits));
+        }
+        if (digits.length() > 6) {
+            return digits.substring(0, 6);
+        }
+        return defaultCode;
+    }
+
+    private String generateMsgId(String sourceId) {
+        sourceId = formatInstitutionCode(sourceId, "999998");
         Random random = new Random();
         StringBuilder randomDigits = new StringBuilder();
         for (int i = 0; i < 15; i++) {
@@ -475,9 +490,7 @@ public class MessagePipelineService {
     }
 
     private String generateEndToEndId(String sourceId) {
-        if (sourceId == null || sourceId.trim().isEmpty()) {
-            sourceId = "999998";
-        }
+        sourceId = formatInstitutionCode(sourceId, "999998");
         Random random = new Random();
         StringBuilder randomDigits = new StringBuilder();
         for (int i = 0; i < 29; i++) {
@@ -487,8 +500,8 @@ public class MessagePipelineService {
     }
 
     private String generateInstrId(String sourceId, String destinationId) {
-        if (sourceId == null) sourceId = "999998";
-        if (destinationId == null) destinationId = "999997";
+        sourceId = formatInstitutionCode(sourceId, "999998");
+        destinationId = formatInstitutionCode(destinationId, "999997");
         Random random = new Random();
         StringBuilder randomDigits = new StringBuilder();
         for (int i = 0; i < 9; i++) {
@@ -504,8 +517,8 @@ public class MessagePipelineService {
     }
 
     private String generateRptgReqId(String sourceId, String destinationId) {
-        if (sourceId == null) sourceId = "999998";
-        if (destinationId == null) destinationId = "999997";
+        sourceId = formatInstitutionCode(sourceId, "999998");
+        destinationId = formatInstitutionCode(destinationId, "999997");
         Random random = new Random();
         StringBuilder randomDigits = new StringBuilder();
         for (int i = 0; i < 9; i++) {

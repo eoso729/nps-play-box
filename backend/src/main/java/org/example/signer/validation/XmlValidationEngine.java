@@ -199,6 +199,9 @@ public class XmlValidationEngine {
             validateSupplementaryDataPresence(doc, issues, passedRules);
         }
 
+        // 8. Cross-Field Source & Destination Institution Code Consistency Validation
+        validateCrossFieldInstitutionCodes(doc, def, issues, passedRules);
+
         boolean isValid = issues.stream().noneMatch(i -> "ERROR".equalsIgnoreCase(i.getSeverity()));
         return buildReport(isValid,
                 def != null ? def.getKey() : messageType,
@@ -612,24 +615,91 @@ public class XmlValidationEngine {
                 break;
 
             case "NPS_ID":
-                if (text.length() != 35) {
+                if (text.length() > 35) {
                     issues.add(ValidationIssueDto.builder()
-                            .id("WARN-NPS-ID-LEN-" + line)
-                            .severity("WARNING")
-                            .category("BUSINESS_RULE")
+                            .id("ERR-NPS-ID-LEN-" + line)
+                            .severity("ERROR")
+                            .category("FIELD_LENGTH")
                             .xpath(xpath)
                             .fieldPath(elem.getNodeName())
                             .fieldName(fieldName)
                             .lineNumber(line)
                             .columnNumber(col)
                             .currentValue(text + " (length: " + text.length() + ")")
-                            .expected("Exactly 35 characters (Source Inst ID + Timestamp/Random)")
-                            .message("NPS specification requires 35-character IDs for " + fieldName + ".")
-                            .ruleCode("NPS_ID_FORMAT")
+                            .expected("Maximum 35 characters")
+                            .message("NPS specification requires maximum 35-character IDs for " + fieldName + ".")
+                            .ruleCode("FIELD_LENGTH_EXCEEDED")
                             .autoFixable(true)
                             .build());
                 } else {
-                    passedRules.add("35-character NPS ID format valid (" + fieldName + ")");
+                    passedRules.add("NPS ID length compliant (" + fieldName + ")");
+                }
+                break;
+
+            case "ID_VALUE":
+                String idType = findSiblingIdType(elem);
+                if ("BVN".equalsIgnoreCase(idType) || "NIN".equalsIgnoreCase(idType) || idType == null || idType.isEmpty()) {
+                    if (!NibssValidationRules.BVN_PATTERN.matcher(text).matches()) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-BVN-" + line)
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(xpath)
+                                .fieldPath(elem.getNodeName())
+                                .fieldName(fieldName)
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text + " (" + text.length() + " digits)")
+                                .expected("Exactly 11 numeric digits")
+                                .message("NIBSS BVN/NIN ID Value must be exactly 11 numeric digits.")
+                                .ruleCode("NIBSS_BVN_LEN")
+                                .autoFixable(false)
+                                .build());
+                    } else {
+                        passedRules.add("11-digit BVN/NIN verification passed (" + text + ")");
+                    }
+                } else {
+                    if (text.length() > 35) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ID-VAL-LEN-" + line)
+                                .severity("ERROR")
+                                .category("FIELD_LENGTH")
+                                .xpath(xpath)
+                                .fieldPath(elem.getNodeName())
+                                .fieldName(fieldName)
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text + " (" + text.length() + " chars)")
+                                .expected("Maximum 35 characters for " + idType)
+                                .message(idType + " identification code exceeds maximum allowed 35 characters.")
+                                .ruleCode("FIELD_LENGTH_EXCEEDED")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Valid " + idType + " ID Value (" + text + ")");
+                    }
+                }
+                break;
+
+            case "SESSION_ID":
+                if (!NibssValidationRules.SESSION_ID_PATTERN.matcher(text).matches()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-SESSION-ID-" + line)
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(xpath)
+                            .fieldPath(elem.getNodeName())
+                            .fieldName(fieldName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text + " (" + text.length() + " chars)")
+                            .expected("Exactly 30 numeric digits (6-digit Source Inst + 12-digit Timestamp YYMMDDHHmmss + 12-digit Seq)")
+                            .message("NIP Session ID must be exactly 30 numeric digits.")
+                            .ruleCode("INVALID_SESSION_ID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Valid 30-digit Session ID: " + text);
                 }
                 break;
 
@@ -850,7 +920,8 @@ public class XmlValidationEngine {
                 break;
 
             case "MEMBER_ID":
-                if (text.length() < 3 || text.length() > 11) {
+            case "INSTITUTION_CODE":
+                if (!NibssValidationRules.INSTITUTION_CODE_PATTERN.matcher(text).matches()) {
                     issues.add(ValidationIssueDto.builder()
                             .id("ERR-MMB-ID-" + line)
                             .severity("ERROR")
@@ -861,13 +932,13 @@ public class XmlValidationEngine {
                             .lineNumber(line)
                             .columnNumber(col)
                             .currentValue(text + " (" + text.length() + " chars)")
-                            .expected("3 to 11 characters (6-digit standard institution code)")
-                            .message("Clearing System Member ID must be 3 to 11 characters.")
-                            .ruleCode("FIELD_LENGTH_INVALID")
+                            .expected("Exactly 6 numeric digits (CBN/NIBSS Institution Code, e.g. 000014, 090110, 999058)")
+                            .message("Clearing System Member ID / Institution Code must be exactly 6 numeric digits.")
+                            .ruleCode("FIELD_LENGTH_MISMATCH")
                             .autoFixable(true)
                             .build());
                 } else {
-                    passedRules.add("Valid Member ID: " + text);
+                    passedRules.add("Valid 6-digit Institution Code: " + text);
                 }
                 break;
 
@@ -1037,6 +1108,48 @@ public class XmlValidationEngine {
                             .expected("1, 2, or 3")
                             .message("Invalid Account Tier '" + text + "'.")
                             .ruleCode("NIBSS_ACCOUNT_TIER")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+
+            // G. Institution Code / Member ID Numeric Check
+            if ("MmbId".equalsIgnoreCase(tagName) || "ClrSysMmbId".equalsIgnoreCase(tagName)) {
+                if (!NibssValidationRules.INSTITUTION_CODE_PATTERN.matcher(text).matches()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-MMB-NUMERIC-" + line)
+                            .severity("ERROR")
+                            .category("FIELD_LENGTH")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName("Institution Code")
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text + " (" + text.length() + " chars)")
+                            .expected("Exactly 6 numeric digits (e.g. 000014, 090110, 999058)")
+                            .message("Institution code <" + tagName + "> must be exactly 6 numeric digits.")
+                            .ruleCode("FIELD_LENGTH_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+
+            // H. Session ID Check
+            if ("SessionID".equalsIgnoreCase(tagName) || "SessionId".equalsIgnoreCase(tagName)) {
+                if (!NibssValidationRules.SESSION_ID_PATTERN.matcher(text).matches()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-SESSION-ID-" + line)
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName("Session ID")
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text + " (" + text.length() + " chars)")
+                            .expected("Exactly 30 numeric digits (6-digit Source Inst + 12-digit Timestamp YYMMDDHHmmss + 12-digit Seq)")
+                            .message("NIP Session ID <" + tagName + "> must be exactly 30 numeric digits.")
+                            .ruleCode("INVALID_SESSION_ID")
                             .autoFixable(true)
                             .build());
                 }
@@ -1357,6 +1470,206 @@ public class XmlValidationEngine {
         if (fieldPath == null) return "";
         int idx = fieldPath.lastIndexOf('.');
         return idx >= 0 ? fieldPath.substring(idx + 1) : fieldPath;
+    }
+
+    private static String findSiblingIdType(Element elem) {
+        if (elem == null || elem.getParentNode() == null) return null;
+        Node parent = elem.getParentNode();
+        NodeList siblings = parent.getChildNodes();
+        for (int i = 0; i < siblings.getLength(); i++) {
+            Node s = siblings.item(i);
+            if (s instanceof Element el) {
+                String name = el.getLocalName() != null ? el.getLocalName() : el.getTagName();
+                if ("IdType".equalsIgnoreCase(name)) {
+                    return el.getTextContent() != null ? el.getTextContent().trim() : null;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void validateCrossFieldInstitutionCodes(Document doc, IsoMessageDefinition def, List<ValidationIssueDto> issues, List<String> passedRules) {
+        if (doc == null) return;
+
+        // 1. Find Source Institution Code
+        String sourceInstCode = extractSourceInstCodeForDef(doc, def);
+
+        // 2. Find Destination Institution Code
+        String destInstCode = extractDestInstCodeForDef(doc, def);
+
+        // 3. Cross-validate MsgId / TxId starts with Source Institution Code
+        List<Element> msgIdElems = findElementsByPath(doc, "MsgId");
+        for (Element el : msgIdElems) {
+            String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+            if (sourceInstCode != null && sourceInstCode.matches("\\d{6}") && val.length() >= 6) {
+                String prefix = val.substring(0, 6);
+                if (!prefix.equals(sourceInstCode)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("WARN-MSGID-SRC-MISMATCH-" + getNodeLine(el))
+                            .severity("WARNING")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("MsgId")
+                            .fieldName("Message ID Source Code")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(prefix)
+                            .expected(sourceInstCode)
+                            .message("Message ID prefix (" + prefix + ") does not match document Source Institution Code (" + sourceInstCode + ").")
+                            .ruleCode("SOURCE_INSTITUTION_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("MsgId prefix matches Source Institution Code (" + sourceInstCode + ")");
+                }
+            }
+        }
+
+        // 4. Cross-validate InstrId contains Source Inst Code (chars 1-6) and Destination Inst Code (chars 7-12)
+        List<Element> instrIdElems = findElementsByPath(doc, "InstrId");
+        for (Element el : instrIdElems) {
+            String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+            if (val.length() >= 12) {
+                String srcPrefix = val.substring(0, 6);
+                String dstPrefix = val.substring(6, 12);
+                if (sourceInstCode != null && sourceInstCode.matches("\\d{6}") && !srcPrefix.equals(sourceInstCode)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("WARN-INSTRID-SRC-MISMATCH-" + getNodeLine(el))
+                            .severity("WARNING")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("InstrId")
+                            .fieldName("Instruction ID Source Institution")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(srcPrefix)
+                            .expected(sourceInstCode)
+                            .message("Instruction ID source prefix (" + srcPrefix + ") does not match document Source Institution Code (" + sourceInstCode + ").")
+                            .ruleCode("INSTR_ID_SOURCE_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                }
+                if (destInstCode != null && destInstCode.matches("\\d{6}") && !dstPrefix.equals(destInstCode)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("WARN-INSTRID-DST-MISMATCH-" + getNodeLine(el))
+                            .severity("WARNING")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("InstrId")
+                            .fieldName("Instruction ID Destination Institution")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(dstPrefix)
+                            .expected(destInstCode)
+                            .message("Instruction ID destination prefix (" + dstPrefix + ") does not match document Destination Institution Code (" + destInstCode + ").")
+                            .ruleCode("INSTR_ID_DEST_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+        }
+    }
+
+    private static String findFirstElementText(Document doc, String... paths) {
+        if (doc == null || paths == null) return null;
+        for (String path : paths) {
+            List<Element> list = findElementsByPath(doc, path);
+            if (!list.isEmpty()) {
+                String text = list.get(0).getTextContent();
+                if (text != null && !text.trim().isEmpty()) {
+                    return text.trim();
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String extractSourceInstCodeForDef(Document doc, IsoMessageDefinition def) {
+        if (doc == null) return null;
+        String key = def != null ? def.getKey().toLowerCase() : "";
+        if (key.contains("pain.008") || key.contains("pain.009") || key.contains("pain.010") || key.contains("pain.013")) {
+            return findFirstElementText(doc,
+                    "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "PmtInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("pain.014") || key.contains("pain.001") || key.contains("pain.002")) {
+            return findFirstElementText(doc,
+                    "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("acmt.023") || key.contains("acmt.024")) {
+            return findFirstElementText(doc,
+                    "Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("camt.060")) {
+            return findFirstElementText(doc,
+                    "AcctRptgReq.GrpHdr.MsgSndr.Agt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("camt.052") || key.contains("camt.053")) {
+            return findFirstElementText(doc,
+                    "BkToCstmrAcctRpt.Rpt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
+                    "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        return findFirstElementText(doc,
+                "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtTrfTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtTrfTxInf.InstgAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                "AcctRptgReq.GrpHdr.MsgSndr.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "PmtRtr.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
+        );
+    }
+
+    private static String extractDestInstCodeForDef(Document doc, IsoMessageDefinition def) {
+        if (doc == null) return null;
+        String key = def != null ? def.getKey().toLowerCase() : "";
+        if (key.contains("pain.008") || key.contains("pain.009") || key.contains("pain.010") || key.contains("pain.013")) {
+            return findFirstElementText(doc,
+                    "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "PmtInf.DrctDbtTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("pain.014") || key.contains("pain.001") || key.contains("pain.002")) {
+            return findFirstElementText(doc,
+                    "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("acmt.023") || key.contains("acmt.024")) {
+            return findFirstElementText(doc,
+                    "Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("camt.060")) {
+            return findFirstElementText(doc,
+                    "AcctRptgReq.RptgReq.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
+                    "Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        return findFirstElementText(doc,
+                "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtTrfTxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                "BkToCstmrAcctRpt.Rpt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
+                "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "PmtRtr.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"
+        );
     }
 
     private static String sanitizeId(String path) {
