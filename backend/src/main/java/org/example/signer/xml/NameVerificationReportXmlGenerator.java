@@ -11,16 +11,14 @@ import java.util.Random;
 
 public class NameVerificationReportXmlGenerator {
 
-    public static NameVerificationReport generate(NameVerificationReportDto requestDto, String msgId) {
+    public static NameVerificationReport generate(NameVerificationReportDto requestDto) {
         NameVerificationReport doc = new NameVerificationReport();
         NameVerificationReport.IdVrfctnRpt idVrfctnRpt = new NameVerificationReport.IdVrfctnRpt();
 
-        String effectiveMsgId = (msgId != null && !msgId.isEmpty()) ? msgId : generateMsgId(requestDto.getSendingInstitutionId());
-
         // --- Assignment ---
         NameVerificationReport.Assgnmt assgnmt = new NameVerificationReport.Assgnmt();
-        assgnmt.setMsgId(effectiveMsgId);
-        assgnmt.setCreDtTm(ZonedDateTime.now(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
+        assgnmt.setMsgId(generateMsgId(requestDto.getSendingInstitutionId()));
+        assgnmt.setCreDtTm(ZonedDateTime.now(ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
 
         NameVerificationReport.Assgnr assgnr = new NameVerificationReport.Assgnr();
         assgnr.setAgt(createAgt(requestDto.getSendingInstitutionId()));
@@ -36,35 +34,45 @@ public class NameVerificationReportXmlGenerator {
         // --- Original Assignment ---
         NameVerificationReport.OrgnlAssgnmt orgnlAssgnmt = new NameVerificationReport.OrgnlAssgnmt();
         orgnlAssgnmt.setMsgId(requestDto.getOriginalMsgId());
-        orgnlAssgnmt.setCreDtTm(requestDto.getOriginalCreDtTm());
+        String origCreDtTm = (requestDto.getOriginalCreDtTm() != null && !requestDto.getOriginalCreDtTm().trim().isEmpty())
+                ? requestDto.getOriginalCreDtTm().trim()
+                : ZonedDateTime.now(ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        orgnlAssgnmt.setCreDtTm(origCreDtTm);
 
         // --- Report ---
         NameVerificationReport.Rpt rpt = new NameVerificationReport.Rpt();
         rpt.setOrgnlId(requestDto.getOriginalMsgId());
-        rpt.setVrfctn(requestDto.isVerificationResponse());
 
-        // Failure reason handling if false or explicit reason provided
-        if (!requestDto.isVerificationResponse() || (requestDto.getReasonCode() != null && !requestDto.getReasonCode().isEmpty()) || (requestDto.getReasonProprietary() != null && !requestDto.getReasonProprietary().isEmpty())) {
+        String vrfctnVal = requestDto.getVerificationResponse();
+        boolean isSuccess = vrfctnVal == null || vrfctnVal.trim().isEmpty() || "true".equalsIgnoreCase(vrfctnVal);
+        rpt.setVrfctn(isSuccess ? "true" : "false");
+
+        if (!isSuccess) {
+            String code = (requestDto.getReasonCode() != null && !requestDto.getReasonCode().trim().isEmpty())
+                    ? requestDto.getReasonCode().trim() : "33";
+            String reasonText = (requestDto.getReasonProprietary() != null && !requestDto.getReasonProprietary().trim().isEmpty())
+                    ? requestDto.getReasonProprietary().trim() : "Account number mismatch";
+
             NameVerificationReport.Rsn rsn = new NameVerificationReport.Rsn();
-            rsn.setCd(requestDto.getReasonCode() != null && !requestDto.getReasonCode().isEmpty() ? requestDto.getReasonCode() : "33");
-            rsn.setPrtry(requestDto.getReasonProprietary() != null && !requestDto.getReasonProprietary().isEmpty() ? requestDto.getReasonProprietary() : "Account number mismatch");
+            rsn.setCd(code);
+            rsn.setPrtry(reasonText);
             rpt.setRsn(rsn);
+        } else {
+            rpt.setRsn(null);
         }
 
-        if (requestDto.getVerifiedAccountNumber() != null && !requestDto.getVerifiedAccountNumber().isEmpty()) {
-            NameVerificationReport.OrgnlPtyAndAcctId orgnlPtyAndAcctId = new NameVerificationReport.OrgnlPtyAndAcctId();
-            NameVerificationReport.Acct orgnlAcct = new NameVerificationReport.Acct();
-            NameVerificationReport.AcctId orgnlAcctId = new NameVerificationReport.AcctId();
-            orgnlAcctId.setIban(requestDto.getVerifiedAccountNumber());
-            orgnlAcct.setId(orgnlAcctId);
-            orgnlPtyAndAcctId.setAcct(orgnlAcct);
-            rpt.setOrgnlPtyAndAcctId(orgnlPtyAndAcctId);
-        }
+        NameVerificationReport.OrgnlPtyAndAcctId orgnlPtyAndAcctId = new NameVerificationReport.OrgnlPtyAndAcctId();
+        NameVerificationReport.Acct orgnlAcct = new NameVerificationReport.Acct();
+        NameVerificationReport.AcctId orgnlAcctId = new NameVerificationReport.AcctId();
+        orgnlAcctId.setIban(requestDto.getVerifiedAccountNumber());
+        orgnlAcct.setId(orgnlAcctId);
+        orgnlPtyAndAcctId.setAcct(orgnlAcct);
+        rpt.setOrgnlPtyAndAcctId(orgnlPtyAndAcctId);
 
-        if (requestDto.isVerificationResponse() && requestDto.getVerifiedAccountName() != null && !requestDto.getVerifiedAccountName().isEmpty()) {
+        if (isSuccess && requestDto.getVerifiedAccountName() != null && !requestDto.getVerifiedAccountName().trim().isEmpty()) {
             NameVerificationReport.UpdtdPtyAndAcctId updtdPtyAndAcctId = new NameVerificationReport.UpdtdPtyAndAcctId();
             NameVerificationReport.Pty updtdPty = new NameVerificationReport.Pty();
-            updtdPty.setNm(requestDto.getVerifiedAccountName());
+            updtdPty.setNm(requestDto.getVerifiedAccountName().trim());
             updtdPtyAndAcctId.setPty(updtdPty);
             rpt.setUpdtdPtyAndAcctId(updtdPtyAndAcctId);
         }
@@ -76,14 +84,14 @@ public class NameVerificationReportXmlGenerator {
         NameVerificationReport.CustomData customData = new NameVerificationReport.CustomData();
 
         NameVerificationReport.CreditorInfo creditorInfo = new NameVerificationReport.CreditorInfo();
-        creditorInfo.setAccountDesignation(requestDto.getCreditorAccountDesignation() != null ? requestDto.getCreditorAccountDesignation() : "");
-        creditorInfo.setIdType(requestDto.getCreditorIdType() != null ? requestDto.getCreditorIdType() : "");
-        creditorInfo.setIdValue(requestDto.getCreditorIdValue() != null ? requestDto.getCreditorIdValue() : "");
-        creditorInfo.setAccountTier(requestDto.getCreditorAccountTier() != null ? requestDto.getCreditorAccountTier() : "");
+        creditorInfo.setAccountDesignation(requestDto.getCreditorAccountDesignation() != null ? requestDto.getCreditorAccountDesignation() : "1");
+        creditorInfo.setIdType(requestDto.getCreditorIdType() != null ? requestDto.getCreditorIdType() : "BVN");
+        creditorInfo.setIdValue(requestDto.getCreditorIdValue() != null ? requestDto.getCreditorIdValue() : "22112323460");
+        creditorInfo.setAccountTier(requestDto.getCreditorAccountTier() != null ? requestDto.getCreditorAccountTier() : "1");
         customData.setCreditorInfo(creditorInfo);
 
         NameVerificationReport.TransactionInfo transactionInfo = new NameVerificationReport.TransactionInfo();
-        transactionInfo.setRiskRating(requestDto.getTransactionRiskRating() != null ? requestDto.getTransactionRiskRating() : "");
+        transactionInfo.setRiskRating(requestDto.getTransactionRiskRating() != null ? requestDto.getTransactionRiskRating() : "1");
         customData.setTransactionInfo(transactionInfo);
 
         envlp.setCustomData(customData);
@@ -102,22 +110,23 @@ public class NameVerificationReportXmlGenerator {
     private static NameVerificationReport.Agt createAgt(String mmbId) {
         NameVerificationReport.Agt agt = new NameVerificationReport.Agt();
         NameVerificationReport.FinInstnId finInstnId = new NameVerificationReport.FinInstnId();
-        NameVerificationReport.ClrSysMmbId clrSysMmbId = new NameVerificationReport.ClrSysMmbId();
-        clrSysMmbId.setMmbId(mmbId != null ? mmbId : "");
-        finInstnId.setClrSysMmbId(clrSysMmbId);
-        finInstnId.setBicfi(mmbId != null ? mmbId : "");
+        if (mmbId != null && !mmbId.isEmpty()) {
+            finInstnId.setBicfi(mmbId);
+            NameVerificationReport.ClrSysMmbId clrSysMmbId = new NameVerificationReport.ClrSysMmbId();
+            clrSysMmbId.setMmbId(mmbId);
+            finInstnId.setClrSysMmbId(clrSysMmbId);
+        }
         agt.setFinInstnId(finInstnId);
         return agt;
     }
 
     private static String generateMsgId(String institutionId) {
-        String inst = institutionId != null && !institutionId.isEmpty() ? institutionId : "999012";
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         StringBuilder randomDigits = new StringBuilder();
         Random random = new Random();
         for (int i = 0; i < 15; i++) {
             randomDigits.append(random.nextInt(10));
         }
-        return inst + timestamp + randomDigits.toString();
+        return institutionId + timestamp + randomDigits.toString();
     }
 }

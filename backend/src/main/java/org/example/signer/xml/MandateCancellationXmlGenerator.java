@@ -15,8 +15,7 @@ public class MandateCancellationXmlGenerator {
         // --- Group Header ---
         MandateCancellation.GrpHdr grpHdr = new MandateCancellation.GrpHdr();
         grpHdr.setMsgId(msgId);
-        LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String creDtTm = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
         req.setGrpHdr(grpHdr);
 
@@ -38,13 +37,10 @@ public class MandateCancellationXmlGenerator {
         cxlRsn.setRsn(rsn);
         details.setCxlRsn(cxlRsn);
 
-        // Original Mandate Container
-        MandateCancellation.OrgnlMndtContainer mndtContainer = new MandateCancellation.OrgnlMndtContainer();
-        String mndtId = requestDto.getOriginalMandateId() != null ? requestDto.getOriginalMandateId() : "MNDT-RCUR-00061";
-        mndtContainer.setOrgnlMndtId(mndtId);
-
         // Original Mandate Details
         MandateCancellation.OrgnlMndtDetails mndtDetails = new MandateCancellation.OrgnlMndtDetails();
+        String mndtId = requestDto.getOriginalMandateId() != null ? requestDto.getOriginalMandateId() : "MNDT-RCUR-00061";
+        mndtDetails.setOrgnlMndtId(mndtId);
         
         MandateCancellation.Ocrncs ocrncs = new MandateCancellation.Ocrncs();
         ocrncs.setSeqTp(requestDto.getSequenceType() != null ? requestDto.getSequenceType() : "RCUR");
@@ -99,8 +95,7 @@ public class MandateCancellationXmlGenerator {
         dbtrAgt.setFinInstnId(createFinInstnId(dbtrBic, dbtrMmbId));
         mndtDetails.setDbtrAgt(dbtrAgt);
 
-        mndtContainer.setOrgnlMndt(mndtDetails);
-        details.setOrgnlMndt(mndtContainer);
+        details.setOrgnlMndt(mndtDetails);
         
         req.setUndrlygCxlDtls(details);
         doc.setMndtCxlReq(req);

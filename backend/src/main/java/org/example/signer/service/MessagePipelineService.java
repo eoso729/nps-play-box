@@ -124,9 +124,9 @@ public class MessagePipelineService {
     }
 
     public XmlGenerationResponseDto generateNameVerificationReportAcmt024(NameVerificationReportDto requestDto) throws Exception {
-        String sendingId = requestDto.getSendingInstitutionId() != null && !requestDto.getSendingInstitutionId().isEmpty() ? requestDto.getSendingInstitutionId() : "999012";
-        String msgId = generateMsgId(sendingId);
-        NameVerificationReport model = NameVerificationReportXmlGenerator.generate(requestDto, msgId);
+        String srcId = requestDto.getSendingInstitutionId() != null ? requestDto.getSendingInstitutionId() : "999012";
+        String msgId = generateMsgId(srcId);
+        NameVerificationReport model = NameVerificationReportXmlGenerator.generate(requestDto);
         return buildXmlGenerationResponse("acmt.024", msgId, model);
     }
 
@@ -137,6 +137,60 @@ public class MessagePipelineService {
         String rptgReqId = generateRptgReqId(srcId, destId);
         BalanceEnquiry model = BalanceEnquiryXmlGenerator.generate(requestDto, msgId, rptgReqId);
         return buildXmlGenerationResponse("camt.060", msgId, model);
+    }
+
+    public XmlGenerationResponseDto generatePaymentStatusReportPacs002(TransferResponseDto requestDto) throws Exception {
+        String srcId = requestDto.getSendingInstitutionId() != null ? requestDto.getSendingInstitutionId() : "090004";
+        String msgId = generateMsgId(srcId);
+        TransferResponse model = TransferResponseXmlGenerator.generate(requestDto);
+        return buildXmlGenerationResponse("pacs.002", msgId, model);
+    }
+
+    public XmlGenerationResponseDto generatePaymentStatusRequestPacs028(PaymentStatusRequestDto requestDto) throws Exception {
+        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999057";
+        String msgId = generateMsgId(srcId);
+        PaymentStatusRequest model = PaymentStatusRequestXmlGenerator.generate(requestDto, msgId);
+        return buildXmlGenerationResponse("pacs.028", msgId, model);
+    }
+
+    public XmlGenerationResponseDto generateMandateAcceptancePain012(MandateAcceptanceReportDto requestDto) throws Exception {
+        String srcId = requestDto.getCreditorAgentMemberId() != null ? requestDto.getCreditorAgentMemberId() : "999058";
+        String msgId = generateMsgId(srcId);
+        MandateAcceptanceReport model = MandateAcceptanceXmlGenerator.generate(requestDto, msgId);
+        return buildXmlGenerationResponse("pain.012", msgId, model);
+    }
+
+    public XmlGenerationResponseDto generateActivationStatusReportPain014(PaymentActivationStatusReportDto requestDto) throws Exception {
+        String srcId = requestDto.getForwardingAgentMemberId() != null ? requestDto.getForwardingAgentMemberId() : "999057";
+        String msgId = generateMsgId(srcId);
+        PaymentActivationStatusReport model = PaymentActivationStatusReportXmlGenerator.generate(requestDto, msgId);
+        return buildXmlGenerationResponse("pain.014", msgId, model);
+    }
+
+    public XmlGenerationResponseDto generateBankAccountReportCamt052(BankAccountReportDto requestDto) throws Exception {
+        String srcId = requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999058";
+        String destId = requestDto.getSchemeCode() != null ? requestDto.getSchemeCode() : "999057";
+        String msgId = generateMsgId(srcId);
+        String rptId = generateRptgReqId(srcId, destId);
+        BankAccountReport model = BankAccountReportXmlGenerator.generate(requestDto, msgId, rptId);
+        return buildXmlGenerationResponse("camt.052", msgId, model);
+    }
+
+    public XmlGenerationResponseDto generateBankStatementCamt053(BankStatementDto requestDto) throws Exception {
+        String srcId = requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999058";
+        String destId = requestDto.getSchemeCode() != null ? requestDto.getSchemeCode() : "999057";
+        String msgId = generateMsgId(srcId);
+        String stmtId = generateRptgReqId(srcId, destId);
+        BankStatement model = BankStatementXmlGenerator.generate(requestDto, msgId, stmtId);
+        return buildXmlGenerationResponse("camt.053", msgId, model);
+    }
+
+    public XmlGenerationResponseDto generateCustomerPaymentStatusPain002(CustomerPaymentStatusReportDto requestDto) throws Exception {
+        String srcId = requestDto.getDebtorAgentMemberId() != null ? requestDto.getDebtorAgentMemberId() : "999057";
+        String msgId = generateMsgId(srcId);
+        String stsId = generateMsgId(srcId);
+        CustomerPaymentStatusReport model = CustomerPaymentStatusReportXmlGenerator.generate(requestDto, msgId, stsId);
+        return buildXmlGenerationResponse("pain.002", msgId, model);
     }
 
     // ==========================================
@@ -238,6 +292,42 @@ public class MessagePipelineService {
 
         return executeFullPipeline("camt.060", msgId, model, "AcctRptgReq",
                 "http://10.8.8.132:8022/nps/camt", "10.8.8.132", false, null);
+    }
+
+    public MessageSendResponseDto sendPaymentStatusRequestPacs028(PaymentStatusRequestDto requestDto) throws Exception {
+        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999057";
+        String msgId = generateMsgId(srcId);
+        PaymentStatusRequest model = PaymentStatusRequestXmlGenerator.generate(requestDto, msgId);
+
+        return executeFullPipeline("pacs.028", msgId, model, "FIToFIPmtStsReq",
+                "http://10.8.8.132:8022/nps/pacs", "10.8.8.132", false, null);
+    }
+
+    public MessageSendResponseDto sendMandateAcceptancePain012(MandateAcceptanceReportDto requestDto) throws Exception {
+        String srcId = requestDto.getCreditorAgentMemberId() != null ? requestDto.getCreditorAgentMemberId() : "999058";
+        String msgId = generateMsgId(srcId);
+        MandateAcceptanceReport model = MandateAcceptanceXmlGenerator.generate(requestDto, msgId);
+
+        return executeFullPipeline("pain.012", msgId, model, "MndtAccptncRpt",
+                "http://10.8.8.132:8022/nps/pain", "10.8.8.132", false, null);
+    }
+
+    public MessageSendResponseDto sendActivationStatusReportPain014(PaymentActivationStatusReportDto requestDto) throws Exception {
+        String srcId = requestDto.getForwardingAgentMemberId() != null ? requestDto.getForwardingAgentMemberId() : "999057";
+        String msgId = generateMsgId(srcId);
+        PaymentActivationStatusReport model = PaymentActivationStatusReportXmlGenerator.generate(requestDto, msgId);
+
+        return executeFullPipeline("pain.014", msgId, model, "CdtrPmtActvtnReqStsRpt",
+                "http://10.8.8.132:8022/nps/pain", "10.8.8.132", false, null);
+    }
+
+    public MessageSendResponseDto sendTransferResponsePacs002(TransferResponseDto requestDto) throws Exception {
+        String srcId = requestDto.getSendingInstitutionId() != null ? requestDto.getSendingInstitutionId() : "090004";
+        String msgId = generateMsgId(srcId);
+        TransferResponse model = TransferResponseXmlGenerator.generate(requestDto);
+
+        return executeFullPipeline("pacs.002", msgId, model, "FIToFIPmtStsRpt",
+                "http://10.8.8.132:8022/nps/pacs", "10.8.8.132", false, null);
     }
 
     // ==========================================

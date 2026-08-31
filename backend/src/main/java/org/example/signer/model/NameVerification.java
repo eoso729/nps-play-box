@@ -3,7 +3,7 @@ package org.example.signer.model;
 import jakarta.xml.bind.annotation.*;
 import lombok.Data;
 
-@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:acmt.023.001.04")
+@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:acmt.023.001.03")
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
 public class NameVerification {

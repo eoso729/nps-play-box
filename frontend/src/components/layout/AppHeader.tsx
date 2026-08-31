@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 interface AppHeaderProps {
@@ -13,6 +14,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onModeChange,
 }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const initials = user
@@ -29,8 +31,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     <header className="h-16 flex-shrink-0 bg-white border-b border-[#e4e9e6] flex items-center justify-between px-6 z-10">
       <div className="flex items-center gap-3.5">
         <div
-          className="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center text-white font-bold text-[12px] flex-shrink-0"
+          className="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center text-white font-bold text-[12px] flex-shrink-0 cursor-pointer"
           style={{ background: 'linear-gradient(135deg, #22a05a, #15803d)', boxShadow: '0 4px 12px rgba(21,128,61,0.3)' }}
+          onClick={() => navigate('/workbench')}
         >
           NPS
         </div>
@@ -44,8 +47,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <div className="flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
         <button
           type="button"
-          onClick={() => onModeChange?.('generation')}
-          className={`px-4 py-1.5 text-[12.5px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+          onClick={() => {
+            if (onModeChange) {
+              onModeChange('generation');
+            } else {
+              navigate('/workbench');
+            }
+          }}
+          className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
             activeMode === 'generation'
               ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
               : 'text-gray-600 hover:text-gray-900'
@@ -56,15 +65,37 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </button>
         <button
           type="button"
-          onClick={() => onModeChange?.('dispatch')}
-          className={`px-4 py-1.5 text-[12.5px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+          onClick={() => {
+            if (onModeChange) {
+              onModeChange('dispatch');
+            } else {
+              navigate('/workbench');
+            }
+          }}
+          className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
             activeMode === 'dispatch'
               ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
               : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           <span className={`w-2 h-2 rounded-full ${activeMode === 'dispatch' ? 'bg-[#16a34a]' : 'bg-gray-400'}`}></span>
-          Pipeline Execution & Response
+          Pipeline Execution
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/inspector')}
+          className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+        >
+          <span className="text-[12px]">🔍</span>
+          Fix My XML & Health Check
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/diff')}
+          className="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+        >
+          <span className="text-[12px]">⚖️</span>
+          Diff Checker
         </button>
       </div>
 

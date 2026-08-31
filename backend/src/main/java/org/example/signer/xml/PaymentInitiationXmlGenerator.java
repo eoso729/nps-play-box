@@ -4,6 +4,7 @@ import org.example.signer.dto.PaymentInitiationRequestDto;
 import org.example.signer.model.PaymentInitiation;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +16,7 @@ public class PaymentInitiationXmlGenerator {
     public static PaymentInitiation generate(PaymentInitiationRequestDto requestDto, String msgId, String endToEndId, String reqdExctnDt) {
         // Use provided amount or default
         BigDecimal amount = (requestDto.getAmount() != null && requestDto.getAmount().compareTo(BigDecimal.ZERO) > 0) 
-                ? requestDto.getAmount() 
+                ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP) 
                 : DEFAULT_AMOUNT;
         
         PaymentInitiation doc = new PaymentInitiation();
@@ -24,8 +25,7 @@ public class PaymentInitiationXmlGenerator {
         // --- Group Header ---
         PaymentInitiation.GrpHdr grpHdr = new PaymentInitiation.GrpHdr();
         grpHdr.setMsgId(msgId);
-        LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.atZone(ZoneId.systemDefault())
+        String creDtTm = java.time.ZonedDateTime.now(ZoneId.of("Africa/Lagos"))
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
         grpHdr.setNbOfTxs(1); // Fixed value
@@ -73,7 +73,7 @@ public class PaymentInitiationXmlGenerator {
         // Debtor Account
         PaymentInitiation.DbtrAcct dbtrAcct = new PaymentInitiation.DbtrAcct();
         PaymentInitiation.AcctId dbtrAcctId = new PaymentInitiation.AcctId();
-        dbtrAcctId.setIban("3157417712"); // Fixed value
+        dbtrAcctId.setIban("0177136558"); // Debtor account
         dbtrAcct.setId(dbtrAcctId);
         dbtrAcct.setNm("Musa"); // Fixed value
         pmtInf.setDbtrAcct(dbtrAcct);

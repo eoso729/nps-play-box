@@ -15,8 +15,7 @@ public class BalanceEnquiryXmlGenerator {
         // --- Group Header ---
         BalanceEnquiry.GrpHdr grpHdr = new BalanceEnquiry.GrpHdr();
         grpHdr.setMsgId(msgId);
-        LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        String creDtTm = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
         
         String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";

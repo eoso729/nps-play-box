@@ -4,6 +4,7 @@ import org.example.signer.dto.PaymentActivationRequestDto;
 import org.example.signer.model.PaymentActivation;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -16,8 +17,8 @@ public class PaymentActivationXmlGenerator {
         // --- Group Header ---
         PaymentActivation.GrpHdr grpHdr = new PaymentActivation.GrpHdr();
         grpHdr.setMsgId(msgId);
-        LocalDateTime now = LocalDateTime.now();
-        String creDtTm = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+        java.time.ZonedDateTime nowWat = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos"));
+        String creDtTm = nowWat.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
 
         PaymentActivation.InitgPty initgPty = new PaymentActivation.InitgPty();
@@ -40,7 +41,12 @@ public class PaymentActivationXmlGenerator {
         pmtInf.setPmtMtd("TRF");
 
         PaymentActivation.ReqdExctnDt reqdExctnDt = new PaymentActivation.ReqdExctnDt();
-        reqdExctnDt.setDtTm(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")));
+        String execDt = requestDto.getRequestedExecutionDate();
+        if (execDt != null && !execDt.trim().isEmpty()) {
+            reqdExctnDt.setDtTm(execDt.contains("T") ? execDt : execDt + "T00:00:00+01:00");
+        } else {
+            reqdExctnDt.setDtTm(nowWat.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")));
+        }
         pmtInf.setReqdExctnDt(reqdExctnDt);
 
         PaymentActivation.Dbtr dbtr = new PaymentActivation.Dbtr();
@@ -76,7 +82,7 @@ public class PaymentActivationXmlGenerator {
         PaymentActivation.Amt amt = new PaymentActivation.Amt();
         PaymentActivation.InstdAmt instdAmt = new PaymentActivation.InstdAmt();
         instdAmt.setCcy(currency);
-        instdAmt.setValue(requestDto.getAmount() != null ? requestDto.getAmount() : new BigDecimal("2500.00"));
+        instdAmt.setValue(requestDto.getAmount() != null ? requestDto.getAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("2500.00"));
         amt.setInstdAmt(instdAmt);
         cdtTrfTx.setAmt(amt);
 

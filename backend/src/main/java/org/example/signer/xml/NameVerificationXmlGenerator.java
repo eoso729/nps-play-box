@@ -29,9 +29,8 @@ public class NameVerificationXmlGenerator {
         NameVerification.Acct acct = new NameVerification.Acct();
         NameVerification.AcctId acctId = new NameVerification.AcctId();
 
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-        String formattedDateTime = now.format(dateTimeFormatter);
+        String formattedDateTime = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos"))
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
 
         cretrPty.setNm(requestDto.getSendingPartyName());
         cretr.setPty(cretrPty);

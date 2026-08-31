@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface XmlPaneProps {
   title: string;
@@ -91,6 +92,7 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
   isLoading,
   footer,
 }) => {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const chip = STATUS_CHIP_STYLES[statusVariant] || STATUS_CHIP_STYLES.idle;
   const displayStatusText = statusText || chip.text;
@@ -115,13 +117,21 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
     URL.revokeObjectURL(url);
   }, [xml, title]);
 
+  const handleHealthCheck = useCallback(() => {
+    if (xml) {
+      localStorage.setItem('nps_inspector_xml', xml);
+      localStorage.setItem('nps_inspector_title', title);
+      navigate('/inspector', { state: { xml, title } });
+    }
+  }, [xml, title, navigate]);
+
   const handleCompare = useCallback(() => {
     if (xml) {
       localStorage.setItem('nps_diff_source_xml', xml);
       localStorage.setItem('nps_diff_source_title', title);
-      window.open('/diff', '_blank');
+      navigate('/diff', { state: { xml, title } });
     }
-  }, [xml, title]);
+  }, [xml, title, navigate]);
 
   const lines = xml ? xml.split('\n') : [];
 
@@ -206,13 +216,22 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
           Export XML
         </button>
         {xml && (
-          <button
-            type="button"
-            onClick={handleCompare}
-            className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold cursor-pointer hover:border-[#22a05a] hover:text-[#15803d] transition-colors animate-pulse"
-          >
-            Compare XML
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={handleHealthCheck}
+              className="flex items-center gap-1.5 border border-[#c4ebd3] bg-[#e6f6ec] text-[#15803d] px-2.5 py-1.5 rounded-[6px] text-[11px] font-bold cursor-pointer hover:bg-[#d2efe0] transition-colors"
+            >
+              <span>🔍</span> Health Check
+            </button>
+            <button
+              type="button"
+              onClick={handleCompare}
+              className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold cursor-pointer hover:border-[#22a05a] hover:text-[#15803d] transition-colors"
+            >
+              Compare XML
+            </button>
+          </>
         )}
       </div>
     </div>
