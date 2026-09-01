@@ -453,8 +453,10 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creation DateTime", "IdVrfctnReq.Assgnmt.CreDtTm", "//Assgnmt/CreDtTm", "2025-08-29T15:05:04.954+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp in UTC+1"),
                 new IsoFieldDef("Creator Name", "IdVrfctnReq.Assgnmt.Cretr.Pty.Nm", "//Cretr/Pty/Nm", "Crystal Bank", "String", 100, true, false, null, "Creator Name"),
                 new IsoFieldDef("Assigner Name", "IdVrfctnReq.Assgnmt.Assgnr.Pty.Nm", "//Assgnr/Pty/Nm", "Oso International Bank", "String", 100, true, false, null, "Assigner Name"),
-                new IsoFieldDef("Assigner Agent Member ID", "IdVrfctnReq.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgnr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999999", "String", 6, true, false, "MEMBER_ID", "Assigner Member ID"),
-                new IsoFieldDef("Assignee Agent Member ID", "IdVrfctnReq.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgne/Agt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 6, true, false, "MEMBER_ID", "Assignee Member ID"),
+                new IsoFieldDef("Assigner Agent BICFI", "IdVrfctnReq.Assgnmt.Assgnr.Agt.FinInstnId.BICFI", "//Assgnr/Agt/FinInstnId/BICFI", "999999", "String", 11, false, false, "INSTITUTION_CODE", "Assigner BICFI / Source ID"),
+                new IsoFieldDef("Assigner Agent Member ID", "IdVrfctnReq.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgnr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999999", "String", 6, false, false, "MEMBER_ID", "Assigner Member ID"),
+                new IsoFieldDef("Assignee Agent BICFI", "IdVrfctnReq.Assgnmt.Assgne.Agt.FinInstnId.BICFI", "//Assgne/Agt/FinInstnId/BICFI", "999012", "String", 11, false, false, "INSTITUTION_CODE", "Assignee BICFI / Beneficiary ID"),
+                new IsoFieldDef("Assignee Agent Member ID", "IdVrfctnReq.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgne/Agt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 6, false, false, "MEMBER_ID", "Assignee Member ID"),
                 new IsoFieldDef("Verification ID", "IdVrfctnReq.Vrfctn.Id", "//Vrfctn/Id", "99999920250829150504887742643314693", "String", 35, true, false, "NPS_ID", "Verification ID"),
                 new IsoFieldDef("Party Name (to be verified)", "IdVrfctnReq.Vrfctn.PtyAndAcctId.Pty.Nm", "//Vrfctn/PtyAndAcctId/Pty/Nm", "Israel Kayole", "String", 100, true, false, null, "Party Name"),
                 new IsoFieldDef("Account Number (IBAN)", "IdVrfctnReq.Vrfctn.PtyAndAcctId.Acct.Id.IBAN", "//Vrfctn/PtyAndAcctId/Acct/Id/IBAN", "1029384756", "String", 10, true, false, "NUBAN", "10-digit NUBAN")
@@ -470,10 +472,10 @@ public class IsoMessageRegistry {
                             <Cretr><Pty><Nm>Crystal Bank</Nm></Pty></Cretr>
                             <Assgnr>
                                 <Pty><Nm>Oso International Bank</Nm></Pty>
-                                <Agt><FinInstnId><ClrSysMmbId><MmbId>999999</MmbId></ClrSysMmbId></FinInstnId></Agt>
+                                <Agt><FinInstnId><BICFI>999999</BICFI><ClrSysMmbId><MmbId>999999</MmbId></ClrSysMmbId></FinInstnId></Agt>
                             </Assgnr>
                             <Assgne>
-                                <Agt><FinInstnId><ClrSysMmbId><MmbId>999012</MmbId></ClrSysMmbId></FinInstnId></Agt>
+                                <Agt><FinInstnId><BICFI>999012</BICFI><ClrSysMmbId><MmbId>999012</MmbId></ClrSysMmbId></FinInstnId></Agt>
                             </Assgne>
                         </Assgnmt>
                         <Vrfctn>

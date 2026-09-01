@@ -595,4 +595,61 @@ public class XmlValidationEngineTest {
         assertEquals(100, genReport.getHealthScore());
         assertTrue(genReport.getIssues().isEmpty());
     }
+
+    @Test
+    public void testAcmt023VerificationIdMismatchDetectedAndAutoFixed() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("acmt.023");
+        String sampleXml = def.getSampleXml();
+
+        // Alter Vrfctn.Id to a different ID than Assgnmt.MsgId
+        String mismatchXml = sampleXml.replace(
+                "<Id>99999920250829150504887742643314693</Id>",
+                "<Id>99999920250829150504887742649999999</Id>"
+        );
+
+        // 1. Validation should fail with VERIFICATION_ID_MISMATCH error
+        ValidationReportDto report = validationEngine.validate(mismatchXml, "acmt.023");
+        assertFalse(report.isValid(), "Validation should fail when Vrfctn.Id != MsgId");
+        assertTrue(report.getIssues().stream().anyMatch(i -> "VERIFICATION_ID_MISMATCH".equals(i.getRuleCode())),
+                "Should report VERIFICATION_ID_MISMATCH");
+
+        // 2. Auto-fix should synchronize Vrfctn.Id to match Assgnmt.MsgId
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchXml)
+                .messageType("acmt.023")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getValidationReport().isValid());
+        assertTrue(fixResp.getFixedXml().contains("<Id>99999920250829150504887742643314693</Id>"));
+    }
+
+    @Test
+    public void testAcmt023BicfiValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("acmt.023");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Invalid short numeric BICFI (e.g. 999 instead of 6 digits)
+        String shortBicfiXml = sampleXml.replace("<BICFI>999999</BICFI>", "<BICFI>999</BICFI>");
+        ValidationReportDto shortReport = validationEngine.validate(shortBicfiXml, "acmt.023");
+        assertFalse(shortReport.isValid());
+        assertTrue(shortReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("BICFI") || "FIELD_LENGTH_MISMATCH".equals(i.getRuleCode())));
+
+        // 2. Assigner BICFI mismatch with MmbId (e.g. BICFI 999001 vs MmbId 999999)
+        String mismatchBicfiXml = sampleXml.replace("<BICFI>999999</BICFI>", "<BICFI>999001</BICFI>");
+        ValidationReportDto mismatchReport = validationEngine.validate(mismatchBicfiXml, "acmt.023");
+        assertTrue(mismatchReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode()) && i.getMessage().contains("Assigner Agent BICFI")));
+
+        // 3. Auto-fix should format and synchronize BICFI with MmbId
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(shortBicfiXml)
+                .messageType("acmt.023")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().contains("<BICFI>000999</BICFI>") || fixResp.getFixedXml().contains("<BICFI>999999</BICFI>"));
+        assertTrue(fixResp.getValidationReport().isValid());
+    }
 }

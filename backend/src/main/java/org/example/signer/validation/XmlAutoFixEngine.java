@@ -124,7 +124,12 @@ public class XmlAutoFixEngine {
                 injectSupplementaryDataIfNeeded(doc, def, fixesApplied);
             }
 
-            // 4. Format and Pretty Print XML (with DOM whitespace stripping to prevent extra indentation/spaces)
+            // 5. Cross-field synchronization (e.g. Vrfctn.Id to MsgId in acmt.023)
+            if (request.isFixIds()) {
+                fixAcmtCrossFieldSync(doc, def, fixesApplied);
+            }
+
+            // 6. Format and Pretty Print XML (with DOM whitespace stripping to prevent extra indentation/spaces)
             String fixedXml = prettyPrint(doc);
             fixesApplied.add("Formatted XML hierarchy with clean 4-space indentation.");
 
@@ -305,6 +310,24 @@ public class XmlAutoFixEngine {
                     element.setTextContent(fixedMmb);
                     fixesApplied.add("Injected 6-digit Institution Code '" + fixedMmb + "' into empty <" + tagName + ">.");
                     text = fixedMmb;
+                }
+            }
+
+            // H2-b. BICFI (6-digit numeric institution code or 8/11 alphanumeric BIC)
+            if ("BICFI".equalsIgnoreCase(tagName) || "BIC".equalsIgnoreCase(tagName)) {
+                String digitsOnly = text.replaceAll("\\D", "");
+                if (!digitsOnly.isEmpty() && digitsOnly.length() == text.length()) {
+                    if (digitsOnly.length() > 6) {
+                        String fixedBic = digitsOnly.substring(0, 6);
+                        element.setTextContent(fixedBic);
+                        fixesApplied.add("Truncated <" + tagName + "> to 6-digit Institution Code: '" + fixedBic + "'");
+                        text = fixedBic;
+                    } else if (digitsOnly.length() < 6 && request.isFixIds()) {
+                        String fixedBic = String.format("%06d", Long.parseLong(digitsOnly));
+                        element.setTextContent(fixedBic);
+                        fixesApplied.add("Formatted <" + tagName + "> with leading zeros to 6-digit Institution Code: '" + fixedBic + "'");
+                        text = fixedBic;
+                    }
                 }
             }
 
@@ -696,5 +719,63 @@ public class XmlAutoFixEngine {
             fixesApplied.add("Inserted default ISO namespace attribute into <Document>.");
         }
         return fixed;
+    }
+
+    private void fixAcmtCrossFieldSync(Document doc, IsoMessageDefinition def, List<String> fixesApplied) {
+        if (def == null || doc == null) return;
+        String key = def.getKey().toLowerCase();
+        if (key.contains("acmt.023")) {
+            // 1. Synchronize Vrfctn.Id with Assgnmt.MsgId
+            NodeList msgIdNodes = doc.getElementsByTagName("MsgId");
+            if (msgIdNodes.getLength() == 0) msgIdNodes = doc.getElementsByTagNameNS("*", "MsgId");
+            NodeList vrfctnNodes = doc.getElementsByTagName("Vrfctn");
+            if (vrfctnNodes.getLength() == 0) vrfctnNodes = doc.getElementsByTagNameNS("*", "Vrfctn");
+
+            if (msgIdNodes.getLength() > 0 && vrfctnNodes.getLength() > 0) {
+                String msgIdVal = msgIdNodes.item(0).getTextContent();
+                if (msgIdVal != null && !msgIdVal.trim().isEmpty()) {
+                    msgIdVal = msgIdVal.trim();
+                    Element vrfctn = (Element) vrfctnNodes.item(0);
+                    NodeList idList = vrfctn.getElementsByTagName("Id");
+                    if (idList.getLength() > 0) {
+                        Element idElem = (Element) idList.item(0);
+                        if (!msgIdVal.equals(idElem.getTextContent())) {
+                            idElem.setTextContent(msgIdVal);
+                            fixesApplied.add("Synchronized Verification ID <Vrfctn><Id> to match Assignment Message ID (" + msgIdVal + ").");
+                        }
+                    }
+                }
+            }
+
+            // 2. Synchronize Assgnr BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "Assgnr", fixesApplied);
+            // 3. Synchronize Assgne BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "Assgne", fixesApplied);
+        }
+    }
+
+    private void syncAgentBicfiWithMmbId(Document doc, String agentRole, List<String> fixesApplied) {
+        NodeList agentNodes = doc.getElementsByTagName(agentRole);
+        if (agentNodes.getLength() == 0) agentNodes = doc.getElementsByTagNameNS("*", agentRole);
+        if (agentNodes.getLength() > 0) {
+            Element agent = (Element) agentNodes.item(0);
+            NodeList mmbList = agent.getElementsByTagName("MmbId");
+            if (mmbList.getLength() == 0) mmbList = agent.getElementsByTagNameNS("*", "MmbId");
+            NodeList bicList = agent.getElementsByTagName("BICFI");
+            if (bicList.getLength() == 0) bicList = agent.getElementsByTagNameNS("*", "BICFI");
+
+            if (mmbList.getLength() > 0 && bicList.getLength() > 0) {
+                String mmbVal = mmbList.item(0).getTextContent();
+                Element bicElem = (Element) bicList.item(0);
+                String bicVal = bicElem.getTextContent();
+                if (mmbVal != null && !mmbVal.trim().isEmpty()) {
+                    mmbVal = mmbVal.trim();
+                    if (bicVal == null || bicVal.trim().isEmpty() || (bicVal.trim().matches("\\d+") && !bicVal.trim().equals(mmbVal))) {
+                        bicElem.setTextContent(mmbVal);
+                        fixesApplied.add("Synchronized " + agentRole + " BICFI to match Member ID (" + mmbVal + ").");
+                    }
+                }
+            }
+        }
     }
 }

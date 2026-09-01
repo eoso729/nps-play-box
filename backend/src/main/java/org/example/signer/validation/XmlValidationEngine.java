@@ -1134,6 +1134,48 @@ public class XmlValidationEngine {
                 }
             }
 
+            // G2. Institution BICFI Format Check (6-digit numeric institution code or 8/11-character BIC)
+            if ("BICFI".equalsIgnoreCase(tagName) || "BIC".equalsIgnoreCase(tagName)) {
+                boolean isNumeric = text.matches("\\d+");
+                if (isNumeric) {
+                    if (!NibssValidationRules.INSTITUTION_CODE_PATTERN.matcher(text).matches()) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-BICFI-NUMERIC-" + line)
+                                .severity("ERROR")
+                                .category("FIELD_LENGTH")
+                                .xpath(getElementXPath(element))
+                                .fieldPath(path)
+                                .fieldName("Institution BICFI")
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text + " (" + text.length() + " chars)")
+                                .expected("Exactly 6 numeric digits (CBN/NIBSS Institution Code)")
+                                .message("Numeric BICFI <" + tagName + "> must be exactly 6 numeric digits.")
+                                .ruleCode("FIELD_LENGTH_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    }
+                } else {
+                    if (text.length() < 6 || text.length() > 11) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-BICFI-LEN-" + line)
+                                .severity("ERROR")
+                                .category("FIELD_LENGTH")
+                                .xpath(getElementXPath(element))
+                                .fieldPath(path)
+                                .fieldName("Institution BICFI")
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text + " (" + text.length() + " chars)")
+                                .expected("Between 6 and 11 characters for BICFI")
+                                .message("Alphanumeric BICFI <" + tagName + "> must be between 6 and 11 characters.")
+                                .ruleCode("FIELD_LENGTH_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    }
+                }
+            }
+
             // H. Session ID Check
             if ("SessionID".equalsIgnoreCase(tagName) || "SessionId".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.SESSION_ID_PATTERN.matcher(text).matches()) {
@@ -1568,6 +1610,135 @@ public class XmlValidationEngine {
                 }
             }
         }
+
+        // 5. Cross-validate Vrfctn.Id must match Assgnmt.MsgId for acmt.023
+        String key = def != null ? def.getKey().toLowerCase() : "";
+        if (key.contains("acmt.023")) {
+            List<Element> msgIdList = findElementsByPath(doc, "Assgnmt.MsgId");
+            List<Element> vrfctnIdList = findElementsByPath(doc, "Vrfctn.Id");
+            if (!msgIdList.isEmpty() && !vrfctnIdList.isEmpty()) {
+                String msgIdVal = msgIdList.get(0).getTextContent() != null ? msgIdList.get(0).getTextContent().trim() : "";
+                Element vrfctnIdElem = vrfctnIdList.get(0);
+                String vrfctnIdVal = vrfctnIdElem.getTextContent() != null ? vrfctnIdElem.getTextContent().trim() : "";
+
+                if (!msgIdVal.isEmpty() && !vrfctnIdVal.isEmpty()) {
+                    if (!msgIdVal.equals(vrfctnIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-VRFCTN-ID-MISMATCH-" + getNodeLine(vrfctnIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(vrfctnIdElem))
+                                .fieldPath("IdVrfctnReq.Vrfctn.Id")
+                                .fieldName("Verification ID")
+                                .lineNumber(getNodeLine(vrfctnIdElem))
+                                .columnNumber(getNodeCol(vrfctnIdElem))
+                                .currentValue(vrfctnIdVal)
+                                .expected(msgIdVal)
+                                .message("Verification ID <Vrfctn><Id> ('" + vrfctnIdVal + "') must be identical to Assignment Message ID <Assgnmt><MsgId> ('" + msgIdVal + "').")
+                                .ruleCode("VERIFICATION_ID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Verification ID <Vrfctn><Id> matches Assignment Message ID <Assgnmt><MsgId> (" + msgIdVal + ")");
+                    }
+                }
+            }
+        }
+
+        // 6. Cross-validate Agent FinInstnId containers in acmt messages
+        if (key.contains("acmt.023") || key.contains("acmt.024")) {
+            validateAcmtAgentFinInstnId(doc, "Assgnr", issues, passedRules);
+            validateAcmtAgentFinInstnId(doc, "Assgne", issues, passedRules);
+        }
+    }
+
+    private void validateAcmtAgentFinInstnId(Document doc, String agentRole, List<ValidationIssueDto> issues, List<String> passedRules) {
+        String roleName = "Assgnr".equalsIgnoreCase(agentRole) ? "Assigner" : "Assgne".equalsIgnoreCase(agentRole) ? "Assignee" : agentRole;
+        List<Element> finInstnIdElems = findElementsByPath(doc, agentRole + ".Agt.FinInstnId");
+        if (finInstnIdElems.isEmpty()) {
+            finInstnIdElems = findElementsByPath(doc, "Assgnmt." + agentRole + ".Agt.FinInstnId");
+        }
+        for (Element finInstnId : finInstnIdElems) {
+            String bicfi = findChildText(finInstnId, "BICFI");
+            String mmbId = findChildText(finInstnId, "MmbId");
+            if (mmbId == null || mmbId.isEmpty()) {
+                Element clrSys = findChildElement(finInstnId, "ClrSysMmbId");
+                if (clrSys != null) {
+                    mmbId = findChildText(clrSys, "MmbId");
+                }
+            }
+
+            if ((bicfi == null || bicfi.isEmpty()) && (mmbId == null || mmbId.isEmpty())) {
+                issues.add(ValidationIssueDto.builder()
+                        .id("ERR-" + agentRole.toUpperCase() + "-INST-MISSING-" + getNodeLine(finInstnId))
+                        .severity("ERROR")
+                        .category("SCHEMA_STRUCTURE")
+                        .xpath(getElementXPath(finInstnId))
+                        .fieldPath(agentRole + ".Agt.FinInstnId")
+                        .fieldName(roleName + " Agent Financial Institution Identifier")
+                        .lineNumber(getNodeLine(finInstnId))
+                        .columnNumber(getNodeCol(finInstnId))
+                        .currentValue("[MISSING]")
+                        .expected("<BICFI> and/or <ClrSysMmbId><MmbId>")
+                        .message(roleName + " Agent Financial Institution Identifier (<BICFI> or <ClrSysMmbId><MmbId>) is missing.")
+                        .ruleCode("MANDATORY_FIELD_MISSING")
+                        .autoFixable(true)
+                        .build());
+            } else {
+                passedRules.add(roleName + " Agent Financial Institution Identifier is present");
+            }
+
+            if (bicfi != null && !bicfi.isEmpty() && mmbId != null && !mmbId.isEmpty()) {
+                if (bicfi.matches("\\d{6}") && mmbId.matches("\\d{6}") && !bicfi.equals(mmbId)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("WARN-" + agentRole.toUpperCase() + "-BICFI-MISMATCH-" + getNodeLine(finInstnId))
+                            .severity("WARNING")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(finInstnId) + "/BICFI")
+                            .fieldPath(agentRole + ".Agt.FinInstnId.BICFI")
+                            .fieldName(roleName + " Agent BICFI")
+                            .lineNumber(getNodeLine(finInstnId))
+                            .columnNumber(getNodeCol(finInstnId))
+                            .currentValue(bicfi)
+                            .expected(mmbId)
+                            .message(roleName + " Agent BICFI ('" + bicfi + "') does not match Member ID ('" + mmbId + "').")
+                            .ruleCode("INSTITUTION_CODE_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                } else if (bicfi.equals(mmbId)) {
+                    passedRules.add(roleName + " Agent BICFI matches Member ID (" + bicfi + ")");
+                }
+            }
+        }
+    }
+
+    private static String findChildText(Element parent, String childTag) {
+        if (parent == null || childTag == null) return null;
+        NodeList list = parent.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+            if (list.item(i) instanceof Element el) {
+                String name = el.getLocalName() != null ? el.getLocalName() : el.getTagName();
+                if (childTag.equalsIgnoreCase(name)) {
+                    String t = el.getTextContent();
+                    return t != null ? t.trim() : "";
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Element findChildElement(Element parent, String childTag) {
+        if (parent == null || childTag == null) return null;
+        NodeList list = parent.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+            if (list.item(i) instanceof Element el) {
+                String name = el.getLocalName() != null ? el.getLocalName() : el.getTagName();
+                if (childTag.equalsIgnoreCase(name)) {
+                    return el;
+                }
+            }
+        }
+        return null;
     }
 
     private static String findFirstElementText(Document doc, String... paths) {
@@ -1603,7 +1774,10 @@ public class XmlValidationEngine {
         }
         if (key.contains("acmt.023") || key.contains("acmt.024")) {
             return findFirstElementText(doc,
-                    "Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId"
+                    "Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                    "Assgnmt.Assgnr.Agt.FinInstnId.BICFI",
+                    "OrgnlAssgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                    "OrgnlAssgnmt.Assgnr.Agt.FinInstnId.BICFI"
             );
         }
         if (key.contains("camt.060")) {
@@ -1649,7 +1823,10 @@ public class XmlValidationEngine {
         }
         if (key.contains("acmt.023") || key.contains("acmt.024")) {
             return findFirstElementText(doc,
-                    "Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId"
+                    "Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                    "Assgnmt.Assgne.Agt.FinInstnId.BICFI",
+                    "OrgnlAssgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                    "OrgnlAssgnmt.Assgne.Agt.FinInstnId.BICFI"
             );
         }
         if (key.contains("camt.060")) {
