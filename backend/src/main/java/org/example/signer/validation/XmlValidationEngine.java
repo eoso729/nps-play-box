@@ -1905,10 +1905,46 @@ public class XmlValidationEngine {
             }
         }
 
-        // 6. Cross-validate Agent FinInstnId containers in acmt messages
+        // 5d. Cross-validate pacs.028 specific rules (StsReqId == MsgId)
+        if (key.contains("pacs.028")) {
+            List<Element> msgIdList = findElementsByPath(doc, "GrpHdr.MsgId");
+            List<Element> stsReqIdList = findElementsByPath(doc, "TxInf.StsReqId");
+            if (!msgIdList.isEmpty() && !stsReqIdList.isEmpty()) {
+                String msgIdVal = msgIdList.get(0).getTextContent() != null ? msgIdList.get(0).getTextContent().trim() : "";
+                Element stsReqIdElem = stsReqIdList.get(0);
+                String stsReqIdVal = stsReqIdElem.getTextContent() != null ? stsReqIdElem.getTextContent().trim() : "";
+
+                if (!msgIdVal.isEmpty() && !stsReqIdVal.isEmpty()) {
+                    if (!msgIdVal.equals(stsReqIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-STSREQID-MISMATCH-" + getNodeLine(stsReqIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(stsReqIdElem))
+                                .fieldPath("FIToFIPmtStsReq.TxInf.StsReqId")
+                                .fieldName("Status Request ID")
+                                .lineNumber(getNodeLine(stsReqIdElem))
+                                .columnNumber(getNodeCol(stsReqIdElem))
+                                .currentValue(stsReqIdVal)
+                                .expected(msgIdVal)
+                                .message("Status Request ID <TxInf><StsReqId> ('" + stsReqIdVal + "') must be identical to Message ID <GrpHdr><MsgId> ('" + msgIdVal + "').")
+                                .ruleCode("STATUS_REQUEST_ID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Status Request ID <TxInf><StsReqId> matches Message ID <GrpHdr><MsgId> (" + msgIdVal + ")");
+                    }
+                }
+            }
+        }
+
+        // 6. Cross-validate Agent FinInstnId containers in acmt and pacs messages
         if (key.contains("acmt.023") || key.contains("acmt.024")) {
             validateAcmtAgentFinInstnId(doc, "Assgnr", issues, passedRules);
             validateAcmtAgentFinInstnId(doc, "Assgne", issues, passedRules);
+        } else if (key.contains("pacs.028")) {
+            validateAcmtAgentFinInstnId(doc, "InstgAgt", issues, passedRules);
+            validateAcmtAgentFinInstnId(doc, "InstdAgt", issues, passedRules);
         }
     }
 

@@ -753,4 +753,36 @@ public class XmlValidationEngineTest {
         assertFalse(nameEnquiryReport.isValid());
         assertTrue(nameEnquiryReport.getIssues().stream().anyMatch(i -> "EMPTY_TAG_NOT_ALLOWED".equals(i.getRuleCode()) && i.getMessage().contains("NameEnquiryMsgId")));
     }
+
+    @Test
+    public void testPacs028ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.028");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pacs.028");
+        assertTrue(report.isValid(), "pacs.028 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched TxInf.StsReqId vs GrpHdr.MsgId
+        String mismatchXml = sampleXml.replace(
+                "<StsReqId>99999920250829174941709740087747292</StsReqId>",
+                "<StsReqId>99999920250829174941709740087747000</StsReqId>"
+        );
+        ValidationReportDto mismatchReport = validationEngine.validate(mismatchXml, "pacs.028");
+        assertFalse(mismatchReport.isValid());
+        assertTrue(mismatchReport.getIssues().stream().anyMatch(i -> "STATUS_REQUEST_ID_MISMATCH".equals(i.getRuleCode())),
+                "Should report STATUS_REQUEST_ID_MISMATCH when StsReqId != MsgId");
+
+        // 3. Auto-fix repairs StsReqId
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchXml)
+                .messageType("pacs.028")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().contains("<StsReqId>99999920250829174941709740087747292</StsReqId>"));
+        assertTrue(fixResp.getValidationReport().isValid());
+    }
 }

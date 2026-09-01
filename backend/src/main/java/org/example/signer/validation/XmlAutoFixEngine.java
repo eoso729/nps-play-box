@@ -785,6 +785,30 @@ public class XmlAutoFixEngine {
             // 3. Synchronize Assgne BICFI with MmbId if numeric
             syncAgentBicfiWithMmbId(doc, "Assgne", fixesApplied);
         }
+
+        if (key.contains("pacs.028")) {
+            // 1. Synchronize TxInf.StsReqId with GrpHdr.MsgId
+            NodeList msgIdNodes = doc.getElementsByTagName("MsgId");
+            if (msgIdNodes.getLength() == 0) msgIdNodes = doc.getElementsByTagNameNS("*", "MsgId");
+            NodeList stsReqIdNodes = doc.getElementsByTagName("StsReqId");
+            if (stsReqIdNodes.getLength() == 0) stsReqIdNodes = doc.getElementsByTagNameNS("*", "StsReqId");
+
+            if (msgIdNodes.getLength() > 0 && stsReqIdNodes.getLength() > 0) {
+                String msgIdVal = msgIdNodes.item(0).getTextContent();
+                if (msgIdVal != null && !msgIdVal.trim().isEmpty()) {
+                    msgIdVal = msgIdVal.trim();
+                    Element stsReqIdElem = (Element) stsReqIdNodes.item(0);
+                    if (!msgIdVal.equals(stsReqIdElem.getTextContent())) {
+                        stsReqIdElem.setTextContent(msgIdVal);
+                        fixesApplied.add("Synchronized Status Request ID <TxInf><StsReqId> to match Message ID (" + msgIdVal + ").");
+                    }
+                }
+            }
+
+            // 2. Synchronize InstgAgt and InstdAgt BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
+        }
     }
 
     private void syncAgentBicfiWithMmbId(Document doc, String agentRole, List<String> fixesApplied) {

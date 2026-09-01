@@ -390,38 +390,46 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Instructing Agent Member ID", "FIToFIPmtStsReq.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Instructing Agent Member ID"),
                 new IsoFieldDef("Original Message ID", "FIToFIPmtStsReq.OrgnlGrpInf.OrgnlMsgId", "//OrgnlGrpInf/OrgnlMsgId", "99905820250802112346977904433112345", "String", 35, true, false, "NPS_ID", "Original message ID"),
                 new IsoFieldDef("Original Message Name ID", "FIToFIPmtStsReq.OrgnlGrpInf.OrgnlMsgNmId", "//OrgnlGrpInf/OrgnlMsgNmId", "pacs.008.001.12", "String", 35, true, false, null, "Original message name"),
-                new IsoFieldDef("Original Creation Date Time", "FIToFIPmtStsReq.OrgnlGrpInf.OrgnlCreDtTm", "//OrgnlGrpInf/OrgnlCreDtTm", "2025-02-25T00:02:35.072+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
-                new IsoFieldDef("Status Request ID", "FIToFIPmtStsReq.TxInf.StsReqId", "//TxInf/StsReqId", "99999920250829174941709740087747292", "String", 35, true, false, "NPS_ID", "Status request ID"),
+                new IsoFieldDef("Original Creation Date Time", "FIToFIPmtStsReq.OrgnlGrpInf.OrgnlCreDtTm", "//OrgnlGrpInf/OrgnlCreDtTm", "2025-02-25T00:02:35.072Z", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
+                new IsoFieldDef("Status Request ID", "FIToFIPmtStsReq.TxInf.StsReqId", "//TxInf/StsReqId", "99999920250829174941709740087747292", "String", 35, true, false, "NPS_ID", "Status request ID (Same as MsgId)"),
                 new IsoFieldDef("Original Transaction ID", "FIToFIPmtStsReq.TxInf.OrgnlTxId", "//TxInf/OrgnlTxId", "99905820250802112346977904433112345", "String", 35, true, false, "NPS_ID", "Original Transaction ID"),
+                new IsoFieldDef("Tx Instructing Agent BICFI", "FIToFIPmtStsReq.TxInf.InstgAgt.FinInstnId.BICFI", "//TxInf/InstgAgt/FinInstnId/BICFI", "999057", "String", 11, false, false, "INSTITUTION_CODE", "Tx Instructing Agent BICFI"),
                 new IsoFieldDef("Tx Instructing Agent Member ID", "FIToFIPmtStsReq.TxInf.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Tx Instructing Agent Member ID"),
+                new IsoFieldDef("Tx Instructed Agent BICFI", "FIToFIPmtStsReq.TxInf.InstdAgt.FinInstnId.BICFI", "//TxInf/InstdAgt/FinInstnId/BICFI", "999012", "String", 11, false, false, "INSTITUTION_CODE", "Tx Instructed Agent BICFI"),
                 new IsoFieldDef("Tx Instructed Agent Member ID", "FIToFIPmtStsReq.TxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInf/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 6, true, false, "MEMBER_ID", "Tx Instructed Agent Member ID"),
                 new IsoFieldDef("Original Transaction Settlement Date", "FIToFIPmtStsReq.TxInf.OrgnlTxRef.IntrBkSttlmDt", "//OrgnlTxRef/IntrBkSttlmDt", "2025-02-25", "Date", 10, true, false, "DATE", "Settlement date")
         );
 
         String sampleXml = """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.028.001.05">
+                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.028.001.06">
                     <FIToFIPmtStsReq>
                         <GrpHdr>
                             <MsgId>99999920250829174941709740087747292</MsgId>
                             <CreDtTm>2025-08-18T09:05:46.973+01:00</CreDtTm>
                             <InstgAgt>
-                                <FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId>
+                                <FinInstnId><ClrSysMmbId><MmbId>999999</MmbId></ClrSysMmbId></FinInstnId>
                             </InstgAgt>
                         </GrpHdr>
                         <OrgnlGrpInf>
                             <OrgnlMsgId>99905820250802112346977904433112345</OrgnlMsgId>
                             <OrgnlMsgNmId>pacs.008.001.12</OrgnlMsgNmId>
-                            <OrgnlCreDtTm>2025-02-25T00:02:35.072+01:00</OrgnlCreDtTm>
+                            <OrgnlCreDtTm>2025-02-25T00:02:35.072Z</OrgnlCreDtTm>
                         </OrgnlGrpInf>
                         <TxInf>
                             <StsReqId>99999920250829174941709740087747292</StsReqId>
                             <OrgnlTxId>99905820250802112346977904433112345</OrgnlTxId>
                             <InstgAgt>
-                                <FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId>
+                                <FinInstnId>
+                                    <BICFI>999999</BICFI>
+                                    <ClrSysMmbId><MmbId>999999</MmbId></ClrSysMmbId>
+                                </FinInstnId>
                             </InstgAgt>
                             <InstdAgt>
-                                <FinInstnId><ClrSysMmbId><MmbId>999012</MmbId></ClrSysMmbId></FinInstnId>
+                                <FinInstnId>
+                                    <BICFI>999012</BICFI>
+                                    <ClrSysMmbId><MmbId>999012</MmbId></ClrSysMmbId>
+                                </FinInstnId>
                             </InstdAgt>
                             <OrgnlTxRef>
                                 <IntrBkSttlmDt>2025-02-25</IntrBkSttlmDt>
@@ -434,11 +442,11 @@ public class IsoMessageRegistry {
         register(IsoMessageDefinition.builder()
                 .key("pacs.028")
                 .name("Payment Status Request")
-                .isoCode("pacs.028.001.05")
+                .isoCode("pacs.028.001.06")
                 .category("Credit Transfer & Returns")
                 .rootElement("Document")
                 .mainElement("FIToFIPmtStsReq")
-                .namespace("urn:iso:std:iso:20022:tech:xsd:pacs.028.001.05")
+                .namespace("urn:iso:std:iso:20022:tech:xsd:pacs.028.001.06")
                 .fields(fields)
                 .sampleXml(sampleXml)
                 .build());
