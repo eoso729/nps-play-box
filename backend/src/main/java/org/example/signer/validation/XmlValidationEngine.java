@@ -1936,25 +1936,77 @@ public class XmlValidationEngine {
                     }
                 }
             }
+
+            // Check OrgnlTxId == OrgnlMsgId for single transfer inquiry
+            List<Element> orgnlMsgIdList = findElementsByPath(doc, "OrgnlGrpInf.OrgnlMsgId");
+            List<Element> orgnlTxIdList = findElementsByPath(doc, "TxInf.OrgnlTxId");
+            if (!orgnlMsgIdList.isEmpty() && !orgnlTxIdList.isEmpty()) {
+                String orgnlMsgIdVal = orgnlMsgIdList.get(0).getTextContent() != null ? orgnlMsgIdList.get(0).getTextContent().trim() : "";
+                Element orgnlTxIdElem = orgnlTxIdList.get(0);
+                String orgnlTxIdVal = orgnlTxIdElem.getTextContent() != null ? orgnlTxIdElem.getTextContent().trim() : "";
+
+                if (!orgnlMsgIdVal.isEmpty() && !orgnlTxIdVal.isEmpty()) {
+                    if (!orgnlMsgIdVal.equals(orgnlTxIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ORGNL-TXID-MISMATCH-" + getNodeLine(orgnlTxIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(orgnlTxIdElem))
+                                .fieldPath("FIToFIPmtStsReq.TxInf.OrgnlTxId")
+                                .fieldName("Original Transaction ID")
+                                .lineNumber(getNodeLine(orgnlTxIdElem))
+                                .columnNumber(getNodeCol(orgnlTxIdElem))
+                                .currentValue(orgnlTxIdVal)
+                                .expected(orgnlMsgIdVal)
+                                .message("Original Transaction ID <TxInf><OrgnlTxId> ('" + orgnlTxIdVal + "') does not match Original Message ID <OrgnlGrpInf><OrgnlMsgId> ('" + orgnlMsgIdVal + "'). For single direct credit status inquiries, OrgnlTxId must match OrgnlMsgId.")
+                                .ruleCode("ORIGINAL_TXID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Original Transaction ID <TxInf><OrgnlTxId> matches Original Message ID <OrgnlGrpInf><OrgnlMsgId> (" + orgnlMsgIdVal + ")");
+                    }
+                }
+            }
         }
 
-        // 6. Cross-validate Agent FinInstnId containers in acmt and pacs messages
-        if (key.contains("acmt.023") || key.contains("acmt.024")) {
-            validateAcmtAgentFinInstnId(doc, "Assgnr", issues, passedRules);
-            validateAcmtAgentFinInstnId(doc, "Assgne", issues, passedRules);
-        } else if (key.contains("pacs.028")) {
-            validateAcmtAgentFinInstnId(doc, "InstgAgt", issues, passedRules);
-            validateAcmtAgentFinInstnId(doc, "InstdAgt", issues, passedRules);
-        }
+        // 6. Cross-validate Agent FinInstnId containers in all messages
+        validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
+        validateAgentFinInstnId(doc, "Assgne", issues, passedRules);
+        validateAgentFinInstnId(doc, "InstgAgt", issues, passedRules);
+        validateAgentFinInstnId(doc, "InstdAgt", issues, passedRules);
+        validateAgentFinInstnId(doc, "DbtrAgt", issues, passedRules);
+        validateAgentFinInstnId(doc, "CdtrAgt", issues, passedRules);
     }
 
-    private void validateAcmtAgentFinInstnId(Document doc, String agentRole, List<ValidationIssueDto> issues, List<String> passedRules) {
-        String roleName = "Assgnr".equalsIgnoreCase(agentRole) ? "Assigner" : "Assgne".equalsIgnoreCase(agentRole) ? "Assignee" : agentRole;
-        List<Element> finInstnIdElems = findElementsByPath(doc, agentRole + ".Agt.FinInstnId");
-        if (finInstnIdElems.isEmpty()) {
-            finInstnIdElems = findElementsByPath(doc, "Assgnmt." + agentRole + ".Agt.FinInstnId");
+    private void validateAgentFinInstnId(Document doc, String agentRole, List<ValidationIssueDto> issues, List<String> passedRules) {
+        String roleName = "Assgnr".equalsIgnoreCase(agentRole) ? "Assigner Agent" :
+                          "Assgne".equalsIgnoreCase(agentRole) ? "Assignee Agent" :
+                          "InstgAgt".equalsIgnoreCase(agentRole) ? "Instructing Agent" :
+                          "InstdAgt".equalsIgnoreCase(agentRole) ? "Instructed Agent" :
+                          "DbtrAgt".equalsIgnoreCase(agentRole) ? "Debtor Agent" :
+                          "CdtrAgt".equalsIgnoreCase(agentRole) ? "Creditor Agent" : agentRole;
+
+        List<Element> agentElems = new ArrayList<>();
+        NodeList nodes = doc.getElementsByTagName(agentRole);
+        if (nodes.getLength() == 0) nodes = doc.getElementsByTagNameNS("*", agentRole);
+        for (int i = 0; i < nodes.getLength(); i++) {
+            agentElems.add((Element) nodes.item(i));
         }
-        for (Element finInstnId : finInstnIdElems) {
+
+        for (Element agentEl : agentElems) {
+            Element finInstnId = findChildElement(agentEl, "FinInstnId");
+            boolean hasAgtWrapper = false;
+            if (finInstnId == null) {
+                Element agtEl = findChildElement(agentEl, "Agt");
+                if (agtEl != null) {
+                    finInstnId = findChildElement(agtEl, "FinInstnId");
+                    hasAgtWrapper = true;
+                }
+            }
+            if (finInstnId == null) continue;
+
+            String basePath = hasAgtWrapper ? agentRole + ".Agt.FinInstnId" : agentRole + ".FinInstnId";
+
             Element bicfiElem = findChildElement(finInstnId, "BICFI");
             String bicfi = bicfiElem != null ? (bicfiElem.getTextContent() != null ? bicfiElem.getTextContent().trim() : "") : null;
             String mmbId = findChildText(finInstnId, "MmbId");
@@ -1971,18 +2023,18 @@ public class XmlValidationEngine {
                         .severity("ERROR")
                         .category("SCHEMA_STRUCTURE")
                         .xpath(getElementXPath(finInstnId))
-                        .fieldPath(agentRole + ".Agt.FinInstnId")
-                        .fieldName(roleName + " Agent Financial Institution Identifier")
+                        .fieldPath(basePath)
+                        .fieldName(roleName + " Financial Institution Identifier")
                         .lineNumber(getNodeLine(finInstnId))
                         .columnNumber(getNodeCol(finInstnId))
                         .currentValue("[MISSING]")
                         .expected("<BICFI> and/or <ClrSysMmbId><MmbId>")
-                        .message(roleName + " Agent Financial Institution Identifier (<BICFI> or <ClrSysMmbId><MmbId>) is missing.")
+                        .message(roleName + " Financial Institution Identifier (<BICFI> or <ClrSysMmbId><MmbId>) is missing.")
                         .ruleCode("MANDATORY_FIELD_MISSING")
                         .autoFixable(true)
                         .build());
             } else {
-                passedRules.add(roleName + " Agent Financial Institution Identifier is present");
+                passedRules.add(roleName + " Financial Institution Identifier is present");
             }
 
             // Check if BICFI is present but empty
@@ -1992,35 +2044,35 @@ public class XmlValidationEngine {
                         .severity("ERROR")
                         .category("BUSINESS_RULE")
                         .xpath(getElementXPath(bicfiElem))
-                        .fieldPath(agentRole + ".Agt.FinInstnId.BICFI")
-                        .fieldName(roleName + " Agent BICFI")
+                        .fieldPath(basePath + ".BICFI")
+                        .fieldName(roleName + " BICFI")
                         .lineNumber(getNodeLine(bicfiElem))
                         .columnNumber(getNodeCol(bicfiElem))
                         .currentValue("[EMPTY]")
                         .expected(mmbId != null && !mmbId.isEmpty() ? mmbId : "6-digit Institution Code (e.g. 991040)")
-                        .message(roleName + " Agent <BICFI> is present but contains no value. Either populate with the 6-digit institution code (" + (mmbId != null && !mmbId.isEmpty() ? mmbId : "e.g. 991040") + ") or remove the empty <BICFI> tag.")
+                        .message(roleName + " <BICFI> is present but contains no value. Either populate with the 6-digit institution code (" + (mmbId != null && !mmbId.isEmpty() ? mmbId : "e.g. 991040") + ") or remove the empty <BICFI> tag.")
                         .ruleCode("EMPTY_TAG_NOT_ALLOWED")
                         .autoFixable(true)
                         .build());
             } else if (bicfi != null && !bicfi.isEmpty() && mmbId != null && !mmbId.isEmpty()) {
                 if (bicfi.matches("\\d{6}") && mmbId.matches("\\d{6}") && !bicfi.equals(mmbId)) {
                     issues.add(ValidationIssueDto.builder()
-                            .id("WARN-" + agentRole.toUpperCase() + "-BICFI-MISMATCH-" + getNodeLine(finInstnId))
-                            .severity("WARNING")
+                            .id("ERR-" + agentRole.toUpperCase() + "-BICFI-MISMATCH-" + getNodeLine(bicfiElem))
+                            .severity("ERROR")
                             .category("BUSINESS_RULE")
-                            .xpath(getElementXPath(finInstnId) + "/BICFI")
-                            .fieldPath(agentRole + ".Agt.FinInstnId.BICFI")
-                            .fieldName(roleName + " Agent BICFI")
-                            .lineNumber(getNodeLine(finInstnId))
-                            .columnNumber(getNodeCol(finInstnId))
+                            .xpath(getElementXPath(bicfiElem))
+                            .fieldPath(basePath + ".BICFI")
+                            .fieldName(roleName + " BICFI")
+                            .lineNumber(getNodeLine(bicfiElem))
+                            .columnNumber(getNodeCol(bicfiElem))
                             .currentValue(bicfi)
                             .expected(mmbId)
-                            .message(roleName + " Agent BICFI ('" + bicfi + "') does not match Member ID ('" + mmbId + "').")
+                            .message(roleName + " BICFI ('" + bicfi + "') does not match Member ID ('" + mmbId + "'). Numeric BICFI and Clearing Member ID must match.")
                             .ruleCode("INSTITUTION_CODE_MISMATCH")
                             .autoFixable(true)
                             .build());
                 } else if (bicfi.equals(mmbId)) {
-                    passedRules.add(roleName + " Agent BICFI matches Member ID (" + bicfi + ")");
+                    passedRules.add(roleName + " BICFI matches Member ID (" + bicfi + ")");
                 }
             }
         }

@@ -784,5 +784,78 @@ public class XmlValidationEngineTest {
         assertTrue(fixResp.isSuccess());
         assertTrue(fixResp.getFixedXml().contains("<StsReqId>99999920250829174941709740087747292</StsReqId>"));
         assertTrue(fixResp.getValidationReport().isValid());
+
+        // 4. User's exact scenario: Mismatched BICFI in InstgAgt/InstdAgt and Mismatched OrgnlTxId
+        String userSnippetXml = """
+                <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                <ns2:Document xmlns:ns2="urn:iso:std:iso:20022:tech:xsd:pacs.028.001.06">
+                    <FIToFIPmtStsReq>
+                        <GrpHdr>
+                            <MsgId>99905720250829174941709740087747292</MsgId>
+                            <CreDtTm>2025-08-18T09:05:46.973+01:00</CreDtTm>
+                            <InstgAgt>
+                                <FinInstnId>
+                                    <ClrSysMmbId>
+                                        <MmbId>999057</MmbId>
+                                    </ClrSysMmbId>
+                                </FinInstnId>
+                            </InstgAgt>
+                        </GrpHdr>
+                        <OrgnlGrpInf>
+                            <OrgnlMsgId>99905820250802112346977904433112345</OrgnlMsgId>
+                            <OrgnlMsgNmId>pacs.008.001.12</OrgnlMsgNmId>
+                            <OrgnlCreDtTm>2025-02-25T00:02:35.072Z</OrgnlCreDtTm>
+                        </OrgnlGrpInf>
+                        <TxInf>
+                            <StsReqId>99905720250829174941709740087747292</StsReqId>
+                            <OrgnlTxId>99905820250802112346977904433112342</OrgnlTxId>
+                            <InstgAgt>
+                                <FinInstnId>
+                                    <BICFI>999054</BICFI>
+                                    <ClrSysMmbId>
+                                        <MmbId>999057</MmbId>
+                                    </ClrSysMmbId>
+                                </FinInstnId>
+                            </InstgAgt>
+                            <InstdAgt>
+                                <FinInstnId>
+                                    <BICFI>999013</BICFI>
+                                    <ClrSysMmbId>
+                                        <MmbId>999012</MmbId>
+                                    </ClrSysMmbId>
+                                </FinInstnId>
+                            </InstdAgt>
+                            <OrgnlTxRef>
+                                <IntrBkSttlmDt>2025-02-25</IntrBkSttlmDt>
+                            </OrgnlTxRef>
+                        </TxInf>
+                    </FIToFIPmtStsReq>
+                </ns2:Document>
+                """.trim();
+
+        ValidationReportDto userReport = validationEngine.validate(userSnippetXml, "pacs.028");
+        assertFalse(userReport.isValid());
+        // Verify OrgnlTxId mismatch error is caught
+        assertTrue(userReport.getIssues().stream().anyMatch(i -> "ORIGINAL_TXID_MISMATCH".equals(i.getRuleCode())),
+                "Must detect OrgnlTxId mismatch with OrgnlMsgId");
+        // Verify InstgAgt BICFI mismatch (999054 vs 999057) is caught
+        assertTrue(userReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode()) && i.getMessage().contains("999054")),
+                "Must detect InstgAgt BICFI 999054 vs MmbId 999057 mismatch");
+        // Verify InstdAgt BICFI mismatch (999013 vs 999012) is caught
+        assertTrue(userReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode()) && i.getMessage().contains("999013")),
+                "Must detect InstdAgt BICFI 999013 vs MmbId 999012 mismatch");
+
+        // Verify Auto-fix repairs all 3 issues
+        XmlAutoFixRequestDto fixUserReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(userSnippetXml)
+                .messageType("pacs.028")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixUserResp = autoFixEngine.autoFix(fixUserReq);
+        assertTrue(fixUserResp.isSuccess());
+        assertTrue(fixUserResp.getFixedXml().contains("<OrgnlTxId>99905820250802112346977904433112345</OrgnlTxId>"));
+        assertTrue(fixUserResp.getFixedXml().contains("<BICFI>999057</BICFI>"));
+        assertTrue(fixUserResp.getFixedXml().contains("<BICFI>999012</BICFI>"));
+        assertTrue(fixUserResp.getValidationReport().isValid());
     }
 }

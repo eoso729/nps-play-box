@@ -805,17 +805,41 @@ public class XmlAutoFixEngine {
                 }
             }
 
-            // 2. Synchronize InstgAgt and InstdAgt BICFI with MmbId if numeric
+            // 2. Synchronize TxInf.OrgnlTxId with OrgnlGrpInf.OrgnlMsgId
+            NodeList orgnlMsgIdNodes = doc.getElementsByTagName("OrgnlMsgId");
+            if (orgnlMsgIdNodes.getLength() == 0) orgnlMsgIdNodes = doc.getElementsByTagNameNS("*", "OrgnlMsgId");
+            NodeList orgnlTxIdNodes = doc.getElementsByTagName("OrgnlTxId");
+            if (orgnlTxIdNodes.getLength() == 0) orgnlTxIdNodes = doc.getElementsByTagNameNS("*", "OrgnlTxId");
+
+            if (orgnlMsgIdNodes.getLength() > 0 && orgnlTxIdNodes.getLength() > 0) {
+                String orgnlMsgIdVal = orgnlMsgIdNodes.item(0).getTextContent();
+                if (orgnlMsgIdVal != null && !orgnlMsgIdVal.trim().isEmpty()) {
+                    orgnlMsgIdVal = orgnlMsgIdVal.trim();
+                    Element orgnlTxIdElem = (Element) orgnlTxIdNodes.item(0);
+                    if (!orgnlMsgIdVal.equals(orgnlTxIdElem.getTextContent())) {
+                        orgnlTxIdElem.setTextContent(orgnlMsgIdVal);
+                        fixesApplied.add("Synchronized Original Transaction ID <TxInf><OrgnlTxId> to match Original Message ID (" + orgnlMsgIdVal + ").");
+                    }
+                }
+            }
+
+            // 3. Synchronize InstgAgt and InstdAgt BICFI with MmbId if numeric
             syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
             syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
         }
+
+        // Global Agent BICFI sync for any remaining agents
+        syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
     }
 
     private void syncAgentBicfiWithMmbId(Document doc, String agentRole, List<String> fixesApplied) {
         NodeList agentNodes = doc.getElementsByTagName(agentRole);
         if (agentNodes.getLength() == 0) agentNodes = doc.getElementsByTagNameNS("*", agentRole);
-        if (agentNodes.getLength() > 0) {
-            Element agent = (Element) agentNodes.item(0);
+        for (int i = 0; i < agentNodes.getLength(); i++) {
+            Element agent = (Element) agentNodes.item(i);
             NodeList mmbList = agent.getElementsByTagName("MmbId");
             if (mmbList.getLength() == 0) mmbList = agent.getElementsByTagNameNS("*", "MmbId");
             NodeList bicList = agent.getElementsByTagName("BICFI");
