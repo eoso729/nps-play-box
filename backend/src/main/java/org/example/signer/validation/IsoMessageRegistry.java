@@ -462,7 +462,7 @@ public class IsoMessageRegistry {
 
         String sampleXml = """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:acmt.023.001.03">
+                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:acmt.023.001.04">
                     <IdVrfctnReq>
                         <Assgnmt>
                             <MsgId>99999920250829150504887742643314693</MsgId>
@@ -490,11 +490,11 @@ public class IsoMessageRegistry {
         register(IsoMessageDefinition.builder()
                 .key("acmt.023")
                 .name("Identification Verification Request")
-                .isoCode("acmt.023.001.03")
+                .isoCode("acmt.023.001.04")
                 .category("Account Services & Statements")
                 .rootElement("Document")
                 .mainElement("IdVrfctnReq")
-                .namespace("urn:iso:std:iso:20022:tech:xsd:acmt.023.001.03")
+                .namespace("urn:iso:std:iso:20022:tech:xsd:acmt.023.001.04")
                 .fields(fields)
                 .sampleXml(sampleXml)
                 .build());

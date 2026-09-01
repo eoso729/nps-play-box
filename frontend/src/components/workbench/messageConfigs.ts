@@ -612,7 +612,7 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
   'acmt.023': {
     key: 'acmt.023',
     label: 'Identification Verification Request',
-    isoCode: 'acmt.023.001.03',
+    isoCode: 'acmt.023.001.04',
     category: 'Account Services & Statements',
     sections: [
       {
