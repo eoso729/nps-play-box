@@ -101,14 +101,13 @@ public class TransferXmlGenerator {
         // --- Supplementary Data ---
         Transfer.SplmtryData splmtryData = new Transfer.SplmtryData();
         splmtryData.setPlcAndNm("AdditionalVerificationDetails");
-        splmtryData.setTestVariable("Verification Data");
         Transfer.Envlp envlp = new Transfer.Envlp();
         Transfer.CustomData customData = new Transfer.CustomData();
         
         Transfer.DebtorInfo debtorInfo = new Transfer.DebtorInfo();
         debtorInfo.setAccountDesignation(requestDto.getDebtorAccountDesignation() != null ? requestDto.getDebtorAccountDesignation() : "1");
         debtorInfo.setIdType(requestDto.getDebtorIdType() != null ? requestDto.getDebtorIdType() : "BVN");
-        debtorInfo.setIdValue(requestDto.getDebtorIdValue() != null ? requestDto.getDebtorIdValue() : "11111111145");
+        debtorInfo.setIdValue(requestDto.getDebtorIdValue() != null ? requestDto.getDebtorIdValue() : "22112323440");
         debtorInfo.setAccountTier(requestDto.getDebtorAccountTier() != null ? requestDto.getDebtorAccountTier() : "1");
         customData.setDebtorInfo(debtorInfo);
 
@@ -116,15 +115,16 @@ public class TransferXmlGenerator {
         creditorInfo.setAccountDesignation(requestDto.getCreditorAccountDesignation() != null ? requestDto.getCreditorAccountDesignation() : "1");
         creditorInfo.setIdType(requestDto.getCreditorIdType() != null ? requestDto.getCreditorIdType() : "BVN");
         creditorInfo.setIdValue(requestDto.getCreditorIdValue() != null ? requestDto.getCreditorIdValue() : 
-                              (requestDto.getCreditorBvn() != null ? requestDto.getCreditorBvn() : "11111111145"));
+                              (requestDto.getCreditorBvn() != null ? requestDto.getCreditorBvn() : "22112323460"));
         creditorInfo.setAccountTier(requestDto.getCreditorAccountTier() != null ? requestDto.getCreditorAccountTier() : "1");
         customData.setCreditorInfo(creditorInfo);
 
         Transfer.TransactionInfo transactionInfo = new Transfer.TransactionInfo();
         transactionInfo.setTransactionLocation(requestDto.getTransactionLocation() != null ? requestDto.getTransactionLocation() : "01080652440N020900337921E");
-        transactionInfo.setNameEnquiryMsgId(requestDto.getNameEnquiryMsgId() != null ? requestDto.getNameEnquiryMsgId() : "");
+        transactionInfo.setNameEnquiryMsgId(requestDto.getNameEnquiryMsgId() != null && !requestDto.getNameEnquiryMsgId().trim().isEmpty() ? 
+                requestDto.getNameEnquiryMsgId() : generateId(srcId, 15));
         transactionInfo.setChannelCode(requestDto.getChannelCode() != null ? requestDto.getChannelCode() : "1");
-        transactionInfo.setRiskRating(requestDto.getRiskRating() != null ? requestDto.getRiskRating() : "1");
+        transactionInfo.setRiskRating(requestDto.getRiskRating() != null ? requestDto.getRiskRating() : "R000000000000000000B9");
         customData.setTransactionInfo(transactionInfo);
 
         envlp.setCustomData(customData);

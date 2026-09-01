@@ -715,4 +715,42 @@ public class XmlValidationEngineTest {
         assertFalse(nmReport.isValid());
         assertTrue(nmReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("verified account name") || "EMPTY_TAG_NOT_ALLOWED".equals(i.getRuleCode())));
     }
+
+    @Test
+    public void testPacs008ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.008");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pacs.008");
+        assertTrue(report.isValid(), "pacs.008 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. NbOfTxs > 1 is rejected
+        String multiTxXml = sampleXml.replace("<NbOfTxs>1</NbOfTxs>", "<NbOfTxs>2</NbOfTxs>");
+        ValidationReportDto multiTxReport = validationEngine.validate(multiTxXml, "pacs.008");
+        assertFalse(multiTxReport.isValid());
+        assertTrue(multiTxReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("NbOfTxs")));
+
+        // 3. BtchBookg true is rejected
+        String batchXml = sampleXml.replace("<BtchBookg>false</BtchBookg>", "<BtchBookg>true</BtchBookg>");
+        ValidationReportDto batchReport = validationEngine.validate(batchXml, "pacs.008");
+        assertFalse(batchReport.isValid());
+        assertTrue(batchReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("BtchBookg")));
+
+        // 4. SttlmMtd != CLRG is rejected
+        String invalidSttlmXml = sampleXml.replace("<SttlmMtd>CLRG</SttlmMtd>", "<SttlmMtd>INST</SttlmMtd>");
+        ValidationReportDto sttlmReport = validationEngine.validate(invalidSttlmXml, "pacs.008");
+        assertFalse(sttlmReport.isValid());
+        assertTrue(sttlmReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("CLRG")));
+
+        // 5. Empty NameEnquiryMsgId is rejected
+        String emptyNameEnquiryXml = sampleXml.replace(
+                "<NameEnquiryMsgId>99905820250801205622930239203831720</NameEnquiryMsgId>",
+                "<NameEnquiryMsgId></NameEnquiryMsgId>"
+        );
+        ValidationReportDto nameEnquiryReport = validationEngine.validate(emptyNameEnquiryXml, "pacs.008");
+        assertFalse(nameEnquiryReport.isValid());
+        assertTrue(nameEnquiryReport.getIssues().stream().anyMatch(i -> "EMPTY_TAG_NOT_ALLOWED".equals(i.getRuleCode()) && i.getMessage().contains("NameEnquiryMsgId")));
+    }
 }

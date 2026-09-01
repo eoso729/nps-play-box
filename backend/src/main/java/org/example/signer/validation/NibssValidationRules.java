@@ -357,8 +357,15 @@ public class NibssValidationRules {
         addTag("CdtrAgt");
         addTag("Cdtr");
         addTag("CdtrAcct");
-        addTag("UltmtDbtr");
-        addTag("UltmtCdtr");
+        addTag("InstrForNxtAgt");
+        addTag("InstrInf");
+        addTag("BtchBookg");
+        addTag("NbOfTxs");
+        addTag("SttlmMtd");
+        addTag("SttlmInf");
+        addTag("DebtorMetadata");
+        addTag("CreditorMetadata");
+        addTag("BiometricData");
         addTag("Purp");
         addTag("RmtInf");
         addTag("Ustrd");

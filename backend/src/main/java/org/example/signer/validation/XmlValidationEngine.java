@@ -1802,6 +1802,109 @@ public class XmlValidationEngine {
             }
         }
 
+        // 5c. Cross-validate pacs.008 specific rules (NbOfTxs, BtchBookg, SttlmMtd, NameEnquiryMsgId)
+        if (key.contains("pacs.008")) {
+            // Check NbOfTxs == 1
+            List<Element> nbOfTxsList = findElementsByPath(doc, "GrpHdr.NbOfTxs");
+            for (Element el : nbOfTxsList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"1".equals(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-NBOFTXS-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("GrpHdr.NbOfTxs")
+                            .fieldName("Number of Transactions")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("1")
+                            .message("Single customer credit transfer (pacs.008) requires NbOfTxs to be exactly 1. Current value is '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Number of transactions is 1 for single customer credit");
+                }
+            }
+
+            // Check BtchBookg == false
+            List<Element> btchBookgList = findElementsByPath(doc, "GrpHdr.BtchBookg");
+            for (Element el : btchBookgList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"false".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-BTCHBOOKG-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("GrpHdr.BtchBookg")
+                            .fieldName("Batch Booking")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("false")
+                            .message("Single customer credit transfer (pacs.008) requires BtchBookg to be false.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Batch booking flag is false");
+                }
+            }
+
+            // Check SttlmMtd == CLRG
+            List<Element> sttlmMtdList = findElementsByPath(doc, "GrpHdr.SttlmInf.SttlmMtd");
+            for (Element el : sttlmMtdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"CLRG".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-STTLMMTD-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("GrpHdr.SttlmInf.SttlmMtd")
+                            .fieldName("Settlement Method")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("CLRG")
+                            .message("Settlement method must be 'CLRG' (Clearing).")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Settlement method is CLRG");
+                }
+            }
+
+            // Check NameEnquiryMsgId is present and non-empty in TransactionInfo
+            List<Element> nameEnquiryMsgIdList = findElementsByPath(doc, "TransactionInfo.NameEnquiryMsgId");
+            for (Element el : nameEnquiryMsgIdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (val.isEmpty()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-NAMEENQUIRYMSGID-EMPTY-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("SplmtryData.Envlp.CustomData.TransactionInfo.NameEnquiryMsgId")
+                            .fieldName("Name Enquiry Message ID")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue("[EMPTY]")
+                            .expected("35-character NPS Message ID from previous acmt.023")
+                            .message("Name Enquiry Message ID <NameEnquiryMsgId> is mandatory and cannot be empty.")
+                            .ruleCode("EMPTY_TAG_NOT_ALLOWED")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Name Enquiry Message ID is present (" + val + ")");
+                }
+            }
+        }
+
         // 6. Cross-validate Agent FinInstnId containers in acmt messages
         if (key.contains("acmt.023") || key.contains("acmt.024")) {
             validateAcmtAgentFinInstnId(doc, "Assgnr", issues, passedRules);
