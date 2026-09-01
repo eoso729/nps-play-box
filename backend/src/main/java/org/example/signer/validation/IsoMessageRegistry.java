@@ -509,20 +509,23 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "IdVrfctnRpt.Assgnmt.MsgId", "//Assgnmt/MsgId", "99901220250829140722546736145961156", "String", 35, true, false, "NPS_ID", "Report Message ID"),
                 new IsoFieldDef("Creation DateTime", "IdVrfctnRpt.Assgnmt.CreDtTm", "//Assgnmt/CreDtTm", "2025-08-29T14:07:22.357+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp in UTC+1"),
-                new IsoFieldDef("Assigner Agent Member ID", "IdVrfctnRpt.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgnr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 6, true, false, "MEMBER_ID", "Assigner Member ID"),
+                new IsoFieldDef("Assigner Agent BICFI", "IdVrfctnRpt.Assgnmt.Assgnr.Agt.FinInstnId.BICFI", "//Assgnr/Agt/FinInstnId/BICFI", "999012", "String", 11, false, false, "INSTITUTION_CODE", "Assigner BICFI / Sending Institution ID"),
+                new IsoFieldDef("Assigner Agent Member ID", "IdVrfctnRpt.Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgnr/Agt/FinInstnId/ClrSysMmbId/MmbId", "999012", "String", 6, false, false, "MEMBER_ID", "Assigner Member ID"),
                 new IsoFieldDef("Assignee Party Name", "IdVrfctnRpt.Assgnmt.Assgne.Pty.Nm", "//Assgne/Pty/Nm", "Oso International Bank", "String", 100, true, false, null, "Assignee Party Name"),
-                new IsoFieldDef("Assignee Agent Member ID", "IdVrfctnRpt.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgne/Agt/FinInstnId/ClrSysMmbId/MmbId", "999999", "String", 6, true, false, "MEMBER_ID", "Assignee Member ID"),
+                new IsoFieldDef("Assignee Agent BICFI", "IdVrfctnRpt.Assgnmt.Assgne.Agt.FinInstnId.BICFI", "//Assgne/Agt/FinInstnId/BICFI", "999999", "String", 11, false, false, "INSTITUTION_CODE", "Assignee BICFI / Receiving Institution ID"),
+                new IsoFieldDef("Assignee Agent Member ID", "IdVrfctnRpt.Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId", "//Assgne/Agt/FinInstnId/ClrSysMmbId/MmbId", "999999", "String", 6, false, false, "MEMBER_ID", "Assignee Member ID"),
                 new IsoFieldDef("Original Assignment Message ID", "IdVrfctnRpt.OrgnlAssgnmt.MsgId", "//OrgnlAssgnmt/MsgId", "99999920250829150504887742643314693", "String", 35, true, false, "NPS_ID", "Original request Msg ID"),
                 new IsoFieldDef("Original Assignment Creation DateTime", "IdVrfctnRpt.OrgnlAssgnmt.CreDtTm", "//OrgnlAssgnmt/CreDtTm", "2025-08-29T15:05:04.347+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
                 new IsoFieldDef("Report Original ID", "IdVrfctnRpt.Rpt.OrgnlId", "//Rpt/OrgnlId", "99999920250829150504887742643314693", "String", 35, true, false, "NPS_ID", "Original ID"),
                 new IsoFieldDef("Verification Result", "IdVrfctnRpt.Rpt.Vrfctn", "//Rpt/Vrfctn", "true", "Boolean", 5, true, false, null, "Verification result flag (true/false)"),
                 new IsoFieldDef("Original Account Number (IBAN)", "IdVrfctnRpt.Rpt.OrgnlPtyAndAcctId.Acct.Id.IBAN", "//OrgnlPtyAndAcctId/Acct/Id/IBAN", "1029384756", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
-                new IsoFieldDef("Updated Party Name", "IdVrfctnRpt.Rpt.UpdtdPtyAndAcctId.Pty.Nm", "//UpdtdPtyAndAcctId/Pty/Nm", "Israel Kayole", "String", 100, true, false, null, "Verified Name"),
+                new IsoFieldDef("Updated Party Name", "IdVrfctnRpt.Rpt.UpdtdPtyAndAcctId.Pty.Nm", "//UpdtdPtyAndAcctId/Pty/Nm", "Israel Kayole", "String", 100, false, false, null, "Verified Name"),
                 new IsoFieldDef("Supplementary Data Type", "IdVrfctnRpt.SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Creditor Account Designation", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.AccountDesignation", "//CreditorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Creditor ID Type", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.IdType", "//CreditorInfo/IdType", "BVN", "Enum", 7, true, false, "ID_TYPE", "ID Type"),
                 new IsoFieldDef("Creditor ID Value", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22112323460", "String", 35, true, false, "ID_VALUE", "11-digit BVN"),
-                new IsoFieldDef("Creditor Account Tier", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)")
+                new IsoFieldDef("Creditor Account Tier", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
+                new IsoFieldDef("Transaction Risk Rating", "IdVrfctnRpt.SplmtryData.Envlp.CustomData.TransactionInfo.RiskRating", "//TransactionInfo/RiskRating", "R000000000000000000B9", "String", 35, false, false, null, "Risk Rating")
         );
 
         String sampleXml = """
@@ -533,11 +536,11 @@ public class IsoMessageRegistry {
                             <MsgId>99901220250829140722546736145961156</MsgId>
                             <CreDtTm>2025-08-29T14:07:22.357+01:00</CreDtTm>
                             <Assgnr>
-                                <Agt><FinInstnId><ClrSysMmbId><MmbId>999012</MmbId></ClrSysMmbId></FinInstnId></Agt>
+                                <Agt><FinInstnId><BICFI>999012</BICFI><ClrSysMmbId><MmbId>999012</MmbId></ClrSysMmbId></FinInstnId></Agt>
                             </Assgnr>
                             <Assgne>
                                 <Pty><Nm>Oso International Bank</Nm></Pty>
-                                <Agt><FinInstnId><ClrSysMmbId><MmbId>999999</MmbId></ClrSysMmbId></FinInstnId></Agt>
+                                <Agt><FinInstnId><BICFI>999999</BICFI><ClrSysMmbId><MmbId>999999</MmbId></ClrSysMmbId></FinInstnId></Agt>
                             </Assgne>
                         </Assgnmt>
                         <OrgnlAssgnmt>

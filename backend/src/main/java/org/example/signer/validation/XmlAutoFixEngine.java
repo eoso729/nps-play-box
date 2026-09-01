@@ -752,6 +752,39 @@ public class XmlAutoFixEngine {
             // 3. Synchronize Assgne BICFI with MmbId if numeric
             syncAgentBicfiWithMmbId(doc, "Assgne", fixesApplied);
         }
+
+        if (key.contains("acmt.024")) {
+            // 1. Synchronize Rpt.OrgnlId with OrgnlAssgnmt.MsgId
+            NodeList orgnlAssgnmtNodes = doc.getElementsByTagName("OrgnlAssgnmt");
+            if (orgnlAssgnmtNodes.getLength() == 0) orgnlAssgnmtNodes = doc.getElementsByTagNameNS("*", "OrgnlAssgnmt");
+            NodeList rptNodes = doc.getElementsByTagName("Rpt");
+            if (rptNodes.getLength() == 0) rptNodes = doc.getElementsByTagNameNS("*", "Rpt");
+
+            if (orgnlAssgnmtNodes.getLength() > 0 && rptNodes.getLength() > 0) {
+                Element orgnlAssgnmt = (Element) orgnlAssgnmtNodes.item(0);
+                NodeList msgIdList = orgnlAssgnmt.getElementsByTagName("MsgId");
+                if (msgIdList.getLength() > 0) {
+                    String orgnlMsgIdVal = msgIdList.item(0).getTextContent();
+                    if (orgnlMsgIdVal != null && !orgnlMsgIdVal.trim().isEmpty()) {
+                        orgnlMsgIdVal = orgnlMsgIdVal.trim();
+                        Element rpt = (Element) rptNodes.item(0);
+                        NodeList orgnlIdList = rpt.getElementsByTagName("OrgnlId");
+                        if (orgnlIdList.getLength() > 0) {
+                            Element orgnlIdElem = (Element) orgnlIdList.item(0);
+                            if (!orgnlMsgIdVal.equals(orgnlIdElem.getTextContent())) {
+                                orgnlIdElem.setTextContent(orgnlMsgIdVal);
+                                fixesApplied.add("Synchronized Report Original ID <Rpt><OrgnlId> to match Original Assignment Message ID (" + orgnlMsgIdVal + ").");
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Synchronize Assgnr BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "Assgnr", fixesApplied);
+            // 3. Synchronize Assgne BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "Assgne", fixesApplied);
+        }
     }
 
     private void syncAgentBicfiWithMmbId(Document doc, String agentRole, List<String> fixesApplied) {

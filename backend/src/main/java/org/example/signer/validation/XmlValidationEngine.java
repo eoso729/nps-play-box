@@ -1587,8 +1587,12 @@ public class XmlValidationEngine {
         String destInstCode = extractDestInstCodeForDef(doc, def);
 
         // 3. Cross-validate MsgId / TxId starts with Source Institution Code
-        List<Element> msgIdElems = findElementsByPath(doc, "MsgId");
+        List<Element> msgIdElems = findElementsByPath(doc, "GrpHdr.MsgId");
+        if (msgIdElems.isEmpty()) msgIdElems = findElementsByPath(doc, "Assgnmt.MsgId");
+        if (msgIdElems.isEmpty()) msgIdElems = findElementsByPath(doc, "MsgId");
         for (Element el : msgIdElems) {
+            String p = getElementXPath(el);
+            if (p.contains("Orgnl") || p.contains("Original")) continue;
             String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
             if (sourceInstCode != null && sourceInstCode.matches("\\d{6}") && val.length() >= 6) {
                 String prefix = val.substring(0, 6);
@@ -1687,6 +1691,112 @@ public class XmlValidationEngine {
                                 .build());
                     } else {
                         passedRules.add("Verification ID <Vrfctn><Id> matches Assignment Message ID <Assgnmt><MsgId> (" + msgIdVal + ")");
+                    }
+                }
+            }
+        }
+
+        // 5b. Cross-validate Rpt.OrgnlId must match OrgnlAssgnmt.MsgId for acmt.024
+        if (key.contains("acmt.024")) {
+            List<Element> orgnlMsgIdList = findElementsByPath(doc, "OrgnlAssgnmt.MsgId");
+            List<Element> orgnlIdList = findElementsByPath(doc, "Rpt.OrgnlId");
+            if (!orgnlMsgIdList.isEmpty() && !orgnlIdList.isEmpty()) {
+                String orgnlMsgIdVal = orgnlMsgIdList.get(0).getTextContent() != null ? orgnlMsgIdList.get(0).getTextContent().trim() : "";
+                Element orgnlIdElem = orgnlIdList.get(0);
+                String orgnlIdVal = orgnlIdElem.getTextContent() != null ? orgnlIdElem.getTextContent().trim() : "";
+
+                if (!orgnlMsgIdVal.isEmpty() && !orgnlIdVal.isEmpty()) {
+                    if (!orgnlMsgIdVal.equals(orgnlIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ORGNL-ID-MISMATCH-" + getNodeLine(orgnlIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(orgnlIdElem))
+                                .fieldPath("IdVrfctnRpt.Rpt.OrgnlId")
+                                .fieldName("Report Original ID")
+                                .lineNumber(getNodeLine(orgnlIdElem))
+                                .columnNumber(getNodeCol(orgnlIdElem))
+                                .currentValue(orgnlIdVal)
+                                .expected(orgnlMsgIdVal)
+                                .message("Report Original ID <Rpt><OrgnlId> ('" + orgnlIdVal + "') must be identical to Original Assignment Message ID <OrgnlAssgnmt><MsgId> ('" + orgnlMsgIdVal + "').")
+                                .ruleCode("ORIGINAL_ID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Report Original ID <Rpt><OrgnlId> matches Original Assignment Message ID <OrgnlAssgnmt><MsgId> (" + orgnlMsgIdVal + ")");
+                    }
+                }
+            }
+
+            // Cross-validate OrgnlAssgnmt.MsgId starts with Destination/Receiving Institution Code (the original requester)
+            for (Element el : orgnlMsgIdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (destInstCode != null && destInstCode.matches("\\d{6}") && val.length() >= 6) {
+                    String prefix = val.substring(0, 6);
+                    if (!prefix.equals(destInstCode)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("WARN-ORGNL-MSGID-DST-MISMATCH-" + getNodeLine(el))
+                                .severity("WARNING")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(el))
+                                .fieldPath("OrgnlAssgnmt.MsgId")
+                                .fieldName("Original Message ID Requesting Institution")
+                                .lineNumber(getNodeLine(el))
+                                .columnNumber(getNodeCol(el))
+                                .currentValue(prefix)
+                                .expected(destInstCode)
+                                .message("Original Message ID prefix (" + prefix + ") does not match Receiving Institution Code (" + destInstCode + ").")
+                                .ruleCode("SOURCE_INSTITUTION_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("OrgnlAssgnmt.MsgId prefix matches Receiving Institution Code (" + destInstCode + ")");
+                    }
+                }
+            }
+
+            // Cross-validate Vrfctn boolean and UpdtdPtyAndAcctId
+            List<Element> vrfctnList = findElementsByPath(doc, "Rpt.Vrfctn");
+            for (Element vrfctnElem : vrfctnList) {
+                String vrfctnText = vrfctnElem.getTextContent() != null ? vrfctnElem.getTextContent().trim() : "";
+                boolean isValidBool = "true".equalsIgnoreCase(vrfctnText) || "false".equalsIgnoreCase(vrfctnText);
+                if (!isValidBool) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-VRFCTN-BOOL-" + getNodeLine(vrfctnElem))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(vrfctnElem))
+                            .fieldPath("IdVrfctnRpt.Rpt.Vrfctn")
+                            .fieldName("Verification Result")
+                            .lineNumber(getNodeLine(vrfctnElem))
+                            .columnNumber(getNodeCol(vrfctnElem))
+                            .currentValue(vrfctnText)
+                            .expected("'true' or 'false'")
+                            .message("Verification result <Vrfctn> must be a valid boolean ('true' or 'false').")
+                            .ruleCode("INVALID_BOOLEAN")
+                            .autoFixable(true)
+                            .build());
+                } else if ("true".equalsIgnoreCase(vrfctnText)) {
+                    // When verification is successful, updated party name must be present
+                    List<Element> updtdNmList = findElementsByPath(doc, "UpdtdPtyAndAcctId.Pty.Nm");
+                    if (updtdNmList.isEmpty() || updtdNmList.get(0).getTextContent() == null || updtdNmList.get(0).getTextContent().trim().isEmpty()) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-UPDTD-NM-MISSING")
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath("/Document/IdVrfctnRpt/Rpt/UpdtdPtyAndAcctId/Pty/Nm")
+                                .fieldPath("IdVrfctnRpt.Rpt.UpdtdPtyAndAcctId.Pty.Nm")
+                                .fieldName("Updated Party Name")
+                                .lineNumber(getNodeLine(vrfctnElem))
+                                .columnNumber(getNodeCol(vrfctnElem))
+                                .currentValue("[MISSING]")
+                                .expected("Verified Account Holder Name")
+                                .message("When verification result <Vrfctn> is 'true', verified account name <UpdtdPtyAndAcctId><Pty><Nm> is mandatory.")
+                                .ruleCode("MANDATORY_FIELD_MISSING")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Verified account name is present for successful verification");
                     }
                 }
             }

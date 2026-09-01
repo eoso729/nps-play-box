@@ -671,4 +671,48 @@ public class XmlValidationEngineTest {
         assertTrue(emptyFixResp.getFixedXml().contains("<BICFI>991040</BICFI>"), "Auto-fix should populate empty <BICFI> with 991040");
         assertTrue(emptyFixResp.getValidationReport().isValid(), "Fixed XML should be valid");
     }
+
+    @Test
+    public void testAcmt024ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("acmt.024");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample XML passes
+        ValidationReportDto report = validationEngine.validate(sampleXml, "acmt.024");
+        assertTrue(report.isValid(), "Sample acmt.024 XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched Rpt.OrgnlId vs OrgnlAssgnmt.MsgId
+        String mismatchXml = sampleXml.replace(
+                "<OrgnlId>99999920250829150504887742643314693</OrgnlId>",
+                "<OrgnlId>99999920250829150504887742649999999</OrgnlId>"
+        );
+        ValidationReportDto mismatchReport = validationEngine.validate(mismatchXml, "acmt.024");
+        assertFalse(mismatchReport.isValid());
+        assertTrue(mismatchReport.getIssues().stream().anyMatch(i -> "ORIGINAL_ID_MISMATCH".equals(i.getRuleCode())),
+                "Should report ORIGINAL_ID_MISMATCH when Rpt.OrgnlId != OrgnlAssgnmt.MsgId");
+
+        // 3. Auto-fix repairs mismatched OrgnlId
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchXml)
+                .messageType("acmt.024")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().contains("<OrgnlId>99999920250829150504887742643314693</OrgnlId>"));
+        assertTrue(fixResp.getValidationReport().isValid());
+
+        // 4. Invalid boolean in Vrfctn (e.g. "invalid_bool")
+        String invalidBoolXml = sampleXml.replace("<Vrfctn>true</Vrfctn>", "<Vrfctn>invalid_bool</Vrfctn>");
+        ValidationReportDto boolReport = validationEngine.validate(invalidBoolXml, "acmt.024");
+        assertFalse(boolReport.isValid());
+        assertTrue(boolReport.getIssues().stream().anyMatch(i -> "INVALID_BOOLEAN".equals(i.getRuleCode())));
+
+        // 5. Missing updated account name when Vrfctn is true
+        String missingUpdtdNmXml = sampleXml.replace("<Nm>Israel Kayole</Nm>", "<Nm></Nm>");
+        ValidationReportDto nmReport = validationEngine.validate(missingUpdtdNmXml, "acmt.024");
+        assertFalse(nmReport.isValid());
+        assertTrue(nmReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("verified account name") || "EMPTY_TAG_NOT_ALLOWED".equals(i.getRuleCode())));
+    }
 }

@@ -673,6 +673,25 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
           { key: 'verifiedAccountName', label: 'Resolved Account Name', type: 'text', placeholder: 'JOHN DOE ENTERPRISES', maxLength: 100, fullWidth: true, helperText: 'Verified beneficiary name' },
         ],
       },
+      {
+        title: '3. Supplementary Data (KYC & Risk)',
+        fields: [
+          { key: 'creditorAccountDesignation', label: 'Account Designation', type: 'text', placeholder: '1', maxLength: 1, ruleType: 'ACCOUNT_DESIGNATION', helperText: '1 (Individual), 2 (Corporate), etc.' },
+          {
+            key: 'creditorIdType',
+            label: 'ID Type',
+            type: 'select',
+            options: [
+              { value: 'BVN', label: 'BVN - Bank Verification Number' },
+              { value: 'NIN', label: 'NIN - National Identity Number' },
+              { value: 'RC', label: 'RC - Corporate Registration Number' },
+            ],
+          },
+          { key: 'creditorIdValue', label: 'ID Value', type: 'text', placeholder: '22112323460', maxLength: 35, ruleType: 'ID_VALUE' },
+          { key: 'creditorAccountTier', label: 'Account Tier', type: 'text', placeholder: '1', maxLength: 1, ruleType: 'ACCOUNT_TIER', helperText: 'Tier 1, 2, or 3' },
+          { key: 'transactionRiskRating', label: 'Risk Rating', type: 'text', placeholder: 'R000000000000000000B9', maxLength: 35 },
+        ],
+      },
     ],
     prefill: {
       sendingInstitutionId: '999012',
@@ -683,6 +702,11 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       verificationResponse: 'true',
       verifiedAccountNumber: '1000000001',
       verifiedAccountName: 'JOHN DOE ENTERPRISES',
+      creditorAccountDesignation: '1',
+      creditorIdType: 'BVN',
+      creditorIdValue: '22112323460',
+      creditorAccountTier: '1',
+      transactionRiskRating: 'R000000000000000000B9',
     },
   },
 
