@@ -651,5 +651,24 @@ public class XmlValidationEngineTest {
         assertTrue(fixResp.isSuccess());
         assertTrue(fixResp.getFixedXml().contains("<BICFI>000999</BICFI>") || fixResp.getFixedXml().contains("<BICFI>999999</BICFI>"));
         assertTrue(fixResp.getValidationReport().isValid());
+
+        // 4. Test User Scenario: Empty <BICFI></BICFI> in Assgne with MmbId 991040
+        String emptyBicfiXml = sampleXml.replace("<BICFI>999012</BICFI>", "<BICFI></BICFI>")
+                                        .replace("<MmbId>999012</MmbId>", "<MmbId>991040</MmbId>");
+        ValidationReportDto emptyReport = validationEngine.validate(emptyBicfiXml, "acmt.023");
+        assertFalse(emptyReport.isValid(), "Empty <BICFI></BICFI> tag should fail validation");
+        assertTrue(emptyReport.getIssues().stream().anyMatch(i -> "EMPTY_TAG_NOT_ALLOWED".equals(i.getRuleCode()) && i.getMessage().contains("BICFI")),
+                "Should report EMPTY_TAG_NOT_ALLOWED on empty <BICFI>");
+
+        // 5. Auto-fix should populate empty <BICFI> with MmbId 991040
+        XmlAutoFixRequestDto emptyFixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(emptyBicfiXml)
+                .messageType("acmt.023")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto emptyFixResp = autoFixEngine.autoFix(emptyFixReq);
+        assertTrue(emptyFixResp.isSuccess());
+        assertTrue(emptyFixResp.getFixedXml().contains("<BICFI>991040</BICFI>"), "Auto-fix should populate empty <BICFI> with 991040");
+        assertTrue(emptyFixResp.getValidationReport().isValid(), "Fixed XML should be valid");
     }
 }

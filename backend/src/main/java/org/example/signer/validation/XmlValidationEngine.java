@@ -330,27 +330,43 @@ public class XmlValidationEngine {
             int col = getNodeCol(elem);
             String xpath = getElementXPath(elem) + (isAttribute ? "/@" + attributeName : "");
 
-            // Empty check for mandatory field
-            if (text.isEmpty() && field.isMandatory()) {
-                issues.add(ValidationIssueDto.builder()
-                        .id("ERR-EMPTY-" + sanitizeId(field.getXmlPath()))
-                        .severity("ERROR")
-                        .category("SCHEMA_STRUCTURE")
-                        .xpath(xpath)
-                        .fieldPath(field.getXmlPath())
-                        .fieldName(field.getFieldName())
-                        .lineNumber(line)
-                        .columnNumber(col)
-                        .currentValue("")
-                        .expected("Non-empty value")
-                        .message("Mandatory field '" + field.getFieldName() + "' cannot be empty.")
-                        .ruleCode("MANDATORY_FIELD_EMPTY")
-                        .autoFixable(true)
-                        .build());
+            // Empty check for present field
+            if (text.isEmpty()) {
+                if (field.isMandatory()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-EMPTY-" + sanitizeId(field.getXmlPath()))
+                            .severity("ERROR")
+                            .category("SCHEMA_STRUCTURE")
+                            .xpath(xpath)
+                            .fieldPath(field.getXmlPath())
+                            .fieldName(field.getFieldName())
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue("[EMPTY]")
+                            .expected("Non-empty value")
+                            .message("Mandatory field '" + field.getFieldName() + "' cannot be empty.")
+                            .ruleCode("MANDATORY_FIELD_EMPTY")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-EMPTY-OPTIONAL-" + sanitizeId(field.getXmlPath()))
+                            .severity("ERROR")
+                            .category("SCHEMA_STRUCTURE")
+                            .xpath(xpath)
+                            .fieldPath(field.getXmlPath())
+                            .fieldName(field.getFieldName())
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue("[EMPTY]")
+                            .expected("Non-empty value")
+                            .message("Field '" + field.getFieldName() + "' is present in XML but contains no value. Either populate it with a valid value or remove the tag.")
+                            .ruleCode("EMPTY_TAG_NOT_ALLOWED")
+                            .autoFixable(true)
+                            .build());
+                }
                 continue;
             }
-
-            if (text.isEmpty()) continue;
 
             // Field length check (allow 10-11 for Date with trailing Z)
             int effectiveMaxLen = field.getMaxLength();
@@ -958,6 +974,11 @@ public class XmlValidationEngine {
         int col = getNodeCol(element);
         String text = element.getTextContent() != null ? element.getTextContent().trim() : "";
 
+        // Skip digital signature elements
+        if ((element.getNamespaceURI() != null && element.getNamespaceURI().contains("xmldsig")) || "Signature".equalsIgnoreCase(tagName)) {
+            return;
+        }
+
         // 1. Tag Name Case Validation (Check exact PascalCase / Uppercase against canonical ISO 20022 & NIBSS dictionary)
         String canonicalTag = NibssValidationRules.getCanonicalTagName(tagName);
         if (canonicalTag != null && !canonicalTag.equals(tagName)) {
@@ -988,7 +1009,33 @@ public class XmlValidationEngine {
             }
         }
 
-        if (isLeaf && !text.isEmpty()) {
+        if (isLeaf && text.isEmpty()) {
+            Integer minLen = NibssValidationRules.getMinTagLength(tagName);
+            Integer exactLen = NibssValidationRules.getExactTagLength(tagName);
+            boolean isKnownSimple = (minLen != null && minLen > 0) || exactLen != null
+                    || NibssValidationRules.isUppercaseField(tagName) || "BICFI".equalsIgnoreCase(tagName)
+                    || "IBAN".equalsIgnoreCase(tagName) || "MmbId".equalsIgnoreCase(tagName)
+                    || "MsgId".equalsIgnoreCase(tagName) || "Id".equalsIgnoreCase(tagName)
+                    || "ClrSysMmbId".equalsIgnoreCase(tagName);
+
+            if (isKnownSimple) {
+                issues.add(ValidationIssueDto.builder()
+                        .id("ERR-EMPTY-TAG-" + line + "-" + sanitizeId(tagName))
+                        .severity("ERROR")
+                        .category("SCHEMA_STRUCTURE")
+                        .xpath(getElementXPath(element))
+                        .fieldPath(path)
+                        .fieldName(canonicalTag != null ? canonicalTag : tagName)
+                        .lineNumber(line)
+                        .columnNumber(col)
+                        .currentValue("[EMPTY]")
+                        .expected(exactLen != null ? exactLen + " characters" : (minLen != null ? "At least " + minLen + " characters" : "Non-empty value"))
+                        .message("XML tag <" + tagName + "> is present but contains no value. Either populate it with a valid value or remove the empty tag.")
+                        .ruleCode("EMPTY_TAG_NOT_ALLOWED")
+                        .autoFixable(true)
+                        .build());
+            }
+        } else if (isLeaf && !text.isEmpty()) {
             // A. Uppercase normalization checks
             if (NibssValidationRules.isUppercaseField(tagName) || "IdType".equalsIgnoreCase(tagName)) {
                 if (!text.equals(text.toUpperCase())) {
@@ -1659,7 +1706,8 @@ public class XmlValidationEngine {
             finInstnIdElems = findElementsByPath(doc, "Assgnmt." + agentRole + ".Agt.FinInstnId");
         }
         for (Element finInstnId : finInstnIdElems) {
-            String bicfi = findChildText(finInstnId, "BICFI");
+            Element bicfiElem = findChildElement(finInstnId, "BICFI");
+            String bicfi = bicfiElem != null ? (bicfiElem.getTextContent() != null ? bicfiElem.getTextContent().trim() : "") : null;
             String mmbId = findChildText(finInstnId, "MmbId");
             if (mmbId == null || mmbId.isEmpty()) {
                 Element clrSys = findChildElement(finInstnId, "ClrSysMmbId");
@@ -1668,7 +1716,7 @@ public class XmlValidationEngine {
                 }
             }
 
-            if ((bicfi == null || bicfi.isEmpty()) && (mmbId == null || mmbId.isEmpty())) {
+            if (bicfiElem == null && (mmbId == null || mmbId.isEmpty())) {
                 issues.add(ValidationIssueDto.builder()
                         .id("ERR-" + agentRole.toUpperCase() + "-INST-MISSING-" + getNodeLine(finInstnId))
                         .severity("ERROR")
@@ -1688,7 +1736,24 @@ public class XmlValidationEngine {
                 passedRules.add(roleName + " Agent Financial Institution Identifier is present");
             }
 
-            if (bicfi != null && !bicfi.isEmpty() && mmbId != null && !mmbId.isEmpty()) {
+            // Check if BICFI is present but empty
+            if (bicfiElem != null && bicfi.isEmpty()) {
+                issues.add(ValidationIssueDto.builder()
+                        .id("ERR-" + agentRole.toUpperCase() + "-BICFI-EMPTY-" + getNodeLine(bicfiElem))
+                        .severity("ERROR")
+                        .category("BUSINESS_RULE")
+                        .xpath(getElementXPath(bicfiElem))
+                        .fieldPath(agentRole + ".Agt.FinInstnId.BICFI")
+                        .fieldName(roleName + " Agent BICFI")
+                        .lineNumber(getNodeLine(bicfiElem))
+                        .columnNumber(getNodeCol(bicfiElem))
+                        .currentValue("[EMPTY]")
+                        .expected(mmbId != null && !mmbId.isEmpty() ? mmbId : "6-digit Institution Code (e.g. 991040)")
+                        .message(roleName + " Agent <BICFI> is present but contains no value. Either populate with the 6-digit institution code (" + (mmbId != null && !mmbId.isEmpty() ? mmbId : "e.g. 991040") + ") or remove the empty <BICFI> tag.")
+                        .ruleCode("EMPTY_TAG_NOT_ALLOWED")
+                        .autoFixable(true)
+                        .build());
+            } else if (bicfi != null && !bicfi.isEmpty() && mmbId != null && !mmbId.isEmpty()) {
                 if (bicfi.matches("\\d{6}") && mmbId.matches("\\d{6}") && !bicfi.equals(mmbId)) {
                     issues.add(ValidationIssueDto.builder()
                             .id("WARN-" + agentRole.toUpperCase() + "-BICFI-MISMATCH-" + getNodeLine(finInstnId))
