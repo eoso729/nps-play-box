@@ -632,16 +632,21 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creditor Name", "Mndt.Cdtr.Nm", "//Mndt/Cdtr/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "Mndt.CdtrAcct.Id.IBAN", "//Mndt/CdtrAcct/Id/IBAN", "3829837329", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "Mndt.CdtrAcct.Nm", "//Mndt/CdtrAcct/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor Account Name"),
+                new IsoFieldDef("Creditor Agent BICFI", "Mndt.CdtrAgt.FinInstnId.BICFI", "//Mndt/CdtrAgt/FinInstnId/BICFI", "999058", "String", 11, false, false, "INSTITUTION_CODE", "Creditor Agent BICFI"),
                 new IsoFieldDef("Creditor Agent Member ID", "Mndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//Mndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Creditor Member ID"),
                 new IsoFieldDef("Debtor Name", "Mndt.Dbtr.Nm", "//Mndt/Dbtr/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "Mndt.DbtrAcct.Id.IBAN", "//Mndt/DbtrAcct/Id/IBAN", "3829736273", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "Mndt.DbtrAcct.Nm", "//Mndt/DbtrAcct/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Account Name"),
+                new IsoFieldDef("Debtor Agent BICFI", "Mndt.DbtrAgt.FinInstnId.BICFI", "//Mndt/DbtrAgt/FinInstnId/BICFI", "999057", "String", 11, false, false, "INSTITUTION_CODE", "Debtor Agent BICFI"),
                 new IsoFieldDef("Debtor Agent Member ID", "Mndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//Mndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Debtor Member ID"),
+                new IsoFieldDef("Referenced Document Type", "Mndt.RfrdDoc.Tp.CdOrPrtry.Cd", "//Mndt/RfrdDoc/Tp/CdOrPrtry/Cd", "INV", "String", 4, false, false, null, "Referenced Document Type"),
+                new IsoFieldDef("Referenced Document Number", "Mndt.RfrdDoc.Nb", "//Mndt/RfrdDoc/Nb", "INV-2025-001", "String", 35, false, false, null, "Referenced Document Number"),
                 new IsoFieldDef("Supplementary Data Place & Name", "SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Debtor Account Designation", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountDesignation", "//DebtorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Debtor ID Type", "SplmtryData.Envlp.CustomData.DebtorInfo.IdType", "//DebtorInfo/IdType", "BVN", "Enum", 7, true, false, "ID_TYPE", "ID Type"),
                 new IsoFieldDef("Debtor ID Value", "SplmtryData.Envlp.CustomData.DebtorInfo.IdValue", "//DebtorInfo/IdValue", "22222222222", "String", 35, true, false, "ID_VALUE", "11-digit BVN"),
                 new IsoFieldDef("Debtor Account Tier", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountTier", "//DebtorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
+                new IsoFieldDef("Debtor Biometric Data", "SplmtryData.Envlp.CustomData.DebtorMetadata.BiometricData", "//DebtorMetadata/BiometricData", "a", "String", 100, false, false, null, "Debtor Biometric Data"),
                 new IsoFieldDef("Debtor Address Line", "SplmtryData.Envlp.CustomData.DebtorMetadata.AdrLine", "//DebtorMetadata/AdrLine", "12 Adeola Ode Street, Victoria Island", "String", 100, true, false, null, "Debtor Address"),
                 new IsoFieldDef("Debtor Phone Number", "SplmtryData.Envlp.CustomData.DebtorMetadata.PhneNb", "//DebtorMetadata/PhneNb", "09038472264", "String", 15, true, false, null, "Debtor Phone"),
                 new IsoFieldDef("Debtor Email Address", "SplmtryData.Envlp.CustomData.DebtorMetadata.EmailAdr", "//DebtorMetadata/EmailAdr", "mt@nibss.com", "String", 100, true, false, null, "Debtor Email"),
@@ -675,10 +680,26 @@ public class IsoMessageRegistry {
                             <ColltnAmt Ccy="NGN">50000.00</ColltnAmt>
                             <Cdtr><Nm>CreditorCorp</Nm></Cdtr>
                             <CdtrAcct><Id><IBAN>3829837329</IBAN></Id><Nm>CreditorCorp</Nm></CdtrAcct>
-                            <CdtrAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></CdtrAgt>
+                            <CdtrAgt>
+                                <FinInstnId>
+                                    <BICFI>999058</BICFI>
+                                    <ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </CdtrAgt>
                             <Dbtr><Nm>Debtor Customer</Nm></Dbtr>
                             <DbtrAcct><Id><IBAN>3829736273</IBAN></Id><Nm>Debtor Customer</Nm></DbtrAcct>
-                            <DbtrAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></DbtrAgt>
+                            <DbtrAgt>
+                                <FinInstnId>
+                                    <BICFI>999057</BICFI>
+                                    <ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </DbtrAgt>
+                            <RfrdDoc>
+                                <Tp>
+                                    <CdOrPrtry><Cd>INV</Cd></CdOrPrtry>
+                                </Tp>
+                                <Nb>INV-2025-001</Nb>
+                            </RfrdDoc>
                         </Mndt>
                         <SplmtryData>
                             <PlcAndNm>AdditionalVerificationDetails</PlcAndNm>
@@ -691,6 +712,7 @@ public class IsoMessageRegistry {
                                         <AccountTier>1</AccountTier>
                                     </DebtorInfo>
                                     <DebtorMetadata>
+                                        <BiometricData>a</BiometricData>
                                         <AdrLine>12 Adeola Ode Street, Victoria Island</AdrLine>
                                         <PhneNb>09038472264</PhneNb>
                                         <EmailAdr>mt@nibss.com</EmailAdr>

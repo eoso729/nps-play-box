@@ -902,4 +902,41 @@ public class XmlValidationEngineTest {
         assertFalse(bicfiReport.isValid());
         assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
     }
+
+    @Test
+    public void testPain009ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.009");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.009");
+        assertTrue(report.isValid(), "pain.009 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Inverted dates (FnlColltnDt before FrstColltnDt) is flagged
+        String invertedDatesXml = sampleXml.replace(
+                "<FrstColltnDt>2025-09-08</FrstColltnDt>",
+                "<FrstColltnDt>2026-09-08</FrstColltnDt>"
+        );
+        ValidationReportDto dateReport = validationEngine.validate(invertedDatesXml, "pain.009");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())),
+                "Must flag DATE_RANGE_INVALID when final collection date is before first collection date");
+
+        // 3. Mismatched BICFI in CdtrAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replace("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.009");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pain.009")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixResp.getValidationReport().isValid());
+    }
 }

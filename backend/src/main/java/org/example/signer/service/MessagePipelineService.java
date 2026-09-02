@@ -74,7 +74,9 @@ public class MessagePipelineService {
 
     public XmlGenerationResponseDto generateMandateCreationPain009(MandateCreationRequestDto requestDto) throws Exception {
         String msgId = generateMsgId(requestDto.getSourceId());
-        String mandateId = generateMandateId();
+        String mandateId = requestDto.getMandateId() != null && !requestDto.getMandateId().trim().isEmpty()
+                ? requestDto.getMandateId().trim()
+                : generateMandateId();
         MandateCreation model = MandateCreationXmlGenerator.generate(requestDto, msgId, mandateId);
         return buildXmlGenerationResponse("pain.009", msgId, model);
     }
