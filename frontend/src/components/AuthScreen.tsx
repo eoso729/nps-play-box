@@ -186,7 +186,7 @@ export const AuthScreen: React.FC = () => {
             <span className="text-[#1b4d2e]">·</span>
             <span>pacs.008.001.10</span>
             <span className="text-[#1b4d2e]">·</span>
-            <span>camt.060.001.05</span>
+            <span>camt.060.001.07</span>
           </div>
         </div>
 

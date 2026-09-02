@@ -59,22 +59,30 @@ public class MessagePipelineService {
 
     public XmlGenerationResponseDto generatePaymentActivationPain013(PaymentActivationRequestDto requestDto) throws Exception {
         String msgId = generateMsgId(requestDto.getSourceId());
-        String endToEndId = generateEndToEndId(requestDto.getSourceId());
+        String endToEndId = requestDto.getEndToEndId() != null && !requestDto.getEndToEndId().trim().isEmpty()
+                ? requestDto.getEndToEndId().trim() : generateEndToEndId(requestDto.getSourceId());
         PaymentActivation model = PaymentActivationXmlGenerator.generate(requestDto, msgId, endToEndId);
         return buildXmlGenerationResponse("pain.013", msgId, model);
     }
 
     public XmlGenerationResponseDto generatePaymentInitiationPain001(PaymentInitiationRequestDto requestDto) throws Exception {
-        String msgId = generateMsgId(requestDto.getInitiatorId());
-        String endToEndId = generateEndToEndId(requestDto.getInitiatorId());
-        String reqdExctnDt = generateReqdExctnDt();
+        String initiator = requestDto.getSchemeCode() != null && !requestDto.getSchemeCode().trim().isEmpty()
+                ? requestDto.getSchemeCode().trim()
+                : (requestDto.getInitiatorId() != null && !requestDto.getInitiatorId().trim().isEmpty() ? requestDto.getInitiatorId().trim() : "999057");
+        String msgId = generateMsgId(initiator);
+        String endToEndId = requestDto.getEndToEndId() != null && !requestDto.getEndToEndId().trim().isEmpty()
+                ? requestDto.getEndToEndId().trim() : generateEndToEndId(initiator);
+        String reqdExctnDt = requestDto.getRequestedExecutionDate() != null && !requestDto.getRequestedExecutionDate().trim().isEmpty()
+                ? requestDto.getRequestedExecutionDate().trim() : generateReqdExctnDt();
         PaymentInitiation model = PaymentInitiationXmlGenerator.generate(requestDto, msgId, endToEndId, reqdExctnDt);
         return buildXmlGenerationResponse("pain.001", msgId, model);
     }
 
     public XmlGenerationResponseDto generateMandateCreationPain009(MandateCreationRequestDto requestDto) throws Exception {
         String msgId = generateMsgId(requestDto.getSourceId());
-        String mandateId = generateMandateId();
+        String mandateId = requestDto.getMandateId() != null && !requestDto.getMandateId().trim().isEmpty()
+                ? requestDto.getMandateId().trim()
+                : generateMandateId();
         MandateCreation model = MandateCreationXmlGenerator.generate(requestDto, msgId, mandateId);
         return buildXmlGenerationResponse("pain.009", msgId, model);
     }
@@ -131,8 +139,10 @@ public class MessagePipelineService {
     }
 
     public XmlGenerationResponseDto generateBalanceEnquiryCamt060(AccountReportingRequestDto requestDto) throws Exception {
-        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";
-        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() : "999997";
+        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() :
+                (requestDto.getMessageSenderMemberId() != null ? requestDto.getMessageSenderMemberId() : "999998");
+        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() :
+                (requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999997");
         String msgId = generateMsgId(srcId);
         String rptgReqId = generateRptgReqId(srcId, destId);
         BalanceEnquiry model = BalanceEnquiryXmlGenerator.generate(requestDto, msgId, rptgReqId);
@@ -154,14 +164,22 @@ public class MessagePipelineService {
     }
 
     public XmlGenerationResponseDto generateMandateAcceptancePain012(MandateAcceptanceReportDto requestDto) throws Exception {
-        String srcId = requestDto.getCreditorAgentMemberId() != null ? requestDto.getCreditorAgentMemberId() : "999058";
+        String srcId = requestDto.getSourceId() != null && !requestDto.getSourceId().trim().isEmpty()
+                ? requestDto.getSourceId().trim()
+                : (requestDto.getCreditorAgentMemberId() != null && !requestDto.getCreditorAgentMemberId().trim().isEmpty()
+                        ? requestDto.getCreditorAgentMemberId().trim() : "999058");
         String msgId = generateMsgId(srcId);
         MandateAcceptanceReport model = MandateAcceptanceXmlGenerator.generate(requestDto, msgId);
         return buildXmlGenerationResponse("pain.012", msgId, model);
     }
 
     public XmlGenerationResponseDto generateActivationStatusReportPain014(PaymentActivationStatusReportDto requestDto) throws Exception {
-        String srcId = requestDto.getForwardingAgentMemberId() != null ? requestDto.getForwardingAgentMemberId() : "999057";
+        String srcId = requestDto.getSourceId() != null && !requestDto.getSourceId().trim().isEmpty()
+                ? requestDto.getSourceId().trim()
+                : (requestDto.getForwardingAgentMemberId() != null && !requestDto.getForwardingAgentMemberId().trim().isEmpty()
+                        ? requestDto.getForwardingAgentMemberId().trim()
+                        : (requestDto.getDebtorAgentMemberId() != null && !requestDto.getDebtorAgentMemberId().trim().isEmpty()
+                                ? requestDto.getDebtorAgentMemberId().trim() : "999057"));
         String msgId = generateMsgId(srcId);
         PaymentActivationStatusReport model = PaymentActivationStatusReportXmlGenerator.generate(requestDto, msgId);
         return buildXmlGenerationResponse("pain.014", msgId, model);
@@ -207,9 +225,14 @@ public class MessagePipelineService {
     }
 
     public MessageSendResponseDto sendPaymentInitiationPain001(PaymentInitiationRequestDto requestDto) throws Exception {
-        String msgId = generateMsgId(requestDto.getInitiatorId());
-        String endToEndId = generateEndToEndId(requestDto.getInitiatorId());
-        String reqdExctnDt = generateReqdExctnDt();
+        String initiator = requestDto.getSchemeCode() != null && !requestDto.getSchemeCode().trim().isEmpty()
+                ? requestDto.getSchemeCode().trim()
+                : (requestDto.getInitiatorId() != null && !requestDto.getInitiatorId().trim().isEmpty() ? requestDto.getInitiatorId().trim() : "999057");
+        String msgId = generateMsgId(initiator);
+        String endToEndId = requestDto.getEndToEndId() != null && !requestDto.getEndToEndId().trim().isEmpty()
+                ? requestDto.getEndToEndId().trim() : generateEndToEndId(initiator);
+        String reqdExctnDt = requestDto.getRequestedExecutionDate() != null && !requestDto.getRequestedExecutionDate().trim().isEmpty()
+                ? requestDto.getRequestedExecutionDate().trim() : generateReqdExctnDt();
         PaymentInitiation model = PaymentInitiationXmlGenerator.generate(requestDto, msgId, endToEndId, reqdExctnDt);
 
         return executeFullPipeline("pain.001", msgId, model, "CstmrCdtTrfInitn",
@@ -284,8 +307,10 @@ public class MessagePipelineService {
     }
 
     public MessageSendResponseDto sendBalanceEnquiryCamt060(AccountReportingRequestDto requestDto) throws Exception {
-        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";
-        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() : "999997";
+        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() :
+                (requestDto.getMessageSenderMemberId() != null ? requestDto.getMessageSenderMemberId() : "999998");
+        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() :
+                (requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999997");
         String msgId = generateMsgId(srcId);
         String rptgReqId = generateRptgReqId(srcId, destId);
         BalanceEnquiry model = BalanceEnquiryXmlGenerator.generate(requestDto, msgId, rptgReqId);

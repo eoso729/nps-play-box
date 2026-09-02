@@ -902,4 +902,433 @@ public class XmlValidationEngineTest {
         assertFalse(bicfiReport.isValid());
         assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
     }
+
+    @Test
+    public void testPain009ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.009");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.009");
+        assertTrue(report.isValid(), "pain.009 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Inverted dates (FnlColltnDt before FrstColltnDt) is flagged
+        String invertedDatesXml = sampleXml.replace(
+                "<FrstColltnDt>2025-09-08</FrstColltnDt>",
+                "<FrstColltnDt>2026-09-08</FrstColltnDt>"
+        );
+        ValidationReportDto dateReport = validationEngine.validate(invertedDatesXml, "pain.009");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())),
+                "Must flag DATE_RANGE_INVALID when final collection date is before first collection date");
+
+        // 3. Mismatched BICFI in CdtrAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replace("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.009");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pain.009")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixResp.getValidationReport().isValid());
+    }
+
+    @Test
+    public void testPain010ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.010");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.010");
+        assertTrue(report.isValid(), "pain.010 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched Mandate ID is flagged and auto-fixed
+        String mismatchMndtXml = sampleXml.replace(
+                "<MndtId>MNDT-RCUR-00001</MndtId>",
+                "<MndtId>MNDT-RCUR-DIFFERENT</MndtId>"
+        );
+        ValidationReportDto mndtReport = validationEngine.validate(mismatchMndtXml, "pain.010");
+        assertFalse(mndtReport.isValid());
+        assertTrue(mndtReport.getIssues().stream().anyMatch(i -> "MANDATE_ID_MISMATCH".equals(i.getRuleCode())),
+                "Must flag MANDATE_ID_MISMATCH when MndtId != OrgnlMndtId");
+
+        XmlAutoFixRequestDto fixMndtReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchMndtXml)
+                .messageType("pain.010")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixMndtResp = autoFixEngine.autoFix(fixMndtReq);
+        assertTrue(fixMndtResp.isSuccess());
+        assertTrue(fixMndtResp.getFixedXml().contains("<MndtId>MNDT-RCUR-00001</MndtId>"));
+        assertTrue(fixMndtResp.getValidationReport().isValid());
+
+        // 3. Inverted dates (FnlColltnDt before FrstColltnDt) is flagged
+        String invertedDatesXml = sampleXml.replace(
+                "<FrstColltnDt>2025-09-08</FrstColltnDt>",
+                "<FrstColltnDt>2026-09-08</FrstColltnDt>"
+        );
+        ValidationReportDto dateReport = validationEngine.validate(invertedDatesXml, "pain.010");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())),
+                "Must flag DATE_RANGE_INVALID when final collection date is before first collection date");
+
+        // 4. Mismatched BICFI in CdtrAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replace("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.010");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pain.010")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+    }
+
+    @Test
+    public void testPain011ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.011");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.011");
+        assertTrue(report.isValid(), "pain.011 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Inverted dates (FnlColltnDt before FrstColltnDt) is flagged
+        String invertedDatesXml = sampleXml.replace(
+                "<FrstColltnDt>2025-09-08</FrstColltnDt>",
+                "<FrstColltnDt>2026-09-08</FrstColltnDt>"
+        );
+        ValidationReportDto dateReport = validationEngine.validate(invertedDatesXml, "pain.011");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())),
+                "Must flag DATE_RANGE_INVALID when final collection date is before first collection date");
+
+        // 3. Mismatched BICFI in CdtrAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replace("<BICFI>999057</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.011");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pain.011")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999057</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+    }
+
+    @Test
+    public void testPain012ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.012");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.012");
+        assertTrue(report.isValid(), "pain.012 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Inverted dates (FnlColltnDt before FrstColltnDt) is flagged
+        String invertedDatesXml = sampleXml.replace(
+                "<FrstColltnDt>2025-09-08</FrstColltnDt>",
+                "<FrstColltnDt>2026-09-08</FrstColltnDt>"
+        );
+        ValidationReportDto dateReport = validationEngine.validate(invertedDatesXml, "pain.012");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())),
+                "Must flag DATE_RANGE_INVALID when final collection date is before first collection date");
+
+        // 3. Mismatched BICFI in CdtrAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replace("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.012");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pain.012")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+    }
+
+    @Test
+    public void testPain013ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.013");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.013");
+        assertTrue(report.isValid(), "pain.013 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in CdtrAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replace("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.013");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pain.013")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+    }
+
+    @Test
+    public void testPain014ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.014");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.014");
+        assertTrue(report.isValid(), "pain.014 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in FwdgAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.014");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pain.014")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+    }
+
+    @Test
+    public void testPacs003ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.003");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pacs.003");
+        assertTrue(report.isValid(), "pacs.003 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in InstgAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999998</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pacs.003");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pacs.003")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999998</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+
+        // 3. Invalid date range in MndtRltdInf
+        String invalidDateXml = sampleXml.replace("<FnlColltnDt>2026-01-28</FnlColltnDt>", "<FnlColltnDt>2026-01-20</FnlColltnDt>");
+        ValidationReportDto dateReport = validationEngine.validate(invalidDateXml, "pacs.003");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
+    }
+
+    @Test
+    public void testCamt060ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("camt.060");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "camt.060");
+        assertTrue(report.isValid(), "camt.060 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in MsgSndr is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999057</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "camt.060");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("camt.060")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999057</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+
+        // 3. Invalid date range in RptgPrd FrToDt
+        String invalidDateXml = sampleXml.replace("<ToDt>2026-03-02</ToDt>", "<ToDt>2026-02-20</ToDt>");
+        ValidationReportDto dateReport = validationEngine.validate(invalidDateXml, "camt.060");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
+    }
+
+    @Test
+    public void testCamt052ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("camt.052");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "camt.052");
+        assertTrue(report.isValid(), "camt.052 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in Svcr is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "camt.052");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("camt.052")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+
+        // 3. Invalid date range in FrToDt
+        String invalidDateXml = sampleXml.replace("<ToDtTm>2026-03-02T12:39:14.000+01:00</ToDtTm>", "<ToDtTm>2026-02-20T12:39:14.000+01:00</ToDtTm>");
+        ValidationReportDto dateReport = validationEngine.validate(invalidDateXml, "camt.052");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
+    }
+
+    @Test
+    public void testCamt053ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("camt.053");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "camt.053");
+        assertTrue(report.isValid(), "camt.053 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in Svcr is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "camt.053");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("camt.053")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+
+        // 3. Invalid date range in FrToDt
+        String invalidDateXml = sampleXml.replace("<ToDtTm>2026-02-27T05:59:59.000+01:00</ToDtTm>", "<ToDtTm>2026-01-20T00:00:00.000+01:00</ToDtTm>");
+        ValidationReportDto dateReport = validationEngine.validate(invalidDateXml, "camt.053");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
+    }
+
+    @Test
+    public void testPain001ValidationAndRules() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.001");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.001");
+        assertTrue(report.isValid(), "pain.001 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Control sum mismatch is flagged
+        String mismatchCtrlSumXml = sampleXml.replaceFirst("<CtrlSum>120.51</CtrlSum>", "<CtrlSum>999.99</CtrlSum>");
+        ValidationReportDto ctrlSumReport = validationEngine.validate(mismatchCtrlSumXml, "pain.001");
+        assertFalse(ctrlSumReport.isValid());
+        assertTrue(ctrlSumReport.getIssues().stream().anyMatch(i -> "CONTROL_SUM_MISMATCH".equals(i.getRuleCode())));
+
+        // 3. Invalid Charge Bearer is flagged
+        String invalidChrgBrXml = sampleXml.replace("<ChrgBr>SLEV</ChrgBr>", "<ChrgBr>INVALID</ChrgBr>");
+        ValidationReportDto chrgBrReport = validationEngine.validate(invalidChrgBrXml, "pain.001");
+        assertFalse(chrgBrReport.isValid());
+        assertTrue(chrgBrReport.getIssues().stream().anyMatch(i -> i.getFieldPath().contains("ChrgBr")));
+    }
+
+    @Test
+    public void testPain002ValidationAndRules() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.002");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.002");
+        assertTrue(report.isValid(), "pain.002 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. RJCT status without reason code is flagged
+        String rejectedNoRsnXml = sampleXml.replace("<TxSts>ACSC</TxSts>", "<TxSts>RJCT</TxSts>")
+                .replaceAll("(?s)<StsRsnInf>.*?</StsRsnInf>", "");
+        ValidationReportDto rjctReport = validationEngine.validate(rejectedNoRsnXml, "pain.002");
+        assertFalse(rjctReport.isValid());
+        assertTrue(rjctReport.getIssues().stream().anyMatch(i -> "REASON_CODE_MISSING".equals(i.getRuleCode())));
+
+        // 3. Mismatched numeric BICFI in DbtrAgt is flagged
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999057</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.002");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+    }
+
+    @Test
+    public void testPain008ValidationAndRules() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.008");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.008");
+        assertTrue(report.isValid(), "pain.008 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched NbOfTxs between GrpHdr and PmtInf is flagged
+        String mismatchNbXml = sampleXml.replaceFirst("<NbOfTxs>1</NbOfTxs>", "<NbOfTxs>2</NbOfTxs>");
+        ValidationReportDto nbReport = validationEngine.validate(mismatchNbXml, "pain.008");
+        assertFalse(nbReport.isValid());
+        assertTrue(nbReport.getIssues().stream().anyMatch(i -> "NUMBER_OF_TRANSACTIONS_MISMATCH".equals(i.getRuleCode())));
+
+        // 3. Invalid PmtMtd (not DD) is flagged
+        String invalidMtdXml = sampleXml.replace("<PmtMtd>DD</PmtMtd>", "<PmtMtd>TRF</PmtMtd>");
+        ValidationReportDto mtdReport = validationEngine.validate(invalidMtdXml, "pain.008");
+        assertFalse(mtdReport.isValid());
+        assertTrue(mtdReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("DD")));
+
+        // 4. Missing SplmtryData is flagged because Supplementary Data is required for pain.008
+        String noSplmtryXml = sampleXml.replaceAll("(?s)<SplmtryData>.*?</SplmtryData>", "");
+        ValidationReportDto suppReport = validationEngine.validate(noSplmtryXml, "pain.008");
+        assertTrue(suppReport.getIssues().stream().anyMatch(i -> "WARN-SPLMTRY-MISSING".equals(i.getId())));
+    }
 }

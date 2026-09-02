@@ -27,7 +27,9 @@ public class BankStatementXmlGenerator {
         msgRcpt.setNm(requestDto.getMessageRecipientName() != null ? requestDto.getMessageRecipientName() : "Debtor Bank Name");
         BankStatement.MsgRcptId rcptId = new BankStatement.MsgRcptId();
         BankStatement.OrgId orgId = new BankStatement.OrgId();
-        orgId.setAnyBIC(requestDto.getMessageRecipientBIC() != null ? requestDto.getMessageRecipientBIC() : "MSGRCPT");
+        String rcptBic = requestDto.getMessageRecipientBIC() != null ? requestDto.getMessageRecipientBIC() :
+                (requestDto.getSchemeCode() != null ? requestDto.getSchemeCode() : "999057");
+        orgId.setAnyBIC(rcptBic);
         rcptId.setOrgId(orgId);
         msgRcpt.setId(rcptId);
         grpHdr.setMsgRcpt(msgRcpt);
@@ -62,7 +64,7 @@ public class BankStatementXmlGenerator {
         BankStatement.SchmeNm schmeNm = new BankStatement.SchmeNm();
         String schemeCode = requestDto.getSchemeCode() != null ? requestDto.getSchemeCode() : "999057";
         schmeNm.setCd(schemeCode);
-        schmeNm.setPrtry(schemeCode);
+        schmeNm.setPrtry(requestDto.getProprietaryScheme() != null ? requestDto.getProprietaryScheme() : schemeCode);
         ownrOthr.setSchmeNm(schmeNm);
         ownrOrgId.setOthr(ownrOthr);
         ownrId.setOrgId(ownrOrgId);
@@ -72,7 +74,7 @@ public class BankStatementXmlGenerator {
         BankStatement.Svcr svcr = new BankStatement.Svcr();
         BankStatement.FinInstnId svcrFinInstnId = new BankStatement.FinInstnId();
         String svcrMmbId = requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999058";
-        svcrFinInstnId.setBicfi(requestDto.getAccountServicerBIC() != null ? requestDto.getAccountServicerBIC() : "XYZBNGNLXXX");
+        svcrFinInstnId.setBicfi(requestDto.getAccountServicerBIC() != null ? requestDto.getAccountServicerBIC() : svcrMmbId);
         BankStatement.ClrSysMmbId svcrClrSysMmbId = new BankStatement.ClrSysMmbId();
         svcrClrSysMmbId.setMmbId(svcrMmbId);
         svcrFinInstnId.setClrSysMmbId(svcrClrSysMmbId);
@@ -99,7 +101,7 @@ public class BankStatementXmlGenerator {
         opBal.setCdtDbtInd(requestDto.getOpeningBalanceCdtDbtInd() != null ? requestDto.getOpeningBalanceCdtDbtInd() : "CRDT");
 
         BankStatement.BalDt opBalDt = new BankStatement.BalDt();
-        opBalDt.setDtTm("2025-04-20T10:21:33.000Z");
+        opBalDt.setDtTm(requestDto.getOpeningBalanceDateTime() != null ? requestDto.getOpeningBalanceDateTime() : "2025-04-20T10:21:33.000Z");
         opBal.setDt(opBalDt);
         balances.add(opBal);
 
@@ -119,8 +121,8 @@ public class BankStatementXmlGenerator {
         clBal.setCdtDbtInd(requestDto.getClosingBalanceCdtDbtInd() != null ? requestDto.getClosingBalanceCdtDbtInd() : "CRDT");
 
         BankStatement.BalDt clBalDt = new BankStatement.BalDt();
-        clBalDt.setDt("2025-04-20Z");
-        clBalDt.setDtTm("2025-04-20T10:21:33.000Z");
+        clBalDt.setDt(requestDto.getClosingBalanceDate() != null ? requestDto.getClosingBalanceDate() : "2025-04-20Z");
+        clBalDt.setDtTm(requestDto.getClosingBalanceDateTime() != null ? requestDto.getClosingBalanceDateTime() : "2025-04-20T10:21:33.000Z");
         clBal.setDt(clBalDt);
         balances.add(clBal);
 
@@ -131,31 +133,47 @@ public class BankStatementXmlGenerator {
         BankStatement.Ntry ntry1 = new BankStatement.Ntry();
         BankStatement.Amount ntry1Amt = new BankStatement.Amount();
         ntry1Amt.setCcy(acct.getCcy());
-        ntry1Amt.setValue(new BigDecimal("30000.00"));
+        BigDecimal entryVal = requestDto.getEntryAmount() != null ? requestDto.getEntryAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("30000.00");
+        ntry1Amt.setValue(entryVal);
         ntry1.setAmt(ntry1Amt);
-        ntry1.setCdtDbtInd("CRDT");
+        ntry1.setCdtDbtInd(requestDto.getEntryCreditDebitIndicator() != null ? requestDto.getEntryCreditDebitIndicator() : "CRDT");
         BankStatement.Sts ntry1Sts = new BankStatement.Sts();
-        ntry1Sts.setCd("BOOK");
-        ntry1Sts.setPrtry("BOOK");
+        String statusCode = requestDto.getEntryStatusCode() != null ? requestDto.getEntryStatusCode() : "BOOK";
+        ntry1Sts.setCd(statusCode);
+        ntry1Sts.setPrtry(requestDto.getEntryStatus() != null ? requestDto.getEntryStatus() : statusCode);
         ntry1.setSts(ntry1Sts);
         BankStatement.EntryDt bookgDt = new BankStatement.EntryDt();
-        bookgDt.setDt("2025-04-20Z");
+        bookgDt.setDt(requestDto.getEntryBookingDate() != null ? requestDto.getEntryBookingDate() : "2025-04-20Z");
         ntry1.setBookgDt(bookgDt);
         BankStatement.EntryDt valDt = new BankStatement.EntryDt();
-        valDt.setDt("2025-04-20Z");
+        valDt.setDt(requestDto.getEntryValueDate() != null ? requestDto.getEntryValueDate() : "2025-04-20Z");
         ntry1.setValDt(valDt);
-        ntry1.setAcctSvcrRef(msgId);
+        ntry1.setAcctSvcrRef(requestDto.getAccountServicerReference() != null ? requestDto.getAccountServicerReference() : msgId);
         BankStatement.BkTxCd bkTxCd1 = new BankStatement.BkTxCd();
         BankStatement.Domn domn1 = new BankStatement.Domn();
-        domn1.setCd("PMNT");
+        domn1.setCd(requestDto.getDomainCode() != null ? requestDto.getDomainCode() : "PMNT");
         BankStatement.Fmly fmly1 = new BankStatement.Fmly();
-        fmly1.setCd("RCDT");
-        fmly1.setSubFmlyCd("ESCT");
+        fmly1.setCd(requestDto.getFamilyCode() != null ? requestDto.getFamilyCode() : "RCDT");
+        fmly1.setSubFmlyCd(requestDto.getSubFamilyCode() != null ? requestDto.getSubFamilyCode() : "ESCT");
         domn1.setFmly(fmly1);
         bkTxCd1.setDomn(domn1);
         ntry1.setBkTxCd(bkTxCd1);
-        entries.add(ntry1);
 
+        if (requestDto.getInstructedAgentBIC() != null && !requestDto.getInstructedAgentBIC().trim().isEmpty()) {
+            BankStatement.NtryDtls ntryDtls = new BankStatement.NtryDtls();
+            BankStatement.TxDtls txDtls = new BankStatement.TxDtls();
+            BankStatement.RltdAgts rltdAgts = new BankStatement.RltdAgts();
+            BankStatement.InstdAgt instdAgt = new BankStatement.InstdAgt();
+            BankStatement.FinInstnId finInstnId = new BankStatement.FinInstnId();
+            finInstnId.setBicfi(requestDto.getInstructedAgentBIC().trim());
+            instdAgt.setFinInstnId(finInstnId);
+            rltdAgts.setInstdAgt(instdAgt);
+            txDtls.setRltdAgts(rltdAgts);
+            ntryDtls.setTxDtls(txDtls);
+            ntry1.setNtryDtls(ntryDtls);
+        }
+
+        entries.add(ntry1);
         stmt.setNtry(entries);
         bkStmt.setStmt(stmt);
         doc.setBkToCstmrStmt(bkStmt);

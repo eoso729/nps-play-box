@@ -59,8 +59,9 @@ public class MandateCreationXmlGenerator {
         
         // --- Creditor Agent ---
         String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";
-        String cdtrBic = requestDto.getCreditorAgentBIC() != null ? requestDto.getCreditorAgentBIC() : "XYZBANK";
         String cdtrMmbId = requestDto.getCreditorAgentMemberId() != null ? requestDto.getCreditorAgentMemberId() : srcId;
+        String cdtrBic = requestDto.getCreditorAgentBIC() != null && !requestDto.getCreditorAgentBIC().trim().isEmpty()
+                ? requestDto.getCreditorAgentBIC().trim() : cdtrMmbId;
         
         MandateCreation.CdtrAgt cdtrAgt = new MandateCreation.CdtrAgt();
         cdtrAgt.setFinInstnId(createFinInstnId(cdtrBic, cdtrMmbId));
@@ -84,8 +85,9 @@ public class MandateCreationXmlGenerator {
         
         // --- Debtor Agent ---
         String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() : "999997";
-        String dbtrBic = requestDto.getDebtorAgentBIC() != null ? requestDto.getDebtorAgentBIC() : "ABCBANK";
         String dbtrMmbId = requestDto.getDebtorAgentMemberId() != null ? requestDto.getDebtorAgentMemberId() : destId;
+        String dbtrBic = requestDto.getDebtorAgentBIC() != null && !requestDto.getDebtorAgentBIC().trim().isEmpty()
+                ? requestDto.getDebtorAgentBIC().trim() : dbtrMmbId;
         
         MandateCreation.DbtrAgt dbtrAgt = new MandateCreation.DbtrAgt();
         dbtrAgt.setFinInstnId(createFinInstnId(dbtrBic, dbtrMmbId));
@@ -146,7 +148,9 @@ public class MandateCreationXmlGenerator {
 
     private static MandateCreation.FinInstnId createFinInstnId(String bic, String memberId) {
         MandateCreation.FinInstnId finInstnId = new MandateCreation.FinInstnId();
-        finInstnId.setBicfi(bic);
+        if (bic != null && !bic.trim().isEmpty()) {
+            finInstnId.setBicfi(bic.trim());
+        }
         MandateCreation.ClrSysMmbId clrSysMmbId = new MandateCreation.ClrSysMmbId();
         clrSysMmbId.setMmbId(memberId);
         finInstnId.setClrSysMmbId(clrSysMmbId);

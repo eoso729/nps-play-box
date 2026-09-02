@@ -14,7 +14,9 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
@@ -1321,6 +1323,7 @@ public class XmlValidationEngine {
         String k = messageKey.toLowerCase();
         return k.contains("pacs.008") || k.contains("pacs.003") || k.contains("pacs.004")
                 || k.contains("pain.009") || k.contains("pain.013") || k.contains("pain.001")
+                || k.contains("pain.008")
                 || k.contains("camt.060") || k.contains("acmt.024");
     }
 
@@ -1596,7 +1599,7 @@ public class XmlValidationEngine {
             String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
             if (sourceInstCode != null && sourceInstCode.matches("\\d{6}") && val.length() >= 6) {
                 String prefix = val.substring(0, 6);
-                if (!prefix.equals(sourceInstCode)) {
+                if (!prefix.equals(sourceInstCode) && !"999999".equals(prefix)) {
                     issues.add(ValidationIssueDto.builder()
                             .id("WARN-MSGID-SRC-MISMATCH-" + getNodeLine(el))
                             .severity("WARNING")
@@ -1607,13 +1610,13 @@ public class XmlValidationEngine {
                             .lineNumber(getNodeLine(el))
                             .columnNumber(getNodeCol(el))
                             .currentValue(prefix)
-                            .expected(sourceInstCode)
+                            .expected(sourceInstCode + " or 999999 (NIBSS Switch)")
                             .message("Message ID prefix (" + prefix + ") does not match document Source Institution Code (" + sourceInstCode + ").")
                             .ruleCode("SOURCE_INSTITUTION_MISMATCH")
                             .autoFixable(true)
                             .build());
                 } else {
-                    passedRules.add("MsgId prefix matches Source Institution Code (" + sourceInstCode + ")");
+                    passedRules.add("MsgId prefix matches Source Institution Code (" + prefix + ")");
                 }
             }
         }
@@ -2029,22 +2032,592 @@ public class XmlValidationEngine {
             }
         }
 
+        // 5f. Cross-validate pain.009 specific rules (FrstColltnDt vs FnlColltnDt, SeqTp, TrckgInd)
+        if (key.contains("pain.009")) {
+            List<Element> frstDtList = findElementsByPath(doc, "Ocrncs.FrstColltnDt");
+            List<Element> fnlDtList = findElementsByPath(doc, "Ocrncs.FnlColltnDt");
+            if (!frstDtList.isEmpty() && !fnlDtList.isEmpty()) {
+                Element frstElem = frstDtList.get(0);
+                Element fnlElem = fnlDtList.get(0);
+                String frstVal = frstElem.getTextContent() != null ? frstElem.getTextContent().trim() : "";
+                String fnlVal = fnlElem.getTextContent() != null ? fnlElem.getTextContent().trim() : "";
+                if (!frstVal.isEmpty() && !fnlVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frstVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(fnlVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(fnlElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(fnlElem))
+                                    .fieldPath("Mndt.Ocrncs.FnlColltnDt")
+                                    .fieldName("Final Collection Date")
+                                    .lineNumber(getNodeLine(fnlElem))
+                                    .columnNumber(getNodeCol(fnlElem))
+                                    .currentValue(fnlVal)
+                                    .expected("On or after " + frstVal)
+                                    .message("Final collection date (" + fnlVal + ") cannot be earlier than first collection date (" + frstVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Mandate collection date range is valid (" + frstVal + " to " + fnlVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        // 5g. Cross-validate pain.010 specific rules (MndtId == OrgnlMndtId, Date range)
+        if (key.contains("pain.010")) {
+            // Check MndtId == OrgnlMndtId
+            List<Element> mndtIdList = findElementsByPath(doc, "Mndt.MndtId");
+            List<Element> orgnlMndtIdList = findElementsByPath(doc, "OrgnlMndt.OrgnlMndtId");
+            if (!mndtIdList.isEmpty() && !orgnlMndtIdList.isEmpty()) {
+                Element mndtIdElem = mndtIdList.get(0);
+                String mndtIdVal = mndtIdElem.getTextContent() != null ? mndtIdElem.getTextContent().trim() : "";
+                Element orgnlMndtIdElem = orgnlMndtIdList.get(0);
+                String orgnlMndtIdVal = orgnlMndtIdElem.getTextContent() != null ? orgnlMndtIdElem.getTextContent().trim() : "";
+
+                if (!mndtIdVal.isEmpty() && !orgnlMndtIdVal.isEmpty()) {
+                    if (!mndtIdVal.equals(orgnlMndtIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-MNDTID-MISMATCH-" + getNodeLine(mndtIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(mndtIdElem))
+                                .fieldPath("MndtAmdmntReq.UndrlygAmdmntDtls.Mndt.MndtId")
+                                .fieldName("Mandate ID")
+                                .lineNumber(getNodeLine(mndtIdElem))
+                                .columnNumber(getNodeCol(mndtIdElem))
+                                .currentValue(mndtIdVal)
+                                .expected(orgnlMndtIdVal)
+                                .message("Amended Mandate ID <Mndt><MndtId> ('" + mndtIdVal + "') must match Original Mandate ID <OrgnlMndt><OrgnlMndtId> ('" + orgnlMndtIdVal + "').")
+                                .ruleCode("MANDATE_ID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Amended Mandate ID matches Original Mandate ID (" + orgnlMndtIdVal + ")");
+                    }
+                }
+            }
+
+            // Date order check
+            List<Element> frstDtList = findElementsByPath(doc, "Ocrncs.FrstColltnDt");
+            List<Element> fnlDtList = findElementsByPath(doc, "Ocrncs.FnlColltnDt");
+            if (!frstDtList.isEmpty() && !fnlDtList.isEmpty()) {
+                Element frstElem = frstDtList.get(0);
+                Element fnlElem = fnlDtList.get(0);
+                String frstVal = frstElem.getTextContent() != null ? frstElem.getTextContent().trim() : "";
+                String fnlVal = fnlElem.getTextContent() != null ? fnlElem.getTextContent().trim() : "";
+                if (!frstVal.isEmpty() && !fnlVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frstVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(fnlVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(fnlElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(fnlElem))
+                                    .fieldPath("Mndt.Ocrncs.FnlColltnDt")
+                                    .fieldName("Final Collection Date")
+                                    .lineNumber(getNodeLine(fnlElem))
+                                    .columnNumber(getNodeCol(fnlElem))
+                                    .currentValue(fnlVal)
+                                    .expected("On or after " + frstVal)
+                                    .message("Final collection date (" + fnlVal + ") cannot be earlier than first collection date (" + frstVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Mandate collection date range is valid (" + frstVal + " to " + fnlVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        // 5h. Cross-validate pain.011 specific rules (Date range, etc.)
+        if (key.contains("pain.011")) {
+            List<Element> frstDtList = findElementsByPath(doc, "Ocrncs.FrstColltnDt");
+            List<Element> fnlDtList = findElementsByPath(doc, "Ocrncs.FnlColltnDt");
+            if (!frstDtList.isEmpty() && !fnlDtList.isEmpty()) {
+                Element frstElem = frstDtList.get(0);
+                Element fnlElem = fnlDtList.get(0);
+                String frstVal = frstElem.getTextContent() != null ? frstElem.getTextContent().trim() : "";
+                String fnlVal = fnlElem.getTextContent() != null ? fnlElem.getTextContent().trim() : "";
+                if (!frstVal.isEmpty() && !fnlVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frstVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(fnlVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(fnlElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(fnlElem))
+                                    .fieldPath("MndtCxlReq.UndrlygCxlDtls.OrgnlMndt.OrgnlMndt.Ocrncs.FnlColltnDt")
+                                    .fieldName("Final Collection Date")
+                                    .lineNumber(getNodeLine(fnlElem))
+                                    .columnNumber(getNodeCol(fnlElem))
+                                    .currentValue(fnlVal)
+                                    .expected("On or after " + frstVal)
+                                    .message("Final collection date (" + fnlVal + ") cannot be earlier than first collection date (" + frstVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Mandate collection date range is valid (" + frstVal + " to " + fnlVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        // 5i. Cross-validate pain.012 specific rules (Date range, etc.)
+        if (key.contains("pain.012")) {
+            List<Element> frstDtList = findElementsByPath(doc, "Ocrncs.FrstColltnDt");
+            List<Element> fnlDtList = findElementsByPath(doc, "Ocrncs.FnlColltnDt");
+            if (!frstDtList.isEmpty() && !fnlDtList.isEmpty()) {
+                Element frstElem = frstDtList.get(0);
+                Element fnlElem = fnlDtList.get(0);
+                String frstVal = frstElem.getTextContent() != null ? frstElem.getTextContent().trim() : "";
+                String fnlVal = fnlElem.getTextContent() != null ? fnlElem.getTextContent().trim() : "";
+                if (!frstVal.isEmpty() && !fnlVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frstVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(fnlVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(fnlElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(fnlElem))
+                                    .fieldPath("MndtAccptncRpt.UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.FnlColltnDt")
+                                    .fieldName("Final Collection Date")
+                                    .lineNumber(getNodeLine(fnlElem))
+                                    .columnNumber(getNodeCol(fnlElem))
+                                    .currentValue(fnlVal)
+                                    .expected("On or after " + frstVal)
+                                    .message("Final collection date (" + fnlVal + ") cannot be earlier than first collection date (" + frstVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Mandate collection date range is valid (" + frstVal + " to " + fnlVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        // 5j. Cross-validate pacs.003 specific rules (Date range in MndtRltdInf)
+        if (key.contains("pacs.003")) {
+            List<Element> frstDtList = findElementsByPath(doc, "MndtRltdInf.FrstColltnDt");
+            List<Element> fnlDtList = findElementsByPath(doc, "MndtRltdInf.FnlColltnDt");
+            if (!frstDtList.isEmpty() && !fnlDtList.isEmpty()) {
+                Element frstElem = frstDtList.get(0);
+                Element fnlElem = fnlDtList.get(0);
+                String frstVal = frstElem.getTextContent() != null ? frstElem.getTextContent().trim() : "";
+                String fnlVal = fnlElem.getTextContent() != null ? fnlElem.getTextContent().trim() : "";
+                if (!frstVal.isEmpty() && !fnlVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frstVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(fnlVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(fnlElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(fnlElem))
+                                    .fieldPath("DrctDbtTxInf.DrctDbtTx.MndtRltdInf.FnlColltnDt")
+                                    .fieldName("Final Collection Date")
+                                    .lineNumber(getNodeLine(fnlElem))
+                                    .columnNumber(getNodeCol(fnlElem))
+                                    .currentValue(fnlVal)
+                                    .expected("On or after " + frstVal)
+                                    .message("Final collection date (" + fnlVal + ") cannot be earlier than first collection date (" + frstVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Mandate collection date range is valid (" + frstVal + " to " + fnlVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        // 5k. Cross-validate camt.060 specific rules (Reporting Period FrDt vs ToDt)
+        if (key.contains("camt.060")) {
+            List<Element> frDtList = findElementsByPath(doc, "FrToDt.FrDt");
+            List<Element> toDtList = findElementsByPath(doc, "FrToDt.ToDt");
+            if (!frDtList.isEmpty() && !toDtList.isEmpty()) {
+                Element frElem = frDtList.get(0);
+                Element toElem = toDtList.get(0);
+                String frVal = frElem.getTextContent() != null ? frElem.getTextContent().trim() : "";
+                String toVal = toElem.getTextContent() != null ? toElem.getTextContent().trim() : "";
+                if (!frVal.isEmpty() && !toVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(toVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(toElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(toElem))
+                                    .fieldPath("AcctRptgReq.RptgReq.RptgPrd.FrToDt.ToDt")
+                                    .fieldName("Reporting Period To Date")
+                                    .lineNumber(getNodeLine(toElem))
+                                    .columnNumber(getNodeCol(toElem))
+                                    .currentValue(toVal)
+                                    .expected("On or after " + frVal)
+                                    .message("Reporting period to date (" + toVal + ") cannot be earlier than from date (" + frVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Reporting period date range is valid (" + frVal + " to " + toVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        // 5l. Cross-validate camt.052 / camt.053 specific rules (FrDtTm vs ToDtTm)
+        if (key.contains("camt.052") || key.contains("camt.053")) {
+            List<Element> frDtList = findElementsByPath(doc, "FrToDt.FrDtTm");
+            List<Element> toDtList = findElementsByPath(doc, "FrToDt.ToDtTm");
+            if (!frDtList.isEmpty() && !toDtList.isEmpty()) {
+                Element frElem = frDtList.get(0);
+                Element toElem = toDtList.get(0);
+                String frVal = frElem.getTextContent() != null ? frElem.getTextContent().trim() : "";
+                String toVal = toElem.getTextContent() != null ? toElem.getTextContent().trim() : "";
+                if (!frVal.isEmpty() && !toVal.isEmpty()) {
+                    try {
+                        String frDatePart = frVal.length() >= 10 ? frVal.substring(0, 10) : frVal;
+                        String toDatePart = toVal.length() >= 10 ? toVal.substring(0, 10) : toVal;
+                        LocalDate d1 = LocalDate.parse(frDatePart);
+                        LocalDate d2 = LocalDate.parse(toDatePart);
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(toElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(toElem))
+                                    .fieldPath("BkToCstmrAcctRpt.Rpt.FrToDt.ToDtTm")
+                                    .fieldName("Report To DateTime")
+                                    .lineNumber(getNodeLine(toElem))
+                                    .columnNumber(getNodeCol(toElem))
+                                    .currentValue(toVal)
+                                    .expected("On or after " + frVal)
+                                    .message("Report to datetime (" + toVal + ") cannot be earlier than from datetime (" + frVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Report datetime range is valid (" + frVal + " to " + toVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        // 5m. Cross-validate pain.001 specific rules (CtrlSum, NbOfTxs, PmtMtd, ChrgBr)
+        if (key.contains("pain.001")) {
+            List<Element> grpNbList = findElementsByPath(doc, "GrpHdr.NbOfTxs");
+            List<Element> pmtNbList = findElementsByPath(doc, "PmtInf.NbOfTxs");
+            if (!grpNbList.isEmpty() && !pmtNbList.isEmpty()) {
+                String gNb = grpNbList.get(0).getTextContent().trim();
+                String pNb = pmtNbList.get(0).getTextContent().trim();
+                if (!gNb.equals(pNb)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-NBOFTXS-MISMATCH-" + getNodeLine(pmtNbList.get(0)))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(pmtNbList.get(0)))
+                            .fieldPath("PmtInf.NbOfTxs")
+                            .fieldName("Payment Number of Transactions")
+                            .lineNumber(getNodeLine(pmtNbList.get(0)))
+                            .columnNumber(getNodeCol(pmtNbList.get(0)))
+                            .currentValue(pNb)
+                            .expected(gNb)
+                            .message("PmtInf/NbOfTxs ('" + pNb + "') must match GrpHdr/NbOfTxs ('" + gNb + "').")
+                            .ruleCode("NUMBER_OF_TRANSACTIONS_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Group header and payment info number of transactions match (" + gNb + ")");
+                }
+            }
+
+            List<Element> grpCtrlList = findElementsByPath(doc, "GrpHdr.CtrlSum");
+            List<Element> pmtCtrlList = findElementsByPath(doc, "PmtInf.CtrlSum");
+            if (!grpCtrlList.isEmpty() && !pmtCtrlList.isEmpty()) {
+                try {
+                    BigDecimal gSum = new BigDecimal(grpCtrlList.get(0).getTextContent().trim());
+                    BigDecimal pSum = new BigDecimal(pmtCtrlList.get(0).getTextContent().trim());
+                    if (gSum.compareTo(pSum) != 0) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-CTRLSUM-MISMATCH-" + getNodeLine(pmtCtrlList.get(0)))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(pmtCtrlList.get(0)))
+                                .fieldPath("PmtInf.CtrlSum")
+                                .fieldName("Payment Information Control Sum")
+                                .lineNumber(getNodeLine(pmtCtrlList.get(0)))
+                                .columnNumber(getNodeCol(pmtCtrlList.get(0)))
+                                .currentValue(pSum.toPlainString())
+                                .expected(gSum.toPlainString())
+                                .message("PmtInf/CtrlSum (" + pSum + ") must match GrpHdr/CtrlSum (" + gSum + ").")
+                                .ruleCode("CONTROL_SUM_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Group header and payment info control sums match (" + gSum + ")");
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            List<Element> pmtMtdList = findElementsByPath(doc, "PmtInf.PmtMtd");
+            for (Element el : pmtMtdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"TRF".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PMTMTD-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("PmtInf.PmtMtd")
+                            .fieldName("Payment Method")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("TRF")
+                            .message("Payment method must be 'TRF' for Customer Credit Transfer Initiation.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Payment method is valid TRF");
+                }
+            }
+
+            List<Element> chrgBrList = findElementsByPath(doc, "PmtInf.ChrgBr");
+            for (Element el : chrgBrList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"SLEV".equalsIgnoreCase(val) && !"CRED".equalsIgnoreCase(val) && !"DEBT".equalsIgnoreCase(val) && !"SHAR".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-CHRGBR-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("PmtInf.ChrgBr")
+                            .fieldName("Charge Bearer")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("SLEV, CRED, DEBT, or SHAR")
+                            .message("Charge Bearer must be one of SLEV, CRED, DEBT, or SHAR. Current value is '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Charge bearer code is valid (" + val + ")");
+                }
+            }
+        }
+
+        // 5n. Cross-validate pain.002 specific rules (GrpSts, TxSts, StsRsnInf when rejected)
+        if (key.contains("pain.002")) {
+            List<Element> txStsList = findElementsByPath(doc, "TxInfAndSts.TxSts");
+            List<Element> rsnCdList = findElementsByPath(doc, "TxInfAndSts.StsRsnInf.Rsn.Cd");
+            for (Element el : txStsList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if ("RJCT".equalsIgnoreCase(val) && rsnCdList.isEmpty()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-RJCT-RSN-MISSING-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("CstmrPmtStsRpt.OrgnlPmtInfAndSts.TxInfAndSts.StsRsnInf.Rsn.Cd")
+                            .fieldName("Status Reason Code")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue("[MISSING]")
+                            .expected("Reason code required when transaction is rejected (e.g. AM09, MD01)")
+                            .message("Transaction status is RJCT (Rejected) but no reason code (<StsRsnInf><Rsn><Cd>) was provided.")
+                            .ruleCode("REASON_CODE_MISSING")
+                            .autoFixable(true)
+                            .build());
+                } else if (!val.isEmpty()) {
+                    passedRules.add("Transaction status consistency verified (" + val + ")");
+                }
+            }
+
+            List<Element> orgnlMsgNmList = findElementsByPath(doc, "OrgnlGrpInfAndSts.OrgnlMsgNmId");
+            for (Element el : orgnlMsgNmList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!val.isEmpty() && !val.contains("pain.001")) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-ORGNLMSGNM-" + getNodeLine(el))
+                            .severity("WARN")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("OrgnlGrpInfAndSts.OrgnlMsgNmId")
+                            .fieldName("Original Message Name ID")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("pain.001.001.12")
+                            .message("Original message name ID should refer to pain.001 (e.g. pain.001.001.12). Current: '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .build());
+                } else if (!val.isEmpty()) {
+                    passedRules.add("Original message name ID matches expected target (" + val + ")");
+                }
+            }
+        }
+
+        // 5o. Cross-validate pain.008 specific rules (PmtMtd == DD, NbOfTxs, CtrlSum, SeqTp)
+        if (key.contains("pain.008")) {
+            List<Element> grpNbOfTxs = findElementsByPath(doc, "GrpHdr.NbOfTxs");
+            List<Element> pmtNbOfTxs = findElementsByPath(doc, "PmtInf.NbOfTxs");
+            if (!grpNbOfTxs.isEmpty() && !pmtNbOfTxs.isEmpty()) {
+                String grpVal = grpNbOfTxs.get(0).getTextContent() != null ? grpNbOfTxs.get(0).getTextContent().trim() : "";
+                String pmtVal = pmtNbOfTxs.get(0).getTextContent() != null ? pmtNbOfTxs.get(0).getTextContent().trim() : "";
+                if (!grpVal.isEmpty() && !pmtVal.isEmpty() && !grpVal.equals(pmtVal)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PAIN008-NBOFTXS-" + getNodeLine(pmtNbOfTxs.get(0)))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(pmtNbOfTxs.get(0)))
+                            .fieldPath("CstmrDrctDbtInitn.PmtInf.NbOfTxs")
+                            .fieldName("Payment Number of Transactions")
+                            .lineNumber(getNodeLine(pmtNbOfTxs.get(0)))
+                            .columnNumber(getNodeCol(pmtNbOfTxs.get(0)))
+                            .currentValue(pmtVal)
+                            .expected(grpVal)
+                            .message("Payment info NbOfTxs (" + pmtVal + ") must match Group Header NbOfTxs (" + grpVal + ").")
+                            .ruleCode("NUMBER_OF_TRANSACTIONS_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Payment Info NbOfTxs matches Group Header NbOfTxs (" + grpVal + ")");
+                }
+            }
+
+            List<Element> grpCtrlSum = findElementsByPath(doc, "GrpHdr.CtrlSum");
+            List<Element> pmtCtrlSum = findElementsByPath(doc, "PmtInf.CtrlSum");
+            if (!grpCtrlSum.isEmpty() && !pmtCtrlSum.isEmpty()) {
+                String grpVal = grpCtrlSum.get(0).getTextContent() != null ? grpCtrlSum.get(0).getTextContent().trim() : "";
+                String pmtVal = pmtCtrlSum.get(0).getTextContent() != null ? pmtCtrlSum.get(0).getTextContent().trim() : "";
+                if (!grpVal.isEmpty() && !pmtVal.isEmpty()) {
+                    try {
+                        BigDecimal gVal = new BigDecimal(grpVal);
+                        BigDecimal pVal = new BigDecimal(pmtVal);
+                        if (gVal.compareTo(pVal) != 0) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-PAIN008-CTRLSUM-" + getNodeLine(pmtCtrlSum.get(0)))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(pmtCtrlSum.get(0)))
+                                    .fieldPath("CstmrDrctDbtInitn.PmtInf.CtrlSum")
+                                    .fieldName("Payment Control Sum")
+                                    .lineNumber(getNodeLine(pmtCtrlSum.get(0)))
+                                    .columnNumber(getNodeCol(pmtCtrlSum.get(0)))
+                                    .currentValue(pmtVal)
+                                    .expected(grpVal)
+                                    .message("Payment info CtrlSum (" + pmtVal + ") must match Group Header CtrlSum (" + grpVal + ").")
+                                    .ruleCode("CONTROL_SUM_MISMATCH")
+                                    .autoFixable(true)
+                                    .build());
+                        } else {
+                            passedRules.add("Payment Info CtrlSum matches Group Header CtrlSum (" + grpVal + ")");
+                        }
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+
+            List<Element> pmtMtdList = findElementsByPath(doc, "PmtInf.PmtMtd");
+            for (Element el : pmtMtdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"DD".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PAIN008-PMTMTD-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("CstmrDrctDbtInitn.PmtInf.PmtMtd")
+                            .fieldName("Payment Method")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("DD")
+                            .message("Payment method for pain.008 customer direct debit initiation must be 'DD'. Current: '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Payment method is valid DD (Direct Debit)");
+                }
+            }
+
+            List<Element> seqTpList = findElementsByPath(doc, "PmtInf.PmtTpInf.SeqTp");
+            for (Element el : seqTpList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"FRST".equalsIgnoreCase(val) && !"RCUR".equalsIgnoreCase(val) && !"OOFF".equalsIgnoreCase(val) && !"FNAL".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PAIN008-SEQTP-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("CstmrDrctDbtInitn.PmtInf.PmtTpInf.SeqTp")
+                            .fieldName("Sequence Type")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("FRST, RCUR, OOFF, or FNAL")
+                            .message("Sequence type must be FRST, RCUR, OOFF, or FNAL. Current: '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Sequence type is valid (" + val + ")");
+                }
+            }
+        }
+
         // 6. Cross-validate Agent FinInstnId containers in all messages
         validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
         validateAgentFinInstnId(doc, "Assgne", issues, passedRules);
+        validateAgentFinInstnId(doc, "FwdgAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "InstgAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "InstdAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "DbtrAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "CdtrAgt", issues, passedRules);
+        validateAgentFinInstnId(doc, "MsgSndr", issues, passedRules);
+        validateAgentFinInstnId(doc, "AcctOwnr", issues, passedRules);
+        validateAgentFinInstnId(doc, "AcctSvcr", issues, passedRules);
+        validateAgentFinInstnId(doc, "Svcr", issues, passedRules);
     }
 
     private void validateAgentFinInstnId(Document doc, String agentRole, List<ValidationIssueDto> issues, List<String> passedRules) {
         String roleName = "Assgnr".equalsIgnoreCase(agentRole) ? "Assigner Agent" :
                           "Assgne".equalsIgnoreCase(agentRole) ? "Assignee Agent" :
+                          "FwdgAgt".equalsIgnoreCase(agentRole) ? "Forwarding Agent" :
                           "InstgAgt".equalsIgnoreCase(agentRole) ? "Instructing Agent" :
                           "InstdAgt".equalsIgnoreCase(agentRole) ? "Instructed Agent" :
                           "DbtrAgt".equalsIgnoreCase(agentRole) ? "Debtor Agent" :
-                          "CdtrAgt".equalsIgnoreCase(agentRole) ? "Creditor Agent" : agentRole;
+                          "CdtrAgt".equalsIgnoreCase(agentRole) ? "Creditor Agent" :
+                          "MsgSndr".equalsIgnoreCase(agentRole) ? "Message Sender" :
+                          "AcctOwnr".equalsIgnoreCase(agentRole) ? "Account Owner" :
+                          "AcctSvcr".equalsIgnoreCase(agentRole) ? "Account Servicer" :
+                          "Svcr".equalsIgnoreCase(agentRole) ? "Account Servicer" : agentRole;
 
         List<Element> agentElems = new ArrayList<>();
         NodeList nodes = doc.getElementsByTagName(agentRole);
@@ -2191,8 +2764,17 @@ public class XmlValidationEngine {
                     "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
             );
         }
-        if (key.contains("pain.014") || key.contains("pain.001") || key.contains("pain.002")) {
+        if (key.contains("pain.014")) {
             return findFirstElementText(doc,
+                    "FwdgAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.FwdgAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("pain.001") || key.contains("pain.002")) {
+            return findFirstElementText(doc,
+                    "GrpHdr.InitgPty.Id.OrgId.Othr.SchmeNm.Cd",
                     "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
@@ -2242,6 +2824,7 @@ public class XmlValidationEngine {
         }
         if (key.contains("pain.014") || key.contains("pain.001") || key.contains("pain.002")) {
             return findFirstElementText(doc,
+                    "CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"
@@ -2257,8 +2840,21 @@ public class XmlValidationEngine {
         }
         if (key.contains("camt.060")) {
             return findFirstElementText(doc,
+                    "AcctRptgReq.RptgReq.AcctSvcr.FinInstnId.ClrSysMmbId.MmbId",
+                    "RptgReq.AcctSvcr.FinInstnId.ClrSysMmbId.MmbId",
+                    "AcctSvcr.FinInstnId.ClrSysMmbId.MmbId",
                     "AcctRptgReq.RptgReq.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
                     "Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("camt.052") || key.contains("camt.053")) {
+            return findFirstElementText(doc,
+                    "BkToCstmrAcctRpt.Rpt.Acct.Ownr.Id.OrgId.Othr.SchmeNm.Cd",
+                    "BkToCstmrAcctRpt.Rpt.Acct.Ownr.Id.OrgId.Othr.SchmeNm.Prtry",
+                    "BkToCstmrAcctRpt.GrpHdr.MsgRcpt.Id.OrgId.AnyBIC",
+                    "BkToCstmrStmt.Stmt.Acct.Ownr.Id.OrgId.Othr.SchmeNm.Cd",
+                    "BkToCstmrStmt.Stmt.Acct.Ownr.Id.OrgId.Othr.SchmeNm.Prtry",
+                    "BkToCstmrStmt.GrpHdr.MsgRcpt.Id.OrgId.AnyBIC"
             );
         }
         return findFirstElementText(doc,
@@ -2267,8 +2863,6 @@ public class XmlValidationEngine {
                 "CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "CdtTrfTxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId",
-                "BkToCstmrAcctRpt.Rpt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
-                "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
                 "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "PmtRtr.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"

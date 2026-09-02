@@ -48,14 +48,31 @@ public class PaymentActivationStatusReportXmlGenerator {
         grpHdr.setDbtrAcct(dbtrAcct);
 
         // Agents
-        String fwdgMmbId = requestDto.getForwardingAgentMemberId() != null ? requestDto.getForwardingAgentMemberId() : "999057";
-        grpHdr.setFwdgAgt(createAgent(fwdgMmbId, requestDto.getForwardingAgentBIC()));
+        String srcId = requestDto.getSourceId() != null && !requestDto.getSourceId().trim().isEmpty()
+                ? requestDto.getSourceId().trim() : null;
+        String destId = requestDto.getDestinationId() != null && !requestDto.getDestinationId().trim().isEmpty()
+                ? requestDto.getDestinationId().trim() : null;
 
-        String dbtrMmbId = requestDto.getDebtorAgentMemberId() != null ? requestDto.getDebtorAgentMemberId() : "999058";
-        grpHdr.setDbtrAgt(createAgent(dbtrMmbId, requestDto.getDebtorAgentBIC()));
+        String fwdgMmbId = requestDto.getForwardingAgentMemberId() != null && !requestDto.getForwardingAgentMemberId().trim().isEmpty()
+                ? requestDto.getForwardingAgentMemberId().trim()
+                : (srcId != null ? srcId : "999057");
+        String fwdgBic = requestDto.getForwardingAgentBIC() != null && !requestDto.getForwardingAgentBIC().trim().isEmpty()
+                ? requestDto.getForwardingAgentBIC().trim() : fwdgMmbId;
+        grpHdr.setFwdgAgt(createAgent(fwdgMmbId, fwdgBic));
 
-        String cdtrMmbId = requestDto.getCreditorAgentMemberId() != null ? requestDto.getCreditorAgentMemberId() : "999057";
-        grpHdr.setCdtrAgt(createAgent(cdtrMmbId, requestDto.getCreditorAgentBIC()));
+        String dbtrMmbId = requestDto.getDebtorAgentMemberId() != null && !requestDto.getDebtorAgentMemberId().trim().isEmpty()
+                ? requestDto.getDebtorAgentMemberId().trim()
+                : (srcId != null ? srcId : "999058");
+        String dbtrBic = requestDto.getDebtorAgentBIC() != null && !requestDto.getDebtorAgentBIC().trim().isEmpty()
+                ? requestDto.getDebtorAgentBIC().trim() : dbtrMmbId;
+        grpHdr.setDbtrAgt(createAgent(dbtrMmbId, dbtrBic));
+
+        String cdtrMmbId = requestDto.getCreditorAgentMemberId() != null && !requestDto.getCreditorAgentMemberId().trim().isEmpty()
+                ? requestDto.getCreditorAgentMemberId().trim()
+                : (destId != null ? destId : "999057");
+        String cdtrBic = requestDto.getCreditorAgentBIC() != null && !requestDto.getCreditorAgentBIC().trim().isEmpty()
+                ? requestDto.getCreditorAgentBIC().trim() : cdtrMmbId;
+        grpHdr.setCdtrAgt(createAgent(cdtrMmbId, cdtrBic));
 
         rpt.setGrpHdr(grpHdr);
 
@@ -84,7 +101,9 @@ public class PaymentActivationStatusReportXmlGenerator {
     private static PaymentActivationStatusReport.Agent createAgent(String mmbId, String bicfi) {
         PaymentActivationStatusReport.Agent agt = new PaymentActivationStatusReport.Agent();
         PaymentActivationStatusReport.FinInstnId finInstnId = new PaymentActivationStatusReport.FinInstnId();
-        finInstnId.setBicfi(bicfi != null ? bicfi : mmbId);
+        if (bicfi != null && !bicfi.trim().isEmpty()) {
+            finInstnId.setBicfi(bicfi.trim());
+        }
         PaymentActivationStatusReport.ClrSysMmbId clrSysMmbId = new PaymentActivationStatusReport.ClrSysMmbId();
         clrSysMmbId.setMmbId(mmbId);
         finInstnId.setClrSysMmbId(clrSysMmbId);

@@ -26,8 +26,10 @@ public class BankAccountReportXmlGenerator {
         BankAccountReport.MsgRcpt msgRcpt = new BankAccountReport.MsgRcpt();
         msgRcpt.setNm(requestDto.getMessageRecipientName() != null ? requestDto.getMessageRecipientName() : "Debtor Bank Name");
         BankAccountReport.MsgRcptId rcptId = new BankAccountReport.MsgRcptId();
+        String rcptBic = requestDto.getMessageRecipientBIC() != null ? requestDto.getMessageRecipientBIC() :
+                (requestDto.getSchemeCode() != null ? requestDto.getSchemeCode() : "999057");
         BankAccountReport.OrgId orgId = new BankAccountReport.OrgId();
-        orgId.setAnyBIC(requestDto.getMessageRecipientBIC() != null ? requestDto.getMessageRecipientBIC() : "MSGRCPT");
+        orgId.setAnyBIC(rcptBic);
         rcptId.setOrgId(orgId);
         msgRcpt.setId(rcptId);
         grpHdr.setMsgRcpt(msgRcpt);
@@ -62,7 +64,7 @@ public class BankAccountReportXmlGenerator {
         BankAccountReport.SchmeNm schmeNm = new BankAccountReport.SchmeNm();
         String schemeCode = requestDto.getSchemeCode() != null ? requestDto.getSchemeCode() : "999057";
         schmeNm.setCd(schemeCode);
-        schmeNm.setPrtry(schemeCode);
+        schmeNm.setPrtry(requestDto.getProprietaryScheme() != null ? requestDto.getProprietaryScheme() : schemeCode);
         ownrOthr.setSchmeNm(schmeNm);
         ownrOrgId.setOthr(ownrOthr);
         ownrId.setOrgId(ownrOrgId);
@@ -72,7 +74,7 @@ public class BankAccountReportXmlGenerator {
         BankAccountReport.Svcr svcr = new BankAccountReport.Svcr();
         BankAccountReport.FinInstnId svcrFinInstnId = new BankAccountReport.FinInstnId();
         String svcrMmbId = requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999058";
-        svcrFinInstnId.setBicfi(requestDto.getAccountServicerBIC() != null ? requestDto.getAccountServicerBIC() : "XYZBNGNLXXX");
+        svcrFinInstnId.setBicfi(requestDto.getAccountServicerBIC() != null ? requestDto.getAccountServicerBIC() : svcrMmbId);
         BankAccountReport.ClrSysMmbId svcrClrSysMmbId = new BankAccountReport.ClrSysMmbId();
         svcrClrSysMmbId.setMmbId(svcrMmbId);
         svcrFinInstnId.setClrSysMmbId(svcrClrSysMmbId);
@@ -99,35 +101,50 @@ public class BankAccountReportXmlGenerator {
         bal.setDt(balDt);
         rpt.setBal(bal);
 
-        // --- Sample Entries ---
+        // --- Entries ---
         List<BankAccountReport.Ntry> entries = new ArrayList<>();
         BankAccountReport.Ntry ntry1 = new BankAccountReport.Ntry();
         BankAccountReport.Amount ntry1Amt = new BankAccountReport.Amount();
         ntry1Amt.setCcy(acct.getCcy());
-        ntry1Amt.setValue(new BigDecimal("30000.00"));
+        BigDecimal entryVal = requestDto.getEntryAmount() != null ? requestDto.getEntryAmount().setScale(2, RoundingMode.HALF_UP) : new BigDecimal("30000.00");
+        ntry1Amt.setValue(entryVal);
         ntry1.setAmt(ntry1Amt);
-        ntry1.setCdtDbtInd("CRDT");
+        ntry1.setCdtDbtInd(requestDto.getEntryCreditDebitIndicator() != null ? requestDto.getEntryCreditDebitIndicator() : "CRDT");
         BankAccountReport.Sts ntry1Sts = new BankAccountReport.Sts();
-        ntry1Sts.setPrtry("BOOK");
+        ntry1Sts.setPrtry(requestDto.getEntryStatus() != null ? requestDto.getEntryStatus() : "BOOK");
         ntry1.setSts(ntry1Sts);
         BankAccountReport.EntryDt bookgDt = new BankAccountReport.EntryDt();
-        bookgDt.setDt("2026-03-02Z");
+        bookgDt.setDt(requestDto.getEntryBookingDate() != null ? requestDto.getEntryBookingDate() : "2026-03-02Z");
         ntry1.setBookgDt(bookgDt);
         BankAccountReport.EntryDt valDt = new BankAccountReport.EntryDt();
-        valDt.setDt("2026-03-02Z");
+        valDt.setDt(requestDto.getEntryValueDate() != null ? requestDto.getEntryValueDate() : "2026-03-02Z");
         ntry1.setValDt(valDt);
-        ntry1.setAcctSvcrRef(msgId);
+        ntry1.setAcctSvcrRef(requestDto.getAccountServicerReference() != null ? requestDto.getAccountServicerReference() : msgId);
         BankAccountReport.BkTxCd bkTxCd1 = new BankAccountReport.BkTxCd();
         BankAccountReport.Domn domn1 = new BankAccountReport.Domn();
-        domn1.setCd("PMNT");
+        domn1.setCd(requestDto.getDomainCode() != null ? requestDto.getDomainCode() : "PMNT");
         BankAccountReport.Fmly fmly1 = new BankAccountReport.Fmly();
-        fmly1.setCd("RCDT");
-        fmly1.setSubFmlyCd("ESCT");
+        fmly1.setCd(requestDto.getFamilyCode() != null ? requestDto.getFamilyCode() : "RCDT");
+        fmly1.setSubFmlyCd(requestDto.getSubFamilyCode() != null ? requestDto.getSubFamilyCode() : "ESCT");
         domn1.setFmly(fmly1);
         bkTxCd1.setDomn(domn1);
         ntry1.setBkTxCd(bkTxCd1);
-        entries.add(ntry1);
 
+        if (requestDto.getInstructedAgentBIC() != null && !requestDto.getInstructedAgentBIC().trim().isEmpty()) {
+            BankAccountReport.NtryDtls ntryDtls = new BankAccountReport.NtryDtls();
+            BankAccountReport.TxDtls txDtls = new BankAccountReport.TxDtls();
+            BankAccountReport.RltdAgts rltdAgts = new BankAccountReport.RltdAgts();
+            BankAccountReport.InstdAgt instdAgt = new BankAccountReport.InstdAgt();
+            BankAccountReport.FinInstnId finInstnId = new BankAccountReport.FinInstnId();
+            finInstnId.setBicfi(requestDto.getInstructedAgentBIC().trim());
+            instdAgt.setFinInstnId(finInstnId);
+            rltdAgts.setInstdAgt(instdAgt);
+            txDtls.setRltdAgts(rltdAgts);
+            ntryDtls.setTxDtls(txDtls);
+            ntry1.setNtryDtls(ntryDtls);
+        }
+
+        entries.add(ntry1);
         rpt.setNtry(entries);
         bkRpt.setRpt(rpt);
         doc.setBkToCstmrAcctRpt(bkRpt);

@@ -11,6 +11,7 @@ public class MandateCreationRequestDto {
     private String destinationId;
     
     // Mandate Info
+    private String mandateId;
     private String sequenceType;
     private String frequencyType;
     private String firstCollectionDate;

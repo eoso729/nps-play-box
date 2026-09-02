@@ -521,6 +521,7 @@ public class XmlAutoFixEngine {
         String k = messageKey.toLowerCase();
         return k.contains("pacs.008") || k.contains("pacs.003") || k.contains("pacs.004")
                 || k.contains("pain.009") || k.contains("pain.013") || k.contains("pain.001")
+                || k.contains("pain.008")
                 || k.contains("camt.060") || k.contains("acmt.024");
     }
 
@@ -852,11 +853,64 @@ public class XmlAutoFixEngine {
             syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
         }
 
-        // Global Agent BICFI sync for any remaining agents
+        if (key.contains("pain.010")) {
+            NodeList orgnlMndtNodes = doc.getElementsByTagName("OrgnlMndtId");
+            if (orgnlMndtNodes.getLength() == 0) orgnlMndtNodes = doc.getElementsByTagNameNS("*", "OrgnlMndtId");
+            NodeList mndtNodes = doc.getElementsByTagName("MndtId");
+            if (mndtNodes.getLength() == 0) mndtNodes = doc.getElementsByTagNameNS("*", "MndtId");
+
+            if (orgnlMndtNodes.getLength() > 0 && mndtNodes.getLength() > 0) {
+                String orgnlMndtVal = orgnlMndtNodes.item(0).getTextContent();
+                if (orgnlMndtVal != null && !orgnlMndtVal.trim().isEmpty()) {
+                    orgnlMndtVal = orgnlMndtVal.trim();
+                    Element mndtElem = (Element) mndtNodes.item(0);
+                    if (!orgnlMndtVal.equals(mndtElem.getTextContent())) {
+                        mndtElem.setTextContent(orgnlMndtVal);
+                        fixesApplied.add("Synchronized Amended Mandate ID <Mndt><MndtId> to match Original Mandate ID (" + orgnlMndtVal + ").");
+                    }
+                }
+            }
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        }
+
+        if (key.contains("pain.011")) {
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        }
+
+        if (key.contains("pain.012")) {
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        }
+
+        if (key.contains("pain.013")) {
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        }
+
+        if (key.contains("pain.014")) {
+            syncAgentBicfiWithMmbId(doc, "FwdgAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+        }
+
+        if (key.contains("pacs.003")) {
+            syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        }
+
+        syncAgentBicfiWithMmbId(doc, "FwdgAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "MsgSndr", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "AcctOwnr", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "AcctSvcr", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "Svcr", fixesApplied);
     }
 
     private void syncAgentBicfiWithMmbId(Document doc, String agentRole, List<String> fixesApplied) {

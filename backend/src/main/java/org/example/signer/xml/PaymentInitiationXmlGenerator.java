@@ -28,136 +28,198 @@ public class PaymentInitiationXmlGenerator {
         String creDtTm = java.time.ZonedDateTime.now(ZoneId.of("Africa/Lagos"))
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
-        grpHdr.setNbOfTxs(1); // Fixed value
-        grpHdr.setCtrlSum(amount); // Use dynamic amount
+        grpHdr.setNbOfTxs(1);
+        grpHdr.setCtrlSum(amount);
         
         // Initiating Party
         PaymentInitiation.InitgPty initgPty = new PaymentInitiation.InitgPty();
-        initgPty.setNm("Musa"); // Fixed value
+        String initName = requestDto.getInitiatingPartyName() != null && !requestDto.getInitiatingPartyName().trim().isEmpty()
+                ? requestDto.getInitiatingPartyName().trim() : "Musa";
+        initgPty.setNm(initName);
         PaymentInitiation.Id id = new PaymentInitiation.Id();
         PaymentInitiation.OrgId orgId = new PaymentInitiation.OrgId();
         PaymentInitiation.Othr othr = new PaymentInitiation.Othr();
         PaymentInitiation.SchmeNm schmeNm = new PaymentInitiation.SchmeNm();
-        schmeNm.setCd(requestDto.getInitiatorId());
+        String schemeCode = requestDto.getSchemeCode() != null && !requestDto.getSchemeCode().trim().isEmpty()
+                ? requestDto.getSchemeCode().trim()
+                : (requestDto.getInitiatorId() != null && !requestDto.getInitiatorId().trim().isEmpty() ? requestDto.getInitiatorId().trim() : "999057");
+        schmeNm.setCd(schemeCode);
         othr.setSchmeNm(schmeNm);
         orgId.setOthr(othr);
         id.setOrgId(orgId);
         initgPty.setId(id);
         grpHdr.setInitgPty(initgPty);
         
-        // Forwarding Agent
-        PaymentInitiation.FwdgAgt fwdgAgt = new PaymentInitiation.FwdgAgt();
-        PaymentInitiation.FinInstnId fwdgFinInstnId = new PaymentInitiation.FinInstnId();
-        fwdgFinInstnId.setBicfi("FWDGAGT"); // Fixed value
-        fwdgAgt.setFinInstnId(fwdgFinInstnId);
-        grpHdr.setFwdgAgt(fwdgAgt);
+        // Forwarding Agent (Optional)
+        if (requestDto.getForwardingAgentBIC() != null && !requestDto.getForwardingAgentBIC().trim().isEmpty()) {
+            PaymentInitiation.FwdgAgt fwdgAgt = new PaymentInitiation.FwdgAgt();
+            PaymentInitiation.FinInstnId fwdgFinInstnId = new PaymentInitiation.FinInstnId();
+            fwdgFinInstnId.setBicfi(requestDto.getForwardingAgentBIC().trim());
+            fwdgAgt.setFinInstnId(fwdgFinInstnId);
+            grpHdr.setFwdgAgt(fwdgAgt);
+        }
         
         // --- Payment Info ---
         PaymentInitiation.PmtInf pmtInf = new PaymentInitiation.PmtInf();
-        pmtInf.setPmtInfId("PMT-20251016-001-SINGLE"); // Fixed value
-        pmtInf.setPmtMtd("TRF"); // Fixed value
-        pmtInf.setBtchBookg(false); // Fixed value
-        pmtInf.setNbOfTxs(1); // Fixed value
-        pmtInf.setCtrlSum(amount); // Use dynamic amount
+        String pmtInfId;
+        if (requestDto.getPaymentInformationId() != null && !requestDto.getPaymentInformationId().trim().isEmpty()) {
+            pmtInfId = requestDto.getPaymentInformationId().trim();
+        } else if (msgId != null && msgId.length() > 31) {
+            pmtInfId = "PMT-" + msgId.substring(msgId.length() - 31);
+        } else if (msgId != null) {
+            pmtInfId = "PMT-" + msgId;
+        } else {
+            pmtInfId = "PMT-20251016-001-SINGLE";
+        }
+        if (pmtInfId.length() > 35) {
+            pmtInfId = pmtInfId.substring(0, 35);
+        }
+        pmtInf.setPmtInfId(pmtInfId);
+        pmtInf.setPmtMtd("TRF");
+        pmtInf.setBtchBookg(requestDto.getBatchBooking() != null ? requestDto.getBatchBooking() : false);
+        pmtInf.setNbOfTxs(1);
+        pmtInf.setCtrlSum(amount);
         
         // Requested Execution Date
         PaymentInitiation.ReqdExctnDt reqdExctnDtObj = new PaymentInitiation.ReqdExctnDt();
-        reqdExctnDtObj.setDt(reqdExctnDt + "Z");
+        String exctnDt = requestDto.getRequestedExecutionDate() != null && !requestDto.getRequestedExecutionDate().trim().isEmpty()
+                ? requestDto.getRequestedExecutionDate().trim() : reqdExctnDt;
+        if (exctnDt != null && !exctnDt.endsWith("Z")) {
+            exctnDt = exctnDt + "Z";
+        }
+        reqdExctnDtObj.setDt(exctnDt);
         pmtInf.setReqdExctnDt(reqdExctnDtObj);
         
         // Debtor
         PaymentInitiation.Dbtr dbtr = new PaymentInitiation.Dbtr();
-        dbtr.setNm("Musa"); // Fixed value
+        String debtorName = requestDto.getDebtorName() != null && !requestDto.getDebtorName().trim().isEmpty()
+                ? requestDto.getDebtorName().trim() : "Musa";
+        dbtr.setNm(debtorName);
         pmtInf.setDbtr(dbtr);
         
         // Debtor Account
         PaymentInitiation.DbtrAcct dbtrAcct = new PaymentInitiation.DbtrAcct();
         PaymentInitiation.AcctId dbtrAcctId = new PaymentInitiation.AcctId();
-        dbtrAcctId.setIban("0177136558"); // Debtor account
+        String debtorAcctNum = requestDto.getDebtorAccountNumber() != null && !requestDto.getDebtorAccountNumber().trim().isEmpty()
+                ? requestDto.getDebtorAccountNumber().trim() : "0177136558";
+        dbtrAcctId.setIban(debtorAcctNum);
         dbtrAcct.setId(dbtrAcctId);
-        dbtrAcct.setNm("Musa"); // Fixed value
+        String debtorAcctName = requestDto.getDebtorAccountName() != null && !requestDto.getDebtorAccountName().trim().isEmpty()
+                ? requestDto.getDebtorAccountName().trim() : debtorName;
+        dbtrAcct.setNm(debtorAcctName);
         pmtInf.setDbtrAcct(dbtrAcct);
         
         // Debtor Agent
         PaymentInitiation.DbtrAgt dbtrAgt = new PaymentInitiation.DbtrAgt();
         PaymentInitiation.FinInstnId dbtrFinInstnId = new PaymentInitiation.FinInstnId();
-        dbtrFinInstnId.setBicfi(requestDto.getDebtorId());
+        String dbtrMmbId = requestDto.getDebtorAgentMemberId() != null && !requestDto.getDebtorAgentMemberId().trim().isEmpty()
+                ? requestDto.getDebtorAgentMemberId().trim()
+                : (requestDto.getDebtorId() != null && !requestDto.getDebtorId().trim().isEmpty() ? requestDto.getDebtorId().trim() : "999057");
+        String dbtrBic = requestDto.getDebtorAgentBIC() != null && !requestDto.getDebtorAgentBIC().trim().isEmpty()
+                ? requestDto.getDebtorAgentBIC().trim() : dbtrMmbId;
+        dbtrFinInstnId.setBicfi(dbtrBic);
         PaymentInitiation.ClrSysMmbId dbtrClrSysMmbId = new PaymentInitiation.ClrSysMmbId();
-        dbtrClrSysMmbId.setMmbId(requestDto.getDebtorId());
+        dbtrClrSysMmbId.setMmbId(dbtrMmbId);
         dbtrFinInstnId.setClrSysMmbId(dbtrClrSysMmbId);
         dbtrAgt.setFinInstnId(dbtrFinInstnId);
         pmtInf.setDbtrAgt(dbtrAgt);
         
         // Charge Bearer
-        pmtInf.setChrgBr("SLEV"); // Fixed value
+        String chrgBr = requestDto.getChargeBearer() != null && !requestDto.getChargeBearer().trim().isEmpty()
+                ? requestDto.getChargeBearer().trim() : "SLEV";
+        pmtInf.setChrgBr(chrgBr);
         
         // --- Credit Transfer Transaction Info ---
         PaymentInitiation.CdtTrfTxInf cdtTrfTxInf = new PaymentInitiation.CdtTrfTxInf();
         
         // Payment ID
         PaymentInitiation.PmtId pmtId = new PaymentInitiation.PmtId();
-        pmtId.setEndToEndId(endToEndId);
+        String actualEndToEndId = requestDto.getEndToEndId() != null && !requestDto.getEndToEndId().trim().isEmpty()
+                ? requestDto.getEndToEndId().trim() : endToEndId;
+        pmtId.setEndToEndId(actualEndToEndId);
         cdtTrfTxInf.setPmtId(pmtId);
         
         // Amount
         PaymentInitiation.Amt amt = new PaymentInitiation.Amt();
         PaymentInitiation.InstdAmt instdAmt = new PaymentInitiation.InstdAmt();
-        instdAmt.setCcy("NGN"); // Fixed value
-        instdAmt.setValue(amount); // Use dynamic amount
+        String ccy = requestDto.getCurrency() != null && !requestDto.getCurrency().trim().isEmpty()
+                ? requestDto.getCurrency().trim() : "NGN";
+        instdAmt.setCcy(ccy);
+        instdAmt.setValue(amount);
         amt.setInstdAmt(instdAmt);
         cdtTrfTxInf.setAmt(amt);
         
         // Creditor Agent
         PaymentInitiation.CdtrAgt cdtrAgt = new PaymentInitiation.CdtrAgt();
         PaymentInitiation.FinInstnId cdtrFinInstnId = new PaymentInitiation.FinInstnId();
-        cdtrFinInstnId.setBicfi(requestDto.getCreditorId());
+        String cdtrMmbId = requestDto.getCreditorAgentMemberId() != null && !requestDto.getCreditorAgentMemberId().trim().isEmpty()
+                ? requestDto.getCreditorAgentMemberId().trim()
+                : (requestDto.getCreditorId() != null && !requestDto.getCreditorId().trim().isEmpty() ? requestDto.getCreditorId().trim() : "999058");
+        String cdtrBic = requestDto.getCreditorAgentBIC() != null && !requestDto.getCreditorAgentBIC().trim().isEmpty()
+                ? requestDto.getCreditorAgentBIC().trim() : cdtrMmbId;
+        cdtrFinInstnId.setBicfi(cdtrBic);
         PaymentInitiation.ClrSysMmbId cdtrClrSysMmbId = new PaymentInitiation.ClrSysMmbId();
-        cdtrClrSysMmbId.setMmbId(requestDto.getCreditorId());
+        cdtrClrSysMmbId.setMmbId(cdtrMmbId);
         cdtrFinInstnId.setClrSysMmbId(cdtrClrSysMmbId);
         cdtrAgt.setFinInstnId(cdtrFinInstnId);
         cdtTrfTxInf.setCdtrAgt(cdtrAgt);
         
         // Creditor
         PaymentInitiation.Cdtr cdtr = new PaymentInitiation.Cdtr();
-        cdtr.setNm("James"); // Fixed value
+        String creditorName = requestDto.getCreditorName() != null && !requestDto.getCreditorName().trim().isEmpty()
+                ? requestDto.getCreditorName().trim() : "James";
+        cdtr.setNm(creditorName);
         cdtTrfTxInf.setCdtr(cdtr);
         
         // Creditor Account
         PaymentInitiation.CdtrAcct cdtrAcct = new PaymentInitiation.CdtrAcct();
         PaymentInitiation.AcctId cdtrAcctId = new PaymentInitiation.AcctId();
-//        cdtrAcctId.setIban("0693712114"); // Fixed value
-        cdtrAcctId.setIban("3157417712"); // Fixed value
+        String creditorAcctNum = requestDto.getCreditorAccountNumber() != null && !requestDto.getCreditorAccountNumber().trim().isEmpty()
+                ? requestDto.getCreditorAccountNumber().trim() : "3157417712";
+        cdtrAcctId.setIban(creditorAcctNum);
         cdtrAcct.setId(cdtrAcctId);
-        cdtrAcct.setNm("James"); // Fixed value
+        String creditorAcctName = requestDto.getCreditorAccountName() != null && !requestDto.getCreditorAccountName().trim().isEmpty()
+                ? requestDto.getCreditorAccountName().trim() : creditorName;
+        cdtrAcct.setNm(creditorAcctName);
         cdtTrfTxInf.setCdtrAcct(cdtrAcct);
         
         // Remittance Info
         PaymentInitiation.RmtInf rmtInf = new PaymentInitiation.RmtInf();
-        rmtInf.setUstrd("Invoice 12345 (single)"); // Fixed value
+        String rmtInfo = requestDto.getRemittanceInformation() != null && !requestDto.getRemittanceInformation().trim().isEmpty()
+                ? requestDto.getRemittanceInformation().trim() : "Invoice 12345 (single)";
+        rmtInf.setUstrd(rmtInfo);
         cdtTrfTxInf.setRmtInf(rmtInf);
         
         pmtInf.setCdtTrfTxInf(cdtTrfTxInf);
         
         // --- Supplementary Data ---
         PaymentInitiation.SplmtryData splmtryData = new PaymentInitiation.SplmtryData();
-        splmtryData.setPlcAndNm("AdditionalVerificationDetails"); // Fixed value
+        splmtryData.setPlcAndNm("AdditionalVerificationDetails");
         PaymentInitiation.Envlp envlp = new PaymentInitiation.Envlp();
         PaymentInitiation.CustomData customData = new PaymentInitiation.CustomData();
         
-        // Creditor Info - Fixed values
         PaymentInitiation.CreditorInfo creditorInfo = new PaymentInitiation.CreditorInfo();
-        creditorInfo.setAccountDesignation("1");
-        creditorInfo.setIdType("BVN");
-        creditorInfo.setIdValue("22298546518");
-        creditorInfo.setAccountTier("1");
+        creditorInfo.setAccountDesignation(requestDto.getAccountDesignation() != null && !requestDto.getAccountDesignation().trim().isEmpty()
+                ? requestDto.getAccountDesignation().trim() : "1");
+        creditorInfo.setIdType(requestDto.getIdType() != null && !requestDto.getIdType().trim().isEmpty()
+                ? requestDto.getIdType().trim() : "BVN");
+        creditorInfo.setIdValue(requestDto.getIdValue() != null && !requestDto.getIdValue().trim().isEmpty()
+                ? requestDto.getIdValue().trim() : "22298546518");
+        creditorInfo.setAccountTier(requestDto.getAccountTier() != null && !requestDto.getAccountTier().trim().isEmpty()
+                ? requestDto.getAccountTier().trim() : "1");
         customData.setCreditorInfo(creditorInfo);
         
-        // Transaction Info - Fixed values
         PaymentInitiation.TransactionInfo transactionInfo = new PaymentInitiation.TransactionInfo();
-        transactionInfo.setTransactionLocation("013223231333");
-        transactionInfo.setChannelCode("2");
-        transactionInfo.setFixedCollectionAmount(false);
-        transactionInfo.setMandateCode("0000004/001/0000070986");
+        transactionInfo.setTransactionLocation(requestDto.getTransactionLocation() != null && !requestDto.getTransactionLocation().trim().isEmpty()
+                ? requestDto.getTransactionLocation().trim() : "013223231333");
+        transactionInfo.setChannelCode(requestDto.getChannelCode() != null && !requestDto.getChannelCode().trim().isEmpty()
+                ? requestDto.getChannelCode().trim() : "2");
+        transactionInfo.setFixedCollectionAmount(requestDto.getFixedCollectionAmount() != null ? requestDto.getFixedCollectionAmount() : false);
+        if (requestDto.getMandateCode() != null && !requestDto.getMandateCode().trim().isEmpty()) {
+            transactionInfo.setMandateCode(requestDto.getMandateCode().trim());
+        } else {
+            transactionInfo.setMandateCode("0000004/001/0000070986");
+        }
         customData.setTransactionInfo(transactionInfo);
         
         envlp.setCustomData(customData);

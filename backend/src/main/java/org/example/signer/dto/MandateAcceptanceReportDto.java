@@ -4,6 +4,8 @@ import lombok.Data;
 
 @Data
 public class MandateAcceptanceReportDto {
+    private String sourceId;
+    private String destinationId;
     private String originalMsgId;
     private String originalMsgNmId; // e.g. "pain.009.001.08"
     private String originalCreDtTm; // e.g. "2025-12-11T16:19:15.342Z"

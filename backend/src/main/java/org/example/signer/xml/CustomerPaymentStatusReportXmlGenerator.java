@@ -25,12 +25,14 @@ public class CustomerPaymentStatusReportXmlGenerator {
 
         CustomerPaymentStatusReport.Agent dbtrAgt = new CustomerPaymentStatusReport.Agent();
         CustomerPaymentStatusReport.FinInstnId finInstnId = new CustomerPaymentStatusReport.FinInstnId();
-        finInstnId.setBicfi(requestDto.getDebtorAgentBIC() != null ? requestDto.getDebtorAgentBIC() : "DEUTDEFF");
-        if (requestDto.getDebtorAgentMemberId() != null) {
-            CustomerPaymentStatusReport.ClrSysMmbId clrSysMmbId = new CustomerPaymentStatusReport.ClrSysMmbId();
-            clrSysMmbId.setMmbId(requestDto.getDebtorAgentMemberId());
-            finInstnId.setClrSysMmbId(clrSysMmbId);
-        }
+        String mmbId = requestDto.getDebtorAgentMemberId() != null && !requestDto.getDebtorAgentMemberId().trim().isEmpty()
+                ? requestDto.getDebtorAgentMemberId().trim() : "999057";
+        String bic = requestDto.getDebtorAgentBIC() != null && !requestDto.getDebtorAgentBIC().trim().isEmpty()
+                ? requestDto.getDebtorAgentBIC().trim() : mmbId;
+        finInstnId.setBicfi(bic);
+        CustomerPaymentStatusReport.ClrSysMmbId clrSysMmbId = new CustomerPaymentStatusReport.ClrSysMmbId();
+        clrSysMmbId.setMmbId(mmbId);
+        finInstnId.setClrSysMmbId(clrSysMmbId);
         dbtrAgt.setFinInstnId(finInstnId);
         grpHdr.setDbtrAgt(dbtrAgt);
         rpt.setGrpHdr(grpHdr);
