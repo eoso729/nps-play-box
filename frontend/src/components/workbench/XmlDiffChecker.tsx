@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 interface DiffLine {
@@ -59,6 +60,7 @@ function computeDiff(original: string, modified: string): { left: DiffLine[]; ri
 
 export const XmlDiffChecker: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [originalXml, setOriginalXml] = useState('');
   const [modifiedXml, setModifiedXml] = useState('');
   const [originalTitle, setOriginalTitle] = useState('Workbench XML');
@@ -130,8 +132,9 @@ export const XmlDiffChecker: React.FC = () => {
       <header className="h-16 flex-shrink-0 bg-white border-b border-[#e4e9e6] flex items-center justify-between px-6 z-10">
         <div className="flex items-center gap-3.5">
           <div
-            className="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center text-white font-bold text-[12px] flex-shrink-0"
+            className="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center text-white font-bold text-[12px] flex-shrink-0 cursor-pointer"
             style={{ background: 'linear-gradient(135deg, #22a05a, #15803d)', boxShadow: '0 4px 12px rgba(21,128,61,0.3)' }}
+            onClick={() => navigate('/workbench')}
           >
             NPS
           </div>
@@ -141,14 +144,32 @@ export const XmlDiffChecker: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Top Nav Mode Switcher Tabs */}
+        <div className="flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
           <button
             type="button"
-            onClick={() => window.close()}
-            className="border border-[#e4e9e6] bg-white px-3.5 py-[7px] rounded-lg text-[12.5px] font-semibold text-[#111827] hover:border-gray-400 transition-colors cursor-pointer"
+            onClick={() => navigate('/workbench')}
+            className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all cursor-pointer bg-transparent border-0"
           >
-            Close Tab
+            Message Workbench
           </button>
+          <button
+            type="button"
+            onClick={() => navigate('/inspector')}
+            className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all cursor-pointer bg-transparent border-0"
+          >
+            Fix My XML & Health Check
+          </button>
+          <button
+            type="button"
+            className="px-3.5 py-1.5 text-[12px] font-bold rounded-lg bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)] flex items-center gap-1.5 cursor-default border-0"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#16a34a]"></span>
+            Diff Checker
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 border border-[#e4e9e6] rounded-lg px-3 py-1.5 bg-gray-50">
             <span className="w-2 h-2 rounded-full bg-[#16a34a]"></span>
             <span className="text-[12.5px] font-semibold text-gray-700">{displayName}</span>
