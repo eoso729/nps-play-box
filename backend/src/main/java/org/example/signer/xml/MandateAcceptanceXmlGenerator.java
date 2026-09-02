@@ -67,8 +67,14 @@ public class MandateAcceptanceXmlGenerator {
 
         MandateAcceptanceReport.Agent cdtrAgt = new MandateAcceptanceReport.Agent();
         MandateAcceptanceReport.FinInstnId cdtrFinInstnId = new MandateAcceptanceReport.FinInstnId();
-        String cdtrMmbId = requestDto.getCreditorAgentMemberId() != null ? requestDto.getCreditorAgentMemberId() : "999058";
-        cdtrFinInstnId.setBicfi(requestDto.getCreditorAgentBIC() != null ? requestDto.getCreditorAgentBIC() : cdtrMmbId);
+        String cdtrMmbId = requestDto.getCreditorAgentMemberId() != null && !requestDto.getCreditorAgentMemberId().trim().isEmpty()
+                ? requestDto.getCreditorAgentMemberId().trim()
+                : (requestDto.getSourceId() != null && !requestDto.getSourceId().trim().isEmpty() ? requestDto.getSourceId().trim() : "999058");
+        String cdtrBic = requestDto.getCreditorAgentBIC() != null && !requestDto.getCreditorAgentBIC().trim().isEmpty()
+                ? requestDto.getCreditorAgentBIC().trim() : cdtrMmbId;
+        if (cdtrBic != null && !cdtrBic.isEmpty()) {
+            cdtrFinInstnId.setBicfi(cdtrBic);
+        }
         MandateAcceptanceReport.ClrSysMmbId cdtrClrSysMmbId = new MandateAcceptanceReport.ClrSysMmbId();
         cdtrClrSysMmbId.setMmbId(cdtrMmbId);
         cdtrFinInstnId.setClrSysMmbId(cdtrClrSysMmbId);
@@ -89,8 +95,14 @@ public class MandateAcceptanceXmlGenerator {
 
         MandateAcceptanceReport.Agent dbtrAgt = new MandateAcceptanceReport.Agent();
         MandateAcceptanceReport.FinInstnId dbtrFinInstnId = new MandateAcceptanceReport.FinInstnId();
-        String dbtrMmbId = requestDto.getDebtorAgentMemberId() != null ? requestDto.getDebtorAgentMemberId() : "999057";
-        dbtrFinInstnId.setBicfi(requestDto.getDebtorAgentBIC() != null ? requestDto.getDebtorAgentBIC() : dbtrMmbId);
+        String dbtrMmbId = requestDto.getDebtorAgentMemberId() != null && !requestDto.getDebtorAgentMemberId().trim().isEmpty()
+                ? requestDto.getDebtorAgentMemberId().trim()
+                : (requestDto.getDestinationId() != null && !requestDto.getDestinationId().trim().isEmpty() ? requestDto.getDestinationId().trim() : "999057");
+        String dbtrBic = requestDto.getDebtorAgentBIC() != null && !requestDto.getDebtorAgentBIC().trim().isEmpty()
+                ? requestDto.getDebtorAgentBIC().trim() : dbtrMmbId;
+        if (dbtrBic != null && !dbtrBic.isEmpty()) {
+            dbtrFinInstnId.setBicfi(dbtrBic);
+        }
         MandateAcceptanceReport.ClrSysMmbId dbtrClrSysMmbId = new MandateAcceptanceReport.ClrSysMmbId();
         dbtrClrSysMmbId.setMmbId(dbtrMmbId);
         dbtrFinInstnId.setClrSysMmbId(dbtrClrSysMmbId);

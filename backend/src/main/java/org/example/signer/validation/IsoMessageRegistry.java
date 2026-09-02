@@ -961,18 +961,20 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Original Message Creation DateTime", "UndrlygAccptncDtls.OrgnlMsgInf.CreDtTm", "//OrgnlMsgInf/CreDtTm", "2025-12-11T16:19:15.342+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
                 new IsoFieldDef("Acceptance Indicator", "UndrlygAccptncDtls.AccptncRslt.Accptd", "//AccptncRslt/Accptd", "true", "Boolean", 5, true, false, null, "Accepted flag (true/false)"),
                 new IsoFieldDef("Original Mandate ID", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndtId", "//OrgnlMndt/OrgnlMndtId", "MNDT-RCUR-00001", "String", 35, true, false, null, "Original Mandate ID"),
-                new IsoFieldDef("Sequence Type", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.SeqTp", "//OrgnlMndt/Ocrncs/SeqTp", "RCUR", "Enum", 4, true, false, "SEQUENCE_TYPE", "Sequence Type"),
-                new IsoFieldDef("Frequency Type", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.Frqcy.Tp", "//OrgnlMndt/Ocrncs/Frqcy/Tp", "WEEK", "Enum", 4, true, false, "FREQUENCY_TYPE", "Frequency Type"),
-                new IsoFieldDef("First Collection Date", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.FrstColltnDt", "//OrgnlMndt/Ocrncs/FrstColltnDt", "2025-09-08", "Date", 10, true, false, "DATE", "First collection date"),
-                new IsoFieldDef("Final Collection Date", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.FnlColltnDt", "//OrgnlMndt/Ocrncs/FnlColltnDt", "2025-12-31", "Date", 10, true, false, "DATE", "Final collection date"),
-                new IsoFieldDef("Tracking Indicator", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.TrckgInd", "//OrgnlMndt/TrckgInd", "false", "Boolean", 5, true, false, null, "Tracking indicator"),
-                new IsoFieldDef("Creditor Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Cdtr.Nm", "//OrgnlMndt/Cdtr/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor Name"),
-                new IsoFieldDef("Creditor Account Number (IBAN)", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAcct.Id.IBAN", "//OrgnlMndt/CdtrAcct/Id/IBAN", "5555544443", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
+                new IsoFieldDef("Sequence Type", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.SeqTp", "//OrgnlMndt/OrgnlMndt/Ocrncs/SeqTp", "RCUR", "Enum", 4, true, false, "SEQUENCE_TYPE", "Sequence Type"),
+                new IsoFieldDef("Frequency Type", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.Frqcy.Tp", "//OrgnlMndt/OrgnlMndt/Ocrncs/Frqcy/Tp", "WEEK", "Enum", 4, true, false, "FREQUENCY_TYPE", "Frequency Type"),
+                new IsoFieldDef("First Collection Date", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.FrstColltnDt", "//OrgnlMndt/OrgnlMndt/Ocrncs/FrstColltnDt", "2025-09-08", "Date", 10, true, false, "DATE", "First collection date"),
+                new IsoFieldDef("Final Collection Date", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Ocrncs.FnlColltnDt", "//OrgnlMndt/OrgnlMndt/Ocrncs/FnlColltnDt", "2025-12-31", "Date", 10, true, false, "DATE", "Final collection date"),
+                new IsoFieldDef("Tracking Indicator", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.TrckgInd", "//OrgnlMndt/OrgnlMndt/TrckgInd", "false", "Boolean", 5, false, false, null, "Tracking indicator"),
+                new IsoFieldDef("Creditor Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Cdtr.Nm", "//OrgnlMndt/OrgnlMndt/Cdtr/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor Name"),
+                new IsoFieldDef("Creditor Account Number (IBAN)", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAcct.Id.IBAN", "//OrgnlMndt/OrgnlMndt/CdtrAcct/Id/IBAN", "5555544443", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAcct.Nm", "//OrgnlMndt/CdtrAcct/Nm", "CreditorCorp", "String", 100, true, false, null, "Creditor Account Name"),
-                new IsoFieldDef("Creditor Agent Member ID", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlMndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
-                new IsoFieldDef("Debtor Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Dbtr.Nm", "//OrgnlMndt/Dbtr/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Name"),
+                new IsoFieldDef("Creditor Agent BICFI", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAgt.FinInstnId.BICFI", "//OrgnlMndt/OrgnlMndt/CdtrAgt/FinInstnId/BICFI", "999058", "String", 11, false, false, "INSTITUTION_CODE", "Creditor Agent BICFI"),
+                new IsoFieldDef("Creditor Agent Member ID", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlMndt/OrgnlMndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
+                new IsoFieldDef("Debtor Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.Dbtr.Nm", "//OrgnlMndt/OrgnlMndt/Dbtr/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.DbtrAcct.Id.IBAN", "//OrgnlMndt/DbtrAcct/Id/IBAN", "8888899999", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.DbtrAcct.Nm", "//OrgnlMndt/DbtrAcct/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Account Name"),
+                new IsoFieldDef("Debtor Agent BICFI", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.DbtrAgt.FinInstnId.BICFI", "//OrgnlMndt/OrgnlMndt/DbtrAgt/FinInstnId/BICFI", "999057", "String", 11, false, false, "INSTITUTION_CODE", "Debtor Agent BICFI"),
                 new IsoFieldDef("Debtor Agent Member ID", "UndrlygAccptncDtls.OrgnlMndt.OrgnlMndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//OrgnlMndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Debtor Agent Member ID")
         );
 
@@ -990,7 +992,9 @@ public class IsoMessageRegistry {
                                 <MsgNmId>pain.009.001.08</MsgNmId>
                                 <CreDtTm>2025-12-11T16:19:15.342+01:00</CreDtTm>
                             </OrgnlMsgInf>
-                            <AccptncRslt><Accptd>true</Accptd></AccptncRslt>
+                            <AccptncRslt>
+                                <Accptd>true</Accptd>
+                            </AccptncRslt>
                             <OrgnlMndt>
                                 <OrgnlMndtId>MNDT-RCUR-00001</OrgnlMndtId>
                                 <OrgnlMndt>
@@ -1002,11 +1006,27 @@ public class IsoMessageRegistry {
                                     </Ocrncs>
                                     <TrckgInd>false</TrckgInd>
                                     <Cdtr><Nm>CreditorCorp</Nm></Cdtr>
-                                    <CdtrAcct><Id><IBAN>5555544443</IBAN></Id><Nm>CreditorCorp</Nm></CdtrAcct>
-                                    <CdtrAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></CdtrAgt>
+                                    <CdtrAcct>
+                                        <Id><IBAN>5555544443</IBAN></Id>
+                                        <Nm>CreditorCorp</Nm>
+                                    </CdtrAcct>
+                                    <CdtrAgt>
+                                        <FinInstnId>
+                                            <BICFI>999058</BICFI>
+                                            <ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId>
+                                        </FinInstnId>
+                                    </CdtrAgt>
                                     <Dbtr><Nm>Debtor Customer</Nm></Dbtr>
-                                    <DbtrAcct><Id><IBAN>8888899999</IBAN></Id><Nm>Debtor Customer</Nm></DbtrAcct>
-                                    <DbtrAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></DbtrAgt>
+                                    <DbtrAcct>
+                                        <Id><IBAN>8888899999</IBAN></Id>
+                                        <Nm>Debtor Customer</Nm>
+                                    </DbtrAcct>
+                                    <DbtrAgt>
+                                        <FinInstnId>
+                                            <BICFI>999057</BICFI>
+                                            <ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId>
+                                        </FinInstnId>
+                                    </DbtrAgt>
                                 </OrgnlMndt>
                             </OrgnlMndt>
                         </UndrlygAccptncDtls>

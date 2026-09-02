@@ -156,7 +156,10 @@ public class MessagePipelineService {
     }
 
     public XmlGenerationResponseDto generateMandateAcceptancePain012(MandateAcceptanceReportDto requestDto) throws Exception {
-        String srcId = requestDto.getCreditorAgentMemberId() != null ? requestDto.getCreditorAgentMemberId() : "999058";
+        String srcId = requestDto.getSourceId() != null && !requestDto.getSourceId().trim().isEmpty()
+                ? requestDto.getSourceId().trim()
+                : (requestDto.getCreditorAgentMemberId() != null && !requestDto.getCreditorAgentMemberId().trim().isEmpty()
+                        ? requestDto.getCreditorAgentMemberId().trim() : "999058");
         String msgId = generateMsgId(srcId);
         MandateAcceptanceReport model = MandateAcceptanceXmlGenerator.generate(requestDto, msgId);
         return buildXmlGenerationResponse("pain.012", msgId, model);
