@@ -1323,6 +1323,7 @@ public class XmlValidationEngine {
         String k = messageKey.toLowerCase();
         return k.contains("pacs.008") || k.contains("pacs.003") || k.contains("pacs.004")
                 || k.contains("pain.009") || k.contains("pain.013") || k.contains("pain.001")
+                || k.contains("pain.008")
                 || k.contains("camt.060") || k.contains("acmt.024");
     }
 
@@ -2477,6 +2478,116 @@ public class XmlValidationEngine {
                             .build());
                 } else if (!val.isEmpty()) {
                     passedRules.add("Original message name ID matches expected target (" + val + ")");
+                }
+            }
+        }
+
+        // 5o. Cross-validate pain.008 specific rules (PmtMtd == DD, NbOfTxs, CtrlSum, SeqTp)
+        if (key.contains("pain.008")) {
+            List<Element> grpNbOfTxs = findElementsByPath(doc, "GrpHdr.NbOfTxs");
+            List<Element> pmtNbOfTxs = findElementsByPath(doc, "PmtInf.NbOfTxs");
+            if (!grpNbOfTxs.isEmpty() && !pmtNbOfTxs.isEmpty()) {
+                String grpVal = grpNbOfTxs.get(0).getTextContent() != null ? grpNbOfTxs.get(0).getTextContent().trim() : "";
+                String pmtVal = pmtNbOfTxs.get(0).getTextContent() != null ? pmtNbOfTxs.get(0).getTextContent().trim() : "";
+                if (!grpVal.isEmpty() && !pmtVal.isEmpty() && !grpVal.equals(pmtVal)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PAIN008-NBOFTXS-" + getNodeLine(pmtNbOfTxs.get(0)))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(pmtNbOfTxs.get(0)))
+                            .fieldPath("CstmrDrctDbtInitn.PmtInf.NbOfTxs")
+                            .fieldName("Payment Number of Transactions")
+                            .lineNumber(getNodeLine(pmtNbOfTxs.get(0)))
+                            .columnNumber(getNodeCol(pmtNbOfTxs.get(0)))
+                            .currentValue(pmtVal)
+                            .expected(grpVal)
+                            .message("Payment info NbOfTxs (" + pmtVal + ") must match Group Header NbOfTxs (" + grpVal + ").")
+                            .ruleCode("NUMBER_OF_TRANSACTIONS_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Payment Info NbOfTxs matches Group Header NbOfTxs (" + grpVal + ")");
+                }
+            }
+
+            List<Element> grpCtrlSum = findElementsByPath(doc, "GrpHdr.CtrlSum");
+            List<Element> pmtCtrlSum = findElementsByPath(doc, "PmtInf.CtrlSum");
+            if (!grpCtrlSum.isEmpty() && !pmtCtrlSum.isEmpty()) {
+                String grpVal = grpCtrlSum.get(0).getTextContent() != null ? grpCtrlSum.get(0).getTextContent().trim() : "";
+                String pmtVal = pmtCtrlSum.get(0).getTextContent() != null ? pmtCtrlSum.get(0).getTextContent().trim() : "";
+                if (!grpVal.isEmpty() && !pmtVal.isEmpty()) {
+                    try {
+                        BigDecimal gVal = new BigDecimal(grpVal);
+                        BigDecimal pVal = new BigDecimal(pmtVal);
+                        if (gVal.compareTo(pVal) != 0) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-PAIN008-CTRLSUM-" + getNodeLine(pmtCtrlSum.get(0)))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(pmtCtrlSum.get(0)))
+                                    .fieldPath("CstmrDrctDbtInitn.PmtInf.CtrlSum")
+                                    .fieldName("Payment Control Sum")
+                                    .lineNumber(getNodeLine(pmtCtrlSum.get(0)))
+                                    .columnNumber(getNodeCol(pmtCtrlSum.get(0)))
+                                    .currentValue(pmtVal)
+                                    .expected(grpVal)
+                                    .message("Payment info CtrlSum (" + pmtVal + ") must match Group Header CtrlSum (" + grpVal + ").")
+                                    .ruleCode("CONTROL_SUM_MISMATCH")
+                                    .autoFixable(true)
+                                    .build());
+                        } else {
+                            passedRules.add("Payment Info CtrlSum matches Group Header CtrlSum (" + grpVal + ")");
+                        }
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+
+            List<Element> pmtMtdList = findElementsByPath(doc, "PmtInf.PmtMtd");
+            for (Element el : pmtMtdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"DD".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PAIN008-PMTMTD-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("CstmrDrctDbtInitn.PmtInf.PmtMtd")
+                            .fieldName("Payment Method")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("DD")
+                            .message("Payment method for pain.008 customer direct debit initiation must be 'DD'. Current: '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Payment method is valid DD (Direct Debit)");
+                }
+            }
+
+            List<Element> seqTpList = findElementsByPath(doc, "PmtInf.PmtTpInf.SeqTp");
+            for (Element el : seqTpList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"FRST".equalsIgnoreCase(val) && !"RCUR".equalsIgnoreCase(val) && !"OOFF".equalsIgnoreCase(val) && !"FNAL".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PAIN008-SEQTP-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("CstmrDrctDbtInitn.PmtInf.PmtTpInf.SeqTp")
+                            .fieldName("Sequence Type")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("FRST, RCUR, OOFF, or FNAL")
+                            .message("Sequence type must be FRST, RCUR, OOFF, or FNAL. Current: '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Sequence type is valid (" + val + ")");
                 }
             }
         }

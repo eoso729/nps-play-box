@@ -521,6 +521,7 @@ public class XmlAutoFixEngine {
         String k = messageKey.toLowerCase();
         return k.contains("pacs.008") || k.contains("pacs.003") || k.contains("pacs.004")
                 || k.contains("pain.009") || k.contains("pain.013") || k.contains("pain.001")
+                || k.contains("pain.008")
                 || k.contains("camt.060") || k.contains("acmt.024");
     }
 

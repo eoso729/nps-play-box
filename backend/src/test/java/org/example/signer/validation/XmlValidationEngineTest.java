@@ -1303,4 +1303,32 @@ public class XmlValidationEngineTest {
         assertFalse(bicfiReport.isValid());
         assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
     }
+
+    @Test
+    public void testPain008ValidationAndRules() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.008");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.008");
+        assertTrue(report.isValid(), "pain.008 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched NbOfTxs between GrpHdr and PmtInf is flagged
+        String mismatchNbXml = sampleXml.replaceFirst("<NbOfTxs>1</NbOfTxs>", "<NbOfTxs>2</NbOfTxs>");
+        ValidationReportDto nbReport = validationEngine.validate(mismatchNbXml, "pain.008");
+        assertFalse(nbReport.isValid());
+        assertTrue(nbReport.getIssues().stream().anyMatch(i -> "NUMBER_OF_TRANSACTIONS_MISMATCH".equals(i.getRuleCode())));
+
+        // 3. Invalid PmtMtd (not DD) is flagged
+        String invalidMtdXml = sampleXml.replace("<PmtMtd>DD</PmtMtd>", "<PmtMtd>TRF</PmtMtd>");
+        ValidationReportDto mtdReport = validationEngine.validate(invalidMtdXml, "pain.008");
+        assertFalse(mtdReport.isValid());
+        assertTrue(mtdReport.getIssues().stream().anyMatch(i -> i.getMessage().contains("DD")));
+
+        // 4. Missing SplmtryData is flagged because Supplementary Data is required for pain.008
+        String noSplmtryXml = sampleXml.replaceAll("(?s)<SplmtryData>.*?</SplmtryData>", "");
+        ValidationReportDto suppReport = validationEngine.validate(noSplmtryXml, "pain.008");
+        assertTrue(suppReport.getIssues().stream().anyMatch(i -> "WARN-SPLMTRY-MISSING".equals(i.getId())));
+    }
 }
