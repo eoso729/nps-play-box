@@ -1,32 +1,28 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { AppHeader } from '../layout/AppHeader';
 import { Sidebar } from '../layout/Sidebar';
 import { StatusBar } from '../layout/StatusBar';
 import { MessageConfigurator } from './MessageConfigurator/MessageConfigurator';
 import { PipelinePanel } from './Pipeline/PipelinePanel';
 import { generateXml, sendMessage } from '../../api/workbench';
-import { PipelineResult, MessageKey } from '../../types/workbench';
-
-const EMPTY_RESULT: PipelineResult = {
-  plainXml: null,
-  signedXml: null,
-  generatedAt: undefined,
-  messageId: undefined,
-  serviceResponse: null,
-  isLoading: false,
-  error: null,
-};
+import { MessageKey } from '../../types/workbench';
+import { useWorkbench } from '../../context/WorkbenchContext';
 
 export const MessageWorkbench: React.FC = () => {
-  const [activeMessage, setActiveMessage] = useState<string>('pain.013');
-  const [workbenchMode, setWorkbenchMode] = useState<'generation' | 'dispatch'>('generation');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [result, setResult] = useState<PipelineResult>(EMPTY_RESULT);
+  const {
+    activeMessage,
+    setActiveMessage,
+    workbenchMode,
+    setWorkbenchMode,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+    result,
+    setResult,
+  } = useWorkbench();
 
   const handleSelectMessage = useCallback((key: string) => {
     setActiveMessage(key);
-    setResult(EMPTY_RESULT);
-  }, []);
+  }, [setActiveMessage]);
 
   const handleGenerate = useCallback(async (payload: Record<string, any>) => {
     setResult(prev => ({ ...prev, isLoading: true, error: null }));

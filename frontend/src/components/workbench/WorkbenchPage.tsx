@@ -1,10 +1,25 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useWorkbench } from '../../context/WorkbenchContext';
 import { MessageWorkbench } from './MessageWorkbench';
+import { MESSAGE_CONFIGS } from './messageConfigs';
 
 export const WorkbenchPage: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const { messageId } = useParams<{ messageId?: string }>();
+  const { setActiveMessage } = useWorkbench();
+
+  useEffect(() => {
+    if (messageId) {
+      const normalized = messageId.includes('.')
+        ? messageId
+        : (Object.keys(MESSAGE_CONFIGS).find(k => k.replace('.', '').toLowerCase() === messageId.toLowerCase()) || messageId);
+      if (MESSAGE_CONFIGS[normalized]) {
+        setActiveMessage(normalized);
+      }
+    }
+  }, [messageId, setActiveMessage]);
 
   if (isLoading) {
     return (

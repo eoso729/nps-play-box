@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MESSAGE_CONFIGS } from '../messageConfigs';
 import { FormFieldset } from './FormFieldset';
 import { validateFormField, validateMessageForm } from '../../../utils/formValidation';
+import { useWorkbench } from '../../../context/WorkbenchContext';
 
 interface MessageConfiguratorProps {
   messageKey: string;
@@ -19,50 +20,43 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
   mode = 'generation',
 }) => {
   const config = MESSAGE_CONFIGS[messageKey];
-  const [formData, setFormData] = useState<Record<string, any>>(config?.prefill ? { ...config.prefill } : {});
+  const { getFormData, updateFormField, resetFormToPrefill, clearForm } = useWorkbench();
+
+  const formData = getFormData(messageKey);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [showValidationSummary, setShowValidationSummary] = useState<boolean>(false);
 
-  // Pre-fill form with defaults when message type changes
+  // Reset errors/touched when message type changes
   useEffect(() => {
-    if (config?.prefill) {
-      setFormData({ ...config.prefill });
-    } else {
-      setFormData({});
-    }
     setErrors({});
     setTouched({});
     setShowValidationSummary(false);
-  }, [messageKey, config]);
+  }, [messageKey]);
 
   const handleChange = (key: string, value: any) => {
-    setFormData(prev => {
-      const next = { ...prev, [key]: value };
-      
-      // Real-time field validation if touched
-      if (touched[key] && config) {
-        let fieldDef;
-        for (const sec of config.sections) {
-          fieldDef = sec.fields.find(f => f.key === key);
-          if (fieldDef) break;
-        }
-        if (fieldDef) {
-          const res = validateFormField(fieldDef, value);
-          setErrors(prevErr => {
-            const nextErr = { ...prevErr };
-            if (!res.valid && res.error) {
-              nextErr[key] = res.error;
-            } else {
-              delete nextErr[key];
-            }
-            return nextErr;
-          });
-        }
+    updateFormField(messageKey, key, value);
+
+    // Real-time field validation if touched
+    if (touched[key] && config) {
+      let fieldDef;
+      for (const sec of config.sections) {
+        fieldDef = sec.fields.find(f => f.key === key);
+        if (fieldDef) break;
       }
-      
-      return next;
-    });
+      if (fieldDef) {
+        const res = validateFormField(fieldDef, value);
+        setErrors(prevErr => {
+          const nextErr = { ...prevErr };
+          if (!res.valid && res.error) {
+            nextErr[key] = res.error;
+          } else {
+            delete nextErr[key];
+          }
+          return nextErr;
+        });
+      }
+    }
   };
 
   const handleBlur = (key: string) => {
@@ -90,16 +84,14 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
   };
 
   const handlePrefill = () => {
-    if (config?.prefill) {
-      setFormData({ ...config.prefill });
-      setErrors({});
-      setTouched({});
-      setShowValidationSummary(false);
-    }
+    resetFormToPrefill(messageKey);
+    setErrors({});
+    setTouched({});
+    setShowValidationSummary(false);
   };
 
   const handleClear = () => {
-    setFormData({});
+    clearForm(messageKey);
     setErrors({});
     setTouched({});
     setShowValidationSummary(false);
