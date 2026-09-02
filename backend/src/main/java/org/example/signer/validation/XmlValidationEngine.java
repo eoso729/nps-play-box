@@ -2211,6 +2211,43 @@ public class XmlValidationEngine {
             }
         }
 
+        // 5j. Cross-validate pacs.003 specific rules (Date range in MndtRltdInf)
+        if (key.contains("pacs.003")) {
+            List<Element> frstDtList = findElementsByPath(doc, "MndtRltdInf.FrstColltnDt");
+            List<Element> fnlDtList = findElementsByPath(doc, "MndtRltdInf.FnlColltnDt");
+            if (!frstDtList.isEmpty() && !fnlDtList.isEmpty()) {
+                Element frstElem = frstDtList.get(0);
+                Element fnlElem = fnlDtList.get(0);
+                String frstVal = frstElem.getTextContent() != null ? frstElem.getTextContent().trim() : "";
+                String fnlVal = fnlElem.getTextContent() != null ? fnlElem.getTextContent().trim() : "";
+                if (!frstVal.isEmpty() && !fnlVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frstVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(fnlVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(fnlElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(fnlElem))
+                                    .fieldPath("DrctDbtTxInf.DrctDbtTx.MndtRltdInf.FnlColltnDt")
+                                    .fieldName("Final Collection Date")
+                                    .lineNumber(getNodeLine(fnlElem))
+                                    .columnNumber(getNodeCol(fnlElem))
+                                    .currentValue(fnlVal)
+                                    .expected("On or after " + frstVal)
+                                    .message("Final collection date (" + fnlVal + ") cannot be earlier than first collection date (" + frstVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Mandate collection date range is valid (" + frstVal + " to " + fnlVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
         // 6. Cross-validate Agent FinInstnId containers in all messages
         validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
         validateAgentFinInstnId(doc, "Assgne", issues, passedRules);

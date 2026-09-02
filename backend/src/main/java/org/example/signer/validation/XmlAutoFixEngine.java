@@ -894,6 +894,13 @@ public class XmlAutoFixEngine {
             syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
         }
 
+        if (key.contains("pacs.003")) {
+            syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        }
+
         // Global Agent BICFI sync for any remaining agents
         syncAgentBicfiWithMmbId(doc, "FwdgAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);

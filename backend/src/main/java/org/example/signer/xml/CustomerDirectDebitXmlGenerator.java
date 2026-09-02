@@ -26,12 +26,21 @@ public class CustomerDirectDebitXmlGenerator {
 
         String instgAgtId = requestDto.getSourceId() != null ? requestDto.getSourceId() :
                 (requestDto.getInstructingBankMemberId() != null ? requestDto.getInstructingBankMemberId() : "999998");
+        String instgBic = requestDto.getInstructingBankBIC() != null && !requestDto.getInstructingBankBIC().trim().isEmpty()
+                ? requestDto.getInstructingBankBIC().trim()
+                : (requestDto.getCreditorBankBIC() != null && !requestDto.getCreditorBankBIC().trim().isEmpty()
+                        ? requestDto.getCreditorBankBIC().trim() : instgAgtId);
+
         String instdAgtId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() :
                 (requestDto.getDebtorBankMemberId() != null ? requestDto.getDebtorBankMemberId() : "999997");
+        String instdBic = requestDto.getInstructedBankBIC() != null && !requestDto.getInstructedBankBIC().trim().isEmpty()
+                ? requestDto.getInstructedBankBIC().trim()
+                : (requestDto.getDebtorBankBIC() != null && !requestDto.getDebtorBankBIC().trim().isEmpty()
+                        ? requestDto.getDebtorBankBIC().trim() : instdAgtId);
 
-        CustomerDirectDebit.Agent instgAgt = createAgent(instgAgtId);
+        CustomerDirectDebit.Agent instgAgt = createAgent(instgBic, instgAgtId);
         grpHdr.setInstgAgt(instgAgt);
-        CustomerDirectDebit.Agent instdAgt = createAgent(instdAgtId);
+        CustomerDirectDebit.Agent instdAgt = createAgent(instdBic, instdAgtId);
         grpHdr.setInstdAgt(instdAgt);
         req.setGrpHdr(grpHdr);
 
@@ -39,10 +48,21 @@ public class CustomerDirectDebitXmlGenerator {
         CustomerDirectDebit.DrctDbtTxInf txInf = new CustomerDirectDebit.DrctDbtTxInf();
         
         CustomerDirectDebit.PmtId pmtId = new CustomerDirectDebit.PmtId();
-        pmtId.setInstrId(generateId(requestDto.getSourceId() + requestDto.getDestinationId(), 9));
-        pmtId.setEndToEndId(generateId(requestDto.getSourceId(), 15));
-        pmtId.setTxId(requestDto.getTransactionId() != null ? requestDto.getTransactionId() : msgId);
+        pmtId.setInstrId(requestDto.getInstructionId() != null && !requestDto.getInstructionId().trim().isEmpty()
+                ? requestDto.getInstructionId().trim() : generateId(instgAgtId + instdAgtId, 9));
+        pmtId.setEndToEndId(requestDto.getEndToEndId() != null && !requestDto.getEndToEndId().trim().isEmpty()
+                ? requestDto.getEndToEndId().trim() : generateId(instgAgtId, 15));
+        pmtId.setTxId(requestDto.getTransactionId() != null && !requestDto.getTransactionId().trim().isEmpty()
+                ? requestDto.getTransactionId().trim() : msgId);
         txInf.setPmtId(pmtId);
+
+        String lclInstrmCode = requestDto.getLocalInstrument() != null && !requestDto.getLocalInstrument().trim().isEmpty()
+                ? requestDto.getLocalInstrument().trim() : "NPS";
+        CustomerDirectDebit.PmtTpInf pmtTpInf = new CustomerDirectDebit.PmtTpInf();
+        CustomerDirectDebit.LclInstrm lclInstrm = new CustomerDirectDebit.LclInstrm();
+        lclInstrm.setPrtry(lclInstrmCode);
+        pmtTpInf.setLclInstrm(lclInstrm);
+        txInf.setPmtTpInf(pmtTpInf);
 
         String currency = requestDto.getCurrency() != null ? requestDto.getCurrency() : "NGN";
         
@@ -81,12 +101,13 @@ public class CustomerDirectDebitXmlGenerator {
         CustomerDirectDebit.AccountId cdtrAcctId = new CustomerDirectDebit.AccountId();
         cdtrAcctId.setIban(requestDto.getCreditorAccountNumber() != null ? requestDto.getCreditorAccountNumber() : "0987654320");
         cdtrAcct.setId(cdtrAcctId);
-        cdtrAcct.setNm(cdrNm);
+        cdtrAcct.setNm(requestDto.getCreditorAccountName() != null && !requestDto.getCreditorAccountName().trim().isEmpty()
+                ? requestDto.getCreditorAccountName().trim() : cdrNm);
         txInf.setCdtrAcct(cdtrAcct);
 
-        txInf.setCdtrAgt(createAgent(instgAgtId));
-        txInf.setInstgAgt(createAgent(instgAgtId));
-        txInf.setInstdAgt(createAgent(instdAgtId));
+        txInf.setCdtrAgt(createAgent(instgBic, instgAgtId));
+        txInf.setInstgAgt(createAgent(instgBic, instgAgtId));
+        txInf.setInstdAgt(createAgent(instdBic, instdAgtId));
 
         // Debtor
         CustomerDirectDebit.Party dbtr = new CustomerDirectDebit.Party();
@@ -98,10 +119,11 @@ public class CustomerDirectDebitXmlGenerator {
         CustomerDirectDebit.AccountId dbtrAcctId = new CustomerDirectDebit.AccountId();
         dbtrAcctId.setIban(requestDto.getDebtorAccountNumber() != null ? requestDto.getDebtorAccountNumber() : "3157417712");
         dbtrAcct.setId(dbtrAcctId);
-        dbtrAcct.setNm(dbtNm);
+        dbtrAcct.setNm(requestDto.getDebtorAccountName() != null && !requestDto.getDebtorAccountName().trim().isEmpty()
+                ? requestDto.getDebtorAccountName().trim() : dbtNm);
         txInf.setDbtrAcct(dbtrAcct);
 
-        txInf.setDbtrAgt(createAgent(instdAgtId));
+        txInf.setDbtrAgt(createAgent(instdBic, instdAgtId));
 
         // Remittance
         CustomerDirectDebit.RmtInf rmtInf = new CustomerDirectDebit.RmtInf();
@@ -153,9 +175,15 @@ public class CustomerDirectDebitXmlGenerator {
     }
 
     private static CustomerDirectDebit.Agent createAgent(String memberId) {
+        return createAgent(memberId, memberId);
+    }
+
+    private static CustomerDirectDebit.Agent createAgent(String bic, String memberId) {
         CustomerDirectDebit.Agent agent = new CustomerDirectDebit.Agent();
         CustomerDirectDebit.FinInstnId finInstnId = new CustomerDirectDebit.FinInstnId();
-        finInstnId.setBicfi(memberId);
+        if (bic != null && !bic.trim().isEmpty()) {
+            finInstnId.setBicfi(bic.trim());
+        }
         CustomerDirectDebit.ClrSysMmbId clrSysMmbId = new CustomerDirectDebit.ClrSysMmbId();
         clrSysMmbId.setMmbId(memberId);
         finInstnId.setClrSysMmbId(clrSysMmbId);

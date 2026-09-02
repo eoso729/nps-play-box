@@ -10,14 +10,21 @@ public class CustomerDirectDebitRequestDto {
     private BigDecimal amount;
     private String currency;
     
-    // Group Header Defaults
+    // Group Header Defaults / Agents
+    private String instructingBankBIC;
     private String instructingBankMemberId;
+    private String instructedBankBIC;
+    private String instructedBankMemberId;
+    private String creditorBankBIC;
+    private String creditorBankMemberId;
+    private String debtorBankBIC;
     private String debtorBankMemberId;
     
-    // Payment IDs
+    // Payment IDs & Type
     private String instructionId;
     private String endToEndId;
     private String transactionId;
+    private String localInstrument;
     
     // Dates
     private String settlementDate;
@@ -32,10 +39,12 @@ public class CustomerDirectDebitRequestDto {
     // Creditor Info
     private String creditorName;
     private String creditorAccountNumber;
+    private String creditorAccountName;
     
     // Debtor Info
     private String debtorName;
     private String debtorAccountNumber;
+    private String debtorAccountName;
     
     // Remittance
     private String narration;

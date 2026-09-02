@@ -1057,24 +1057,33 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creation DateTime", "GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-01-27T10:12:56+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
                 new IsoFieldDef("Number of Transactions", "GrpHdr.NbOfTxs", "//GrpHdr/NbOfTxs", "1", "Numeric", 15, true, false, null, "Nb of transactions"),
                 new IsoFieldDef("Control Sum", "GrpHdr.CtrlSum", "//GrpHdr/CtrlSum", "1000.00", "Decimal", 18, true, false, "AMOUNT", "Control Sum"),
-                new IsoFieldDef("Instructing Agent Member ID", "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Instructing Agent Member ID"),
-                new IsoFieldDef("Instructed Agent Member ID", "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Instructed Agent Member ID"),
-                new IsoFieldDef("Instruction ID", "DrctDbtTxInf.PmtId.InstrId", "//DrctDbtTxInf/PmtId/InstrId", "99999899999920260127101256532309267", "String", 35, true, false, "NPS_ID", "Instruction ID"),
+                new IsoFieldDef("Instructing Agent BICFI", "GrpHdr.InstgAgt.FinInstnId.BICFI", "//GrpHdr/InstgAgt/FinInstnId/BICFI", "999998", "String", 11, false, false, "INSTITUTION_CODE", "Instructing Agent BICFI"),
+                new IsoFieldDef("Instructing Agent Member ID", "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "999998", "String", 6, true, false, "MEMBER_ID", "Instructing Agent Member ID"),
+                new IsoFieldDef("Instructed Agent BICFI", "GrpHdr.InstdAgt.FinInstnId.BICFI", "//GrpHdr/InstdAgt/FinInstnId/BICFI", "999997", "String", 11, false, false, "INSTITUTION_CODE", "Instructed Agent BICFI"),
+                new IsoFieldDef("Instructed Agent Member ID", "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "999997", "String", 6, true, false, "MEMBER_ID", "Instructed Agent Member ID"),
+                new IsoFieldDef("Instruction ID", "DrctDbtTxInf.PmtId.InstrId", "//DrctDbtTxInf/PmtId/InstrId", "99999899999720260127101256532309267", "String", 35, true, false, "NPS_ID", "Instruction ID"),
                 new IsoFieldDef("End-to-End ID", "DrctDbtTxInf.PmtId.EndToEndId", "//DrctDbtTxInf/PmtId/EndToEndId", "99999813263863598554981095085144921", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
                 new IsoFieldDef("Transaction ID", "DrctDbtTxInf.PmtId.TxId", "//DrctDbtTxInf/PmtId/TxId", "99999820260127101256312032527582141", "String", 35, true, false, "NPS_ID", "Transaction ID"),
+                new IsoFieldDef("Local Instrument Code", "DrctDbtTxInf.PmtTpInf.LclInstrm.Prtry", "//DrctDbtTxInf/PmtTpInf/LclInstrm/Prtry", "NPS", "String", 35, false, false, null, "Local Instrument Code"),
                 new IsoFieldDef("Interbank Settlement Amount", "DrctDbtTxInf.IntrBkSttlmAmt", "//DrctDbtTxInf/IntrBkSttlmAmt", "1000.00", "Decimal", 18, true, false, "AMOUNT", "Settlement amount"),
                 new IsoFieldDef("Interbank Settlement Currency", "DrctDbtTxInf.IntrBkSttlmAmt@Ccy", "//DrctDbtTxInf/IntrBkSttlmAmt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Interbank Settlement Date", "DrctDbtTxInf.IntrBkSttlmDt", "//DrctDbtTxInf/IntrBkSttlmDt", "2026-01-27", "Date", 10, true, false, "DATE", "Settlement Date"),
                 new IsoFieldDef("Instructed Amount", "DrctDbtTxInf.InstdAmt", "//DrctDbtTxInf/InstdAmt", "1000.00", "Decimal", 18, true, false, "AMOUNT", "Instructed Amount"),
                 new IsoFieldDef("Mandate ID", "DrctDbtTxInf.DrctDbtTx.MndtRltdInf.MndtId", "//MndtRltdInf/MndtId", "MNDT-RCUR-00001", "String", 35, true, false, null, "Mandate ID"),
+                new IsoFieldDef("Date of Signature", "DrctDbtTxInf.DrctDbtTx.MndtRltdInf.DtOfSgntr", "//MndtRltdInf/DtOfSgntr", "2026-01-27", "Date", 10, true, false, "DATE", "Date of Signature"),
+                new IsoFieldDef("First Collection Date", "DrctDbtTxInf.DrctDbtTx.MndtRltdInf.FrstColltnDt", "//MndtRltdInf/FrstColltnDt", "2026-01-27", "Date", 10, true, false, "DATE", "First Collection Date"),
+                new IsoFieldDef("Final Collection Date", "DrctDbtTxInf.DrctDbtTx.MndtRltdInf.FnlColltnDt", "//MndtRltdInf/FnlColltnDt", "2026-01-28", "Date", 10, false, false, "DATE", "Final Collection Date"),
+                new IsoFieldDef("Frequency Type", "DrctDbtTxInf.DrctDbtTx.MndtRltdInf.Frqcy.Tp", "//MndtRltdInf/Frqcy/Tp", "WEEK", "String", 4, true, false, "FREQUENCY_TYPE", "Frequency Type"),
                 new IsoFieldDef("Creditor Name", "DrctDbtTxInf.Cdtr.Nm", "//DrctDbtTxInf/Cdtr/Nm", "KaYole", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account IBAN", "DrctDbtTxInf.CdtrAcct.Id.IBAN", "//DrctDbtTxInf/CdtrAcct/Id/IBAN", "2210664433", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "DrctDbtTxInf.CdtrAcct.Nm", "//DrctDbtTxInf/CdtrAcct/Nm", "KaYole", "String", 100, true, false, null, "Creditor Account Name"),
-                new IsoFieldDef("Creditor Agent Member ID", "DrctDbtTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
+                new IsoFieldDef("Creditor Agent BICFI", "DrctDbtTxInf.CdtrAgt.FinInstnId.BICFI", "//DrctDbtTxInf/CdtrAgt/FinInstnId/BICFI", "999998", "String", 11, false, false, "INSTITUTION_CODE", "Creditor Agent BICFI"),
+                new IsoFieldDef("Creditor Agent Member ID", "DrctDbtTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999998", "String", 6, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
                 new IsoFieldDef("Debtor Name", "DrctDbtTxInf.Dbtr.Nm", "//DrctDbtTxInf/Dbtr/Nm", "Musa", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account IBAN", "DrctDbtTxInf.DbtrAcct.Id.IBAN", "//DrctDbtTxInf/DbtrAcct/Id/IBAN", "2110334983", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "DrctDbtTxInf.DbtrAcct.Nm", "//DrctDbtTxInf/DbtrAcct/Nm", "Musa", "String", 100, true, false, null, "Debtor Account Name"),
-                new IsoFieldDef("Debtor Agent Member ID", "DrctDbtTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Debtor Agent Member ID"),
+                new IsoFieldDef("Debtor Agent BICFI", "DrctDbtTxInf.DbtrAgt.FinInstnId.BICFI", "//DrctDbtTxInf/DbtrAgt/FinInstnId/BICFI", "999997", "String", 11, false, false, "INSTITUTION_CODE", "Debtor Agent BICFI"),
+                new IsoFieldDef("Debtor Agent Member ID", "DrctDbtTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//DrctDbtTxInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999997", "String", 6, true, false, "MEMBER_ID", "Debtor Agent Member ID"),
                 new IsoFieldDef("Place and Name", "SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Debtor Account Designation", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountDesignation", "//DebtorInfo/AccountDesignation", "1", "Integer", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Debtor ID Type", "SplmtryData.Envlp.CustomData.DebtorInfo.IdType", "//DebtorInfo/IdType", "BVN", "String", 7, true, false, "ID_TYPE", "ID Type"),
@@ -1091,22 +1100,37 @@ public class IsoMessageRegistry {
 
         String sampleXml = """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.003.001.09">
+                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.003.001.11">
                     <FIToFICstmrDrctDbt>
                         <GrpHdr>
                             <MsgId>99999820260127101256312032527582141</MsgId>
                             <CreDtTm>2026-01-27T10:12:56+01:00</CreDtTm>
                             <NbOfTxs>1</NbOfTxs>
                             <CtrlSum>1000.00</CtrlSum>
-                            <InstgAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></InstgAgt>
-                            <InstdAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></InstdAgt>
+                            <InstgAgt>
+                                <FinInstnId>
+                                    <BICFI>999998</BICFI>
+                                    <ClrSysMmbId><MmbId>999998</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </InstgAgt>
+                            <InstdAgt>
+                                <FinInstnId>
+                                    <BICFI>999997</BICFI>
+                                    <ClrSysMmbId><MmbId>999997</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </InstdAgt>
                         </GrpHdr>
                         <DrctDbtTxInf>
                             <PmtId>
-                                <InstrId>99999899999920260127101256532309267</InstrId>
+                                <InstrId>99999899999720260127101256532309267</InstrId>
                                 <EndToEndId>99999813263863598554981095085144921</EndToEndId>
                                 <TxId>99999820260127101256312032527582141</TxId>
                             </PmtId>
+                            <PmtTpInf>
+                                <LclInstrm>
+                                    <Prtry>NPS</Prtry>
+                                </LclInstrm>
+                            </PmtTpInf>
                             <IntrBkSttlmAmt Ccy="NGN">1000.00</IntrBkSttlmAmt>
                             <IntrBkSttlmDt>2026-01-27</IntrBkSttlmDt>
                             <InstdAmt Ccy="NGN">1000.00</InstdAmt>
@@ -1121,12 +1145,32 @@ public class IsoMessageRegistry {
                             </DrctDbtTx>
                             <Cdtr><Nm>KaYole</Nm></Cdtr>
                             <CdtrAcct><Id><IBAN>2210664433</IBAN></Id><Nm>KaYole</Nm></CdtrAcct>
-                            <CdtrAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></CdtrAgt>
-                            <InstgAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></InstgAgt>
-                            <InstdAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></InstdAgt>
+                            <CdtrAgt>
+                                <FinInstnId>
+                                    <BICFI>999998</BICFI>
+                                    <ClrSysMmbId><MmbId>999998</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </CdtrAgt>
+                            <InstgAgt>
+                                <FinInstnId>
+                                    <BICFI>999998</BICFI>
+                                    <ClrSysMmbId><MmbId>999998</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </InstgAgt>
+                            <InstdAgt>
+                                <FinInstnId>
+                                    <BICFI>999997</BICFI>
+                                    <ClrSysMmbId><MmbId>999997</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </InstdAgt>
                             <Dbtr><Nm>Musa</Nm></Dbtr>
                             <DbtrAcct><Id><IBAN>2110334983</IBAN></Id><Nm>Musa</Nm></DbtrAcct>
-                            <DbtrAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></DbtrAgt>
+                            <DbtrAgt>
+                                <FinInstnId>
+                                    <BICFI>999997</BICFI>
+                                    <ClrSysMmbId><MmbId>999997</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </DbtrAgt>
                             <RmtInf><Ustrd>Invoice INV-2025-001</Ustrd></RmtInf>
                         </DrctDbtTxInf>
                         <SplmtryData>
@@ -1162,11 +1206,11 @@ public class IsoMessageRegistry {
         register(IsoMessageDefinition.builder()
                 .key("pacs.003")
                 .name("Direct Debit Transfer")
-                .isoCode("pacs.003.001.09")
+                .isoCode("pacs.003.001.11")
                 .category("Direct Debit Operations")
                 .rootElement("Document")
                 .mainElement("FIToFICstmrDrctDbt")
-                .namespace("urn:iso:std:iso:20022:tech:xsd:pacs.003.001.09")
+                .namespace("urn:iso:std:iso:20022:tech:xsd:pacs.003.001.11")
                 .fields(fields)
                 .sampleXml(sampleXml)
                 .build());

@@ -4,7 +4,7 @@ import jakarta.xml.bind.annotation.*;
 import lombok.Data;
 import java.math.BigDecimal;
 
-@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:pacs.003.001.09")
+@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:pacs.003.001.11")
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
 public class CustomerDirectDebit {
@@ -45,6 +45,8 @@ public class CustomerDirectDebit {
     public static class DrctDbtTxInf {
         @XmlElement(name = "PmtId")
         private PmtId pmtId;
+        @XmlElement(name = "PmtTpInf")
+        private PmtTpInf pmtTpInf;
         @XmlElement(name = "IntrBkSttlmAmt")
         private Amount intrBkSttlmAmt;
         @XmlElement(name = "IntrBkSttlmDt")
@@ -82,6 +84,20 @@ public class CustomerDirectDebit {
         private String endToEndId;
         @XmlElement(name = "TxId")
         private String txId;
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
+    public static class PmtTpInf {
+        @XmlElement(name = "LclInstrm")
+        private LclInstrm lclInstrm;
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
+    public static class LclInstrm {
+        @XmlElement(name = "Prtry")
+        private String prtry;
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)

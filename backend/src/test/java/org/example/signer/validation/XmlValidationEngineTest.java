@@ -1124,4 +1124,37 @@ public class XmlValidationEngineTest {
         assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
         assertTrue(fixBicResp.getValidationReport().isValid());
     }
+
+    @Test
+    public void testPacs003ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.003");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pacs.003");
+        assertTrue(report.isValid(), "pacs.003 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in InstgAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999998</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pacs.003");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pacs.003")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999998</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+
+        // 3. Invalid date range in MndtRltdInf
+        String invalidDateXml = sampleXml.replace("<FnlColltnDt>2026-01-28</FnlColltnDt>", "<FnlColltnDt>2026-01-20</FnlColltnDt>");
+        ValidationReportDto dateReport = validationEngine.validate(invalidDateXml, "pacs.003");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
+    }
 }
