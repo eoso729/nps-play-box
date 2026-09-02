@@ -1256,4 +1256,27 @@ public class XmlValidationEngineTest {
         assertFalse(dateReport.isValid());
         assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
     }
+
+    @Test
+    public void testPain001ValidationAndRules() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.001");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.001");
+        assertTrue(report.isValid(), "pain.001 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Control sum mismatch is flagged
+        String mismatchCtrlSumXml = sampleXml.replaceFirst("<CtrlSum>120.51</CtrlSum>", "<CtrlSum>999.99</CtrlSum>");
+        ValidationReportDto ctrlSumReport = validationEngine.validate(mismatchCtrlSumXml, "pain.001");
+        assertFalse(ctrlSumReport.isValid());
+        assertTrue(ctrlSumReport.getIssues().stream().anyMatch(i -> "CONTROL_SUM_MISMATCH".equals(i.getRuleCode())));
+
+        // 3. Invalid Charge Bearer is flagged
+        String invalidChrgBrXml = sampleXml.replace("<ChrgBr>SLEV</ChrgBr>", "<ChrgBr>INVALID</ChrgBr>");
+        ValidationReportDto chrgBrReport = validationEngine.validate(invalidChrgBrXml, "pain.001");
+        assertFalse(chrgBrReport.isValid());
+        assertTrue(chrgBrReport.getIssues().stream().anyMatch(i -> i.getFieldPath().contains("ChrgBr")));
+    }
 }

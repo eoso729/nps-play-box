@@ -66,9 +66,14 @@ public class MessagePipelineService {
     }
 
     public XmlGenerationResponseDto generatePaymentInitiationPain001(PaymentInitiationRequestDto requestDto) throws Exception {
-        String msgId = generateMsgId(requestDto.getInitiatorId());
-        String endToEndId = generateEndToEndId(requestDto.getInitiatorId());
-        String reqdExctnDt = generateReqdExctnDt();
+        String initiator = requestDto.getSchemeCode() != null && !requestDto.getSchemeCode().trim().isEmpty()
+                ? requestDto.getSchemeCode().trim()
+                : (requestDto.getInitiatorId() != null && !requestDto.getInitiatorId().trim().isEmpty() ? requestDto.getInitiatorId().trim() : "999057");
+        String msgId = generateMsgId(initiator);
+        String endToEndId = requestDto.getEndToEndId() != null && !requestDto.getEndToEndId().trim().isEmpty()
+                ? requestDto.getEndToEndId().trim() : generateEndToEndId(initiator);
+        String reqdExctnDt = requestDto.getRequestedExecutionDate() != null && !requestDto.getRequestedExecutionDate().trim().isEmpty()
+                ? requestDto.getRequestedExecutionDate().trim() : generateReqdExctnDt();
         PaymentInitiation model = PaymentInitiationXmlGenerator.generate(requestDto, msgId, endToEndId, reqdExctnDt);
         return buildXmlGenerationResponse("pain.001", msgId, model);
     }
@@ -220,9 +225,14 @@ public class MessagePipelineService {
     }
 
     public MessageSendResponseDto sendPaymentInitiationPain001(PaymentInitiationRequestDto requestDto) throws Exception {
-        String msgId = generateMsgId(requestDto.getInitiatorId());
-        String endToEndId = generateEndToEndId(requestDto.getInitiatorId());
-        String reqdExctnDt = generateReqdExctnDt();
+        String initiator = requestDto.getSchemeCode() != null && !requestDto.getSchemeCode().trim().isEmpty()
+                ? requestDto.getSchemeCode().trim()
+                : (requestDto.getInitiatorId() != null && !requestDto.getInitiatorId().trim().isEmpty() ? requestDto.getInitiatorId().trim() : "999057");
+        String msgId = generateMsgId(initiator);
+        String endToEndId = requestDto.getEndToEndId() != null && !requestDto.getEndToEndId().trim().isEmpty()
+                ? requestDto.getEndToEndId().trim() : generateEndToEndId(initiator);
+        String reqdExctnDt = requestDto.getRequestedExecutionDate() != null && !requestDto.getRequestedExecutionDate().trim().isEmpty()
+                ? requestDto.getRequestedExecutionDate().trim() : generateReqdExctnDt();
         PaymentInitiation model = PaymentInitiationXmlGenerator.generate(requestDto, msgId, endToEndId, reqdExctnDt);
 
         return executeFullPipeline("pain.001", msgId, model, "CstmrCdtTrfInitn",

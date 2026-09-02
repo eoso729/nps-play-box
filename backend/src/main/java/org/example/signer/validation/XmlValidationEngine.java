@@ -14,6 +14,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
@@ -2324,6 +2325,111 @@ public class XmlValidationEngine {
             }
         }
 
+        // 5m. Cross-validate pain.001 specific rules (CtrlSum, NbOfTxs, PmtMtd, ChrgBr)
+        if (key.contains("pain.001")) {
+            List<Element> grpNbList = findElementsByPath(doc, "GrpHdr.NbOfTxs");
+            List<Element> pmtNbList = findElementsByPath(doc, "PmtInf.NbOfTxs");
+            if (!grpNbList.isEmpty() && !pmtNbList.isEmpty()) {
+                String gNb = grpNbList.get(0).getTextContent().trim();
+                String pNb = pmtNbList.get(0).getTextContent().trim();
+                if (!gNb.equals(pNb)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-NBOFTXS-MISMATCH-" + getNodeLine(pmtNbList.get(0)))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(pmtNbList.get(0)))
+                            .fieldPath("PmtInf.NbOfTxs")
+                            .fieldName("Payment Number of Transactions")
+                            .lineNumber(getNodeLine(pmtNbList.get(0)))
+                            .columnNumber(getNodeCol(pmtNbList.get(0)))
+                            .currentValue(pNb)
+                            .expected(gNb)
+                            .message("PmtInf/NbOfTxs ('" + pNb + "') must match GrpHdr/NbOfTxs ('" + gNb + "').")
+                            .ruleCode("NUMBER_OF_TRANSACTIONS_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Group header and payment info number of transactions match (" + gNb + ")");
+                }
+            }
+
+            List<Element> grpCtrlList = findElementsByPath(doc, "GrpHdr.CtrlSum");
+            List<Element> pmtCtrlList = findElementsByPath(doc, "PmtInf.CtrlSum");
+            if (!grpCtrlList.isEmpty() && !pmtCtrlList.isEmpty()) {
+                try {
+                    BigDecimal gSum = new BigDecimal(grpCtrlList.get(0).getTextContent().trim());
+                    BigDecimal pSum = new BigDecimal(pmtCtrlList.get(0).getTextContent().trim());
+                    if (gSum.compareTo(pSum) != 0) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-CTRLSUM-MISMATCH-" + getNodeLine(pmtCtrlList.get(0)))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(pmtCtrlList.get(0)))
+                                .fieldPath("PmtInf.CtrlSum")
+                                .fieldName("Payment Information Control Sum")
+                                .lineNumber(getNodeLine(pmtCtrlList.get(0)))
+                                .columnNumber(getNodeCol(pmtCtrlList.get(0)))
+                                .currentValue(pSum.toPlainString())
+                                .expected(gSum.toPlainString())
+                                .message("PmtInf/CtrlSum (" + pSum + ") must match GrpHdr/CtrlSum (" + gSum + ").")
+                                .ruleCode("CONTROL_SUM_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Group header and payment info control sums match (" + gSum + ")");
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            List<Element> pmtMtdList = findElementsByPath(doc, "PmtInf.PmtMtd");
+            for (Element el : pmtMtdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"TRF".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-PMTMTD-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("PmtInf.PmtMtd")
+                            .fieldName("Payment Method")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("TRF")
+                            .message("Payment method must be 'TRF' for Customer Credit Transfer Initiation.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Payment method is valid TRF");
+                }
+            }
+
+            List<Element> chrgBrList = findElementsByPath(doc, "PmtInf.ChrgBr");
+            for (Element el : chrgBrList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"SLEV".equalsIgnoreCase(val) && !"CRED".equalsIgnoreCase(val) && !"DEBT".equalsIgnoreCase(val) && !"SHAR".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-CHRGBR-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("PmtInf.ChrgBr")
+                            .fieldName("Charge Bearer")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("SLEV, CRED, DEBT, or SHAR")
+                            .message("Charge Bearer must be one of SLEV, CRED, DEBT, or SHAR. Current value is '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Charge bearer code is valid (" + val + ")");
+                }
+            }
+        }
+
         // 6. Cross-validate Agent FinInstnId containers in all messages
         validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
         validateAgentFinInstnId(doc, "Assgne", issues, passedRules);
@@ -2506,6 +2612,7 @@ public class XmlValidationEngine {
         }
         if (key.contains("pain.001") || key.contains("pain.002")) {
             return findFirstElementText(doc,
+                    "GrpHdr.InitgPty.Id.OrgId.Othr.SchmeNm.Cd",
                     "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
@@ -2555,6 +2662,7 @@ public class XmlValidationEngine {
         }
         if (key.contains("pain.014") || key.contains("pain.001") || key.contains("pain.002")) {
             return findFirstElementText(doc,
+                    "CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"
