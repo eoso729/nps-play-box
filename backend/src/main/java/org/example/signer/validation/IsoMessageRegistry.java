@@ -1316,7 +1316,11 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Debtor Name", "GrpHdr.Dbtr.Nm", "//GrpHdr/Dbtr/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account IBAN", "GrpHdr.DbtrAcct.Id.IBAN", "//GrpHdr/DbtrAcct/Id/IBAN", "8888899999", "String", 10, true, false, "NUBAN", "10-digit Debtor NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "GrpHdr.DbtrAcct.Nm", "//GrpHdr/DbtrAcct/Nm", "Debtor Customer", "String", 100, true, false, null, "Debtor Account Name"),
+                new IsoFieldDef("Forwarding Agent BICFI", "GrpHdr.FwdgAgt.FinInstnId.BICFI", "//GrpHdr/FwdgAgt/FinInstnId/BICFI", "999058", "String", 11, false, false, "INSTITUTION_CODE", "Forwarding Agent BICFI"),
+                new IsoFieldDef("Forwarding Agent Member ID", "GrpHdr.FwdgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/FwdgAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Forwarding Agent Member ID"),
+                new IsoFieldDef("Debtor Agent BICFI", "GrpHdr.DbtrAgt.FinInstnId.BICFI", "//GrpHdr/DbtrAgt/FinInstnId/BICFI", "999058", "String", 11, false, false, "INSTITUTION_CODE", "Debtor Agent BICFI"),
                 new IsoFieldDef("Debtor Agent Member ID", "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Debtor Agent Member ID"),
+                new IsoFieldDef("Creditor Agent BICFI", "GrpHdr.CdtrAgt.FinInstnId.BICFI", "//GrpHdr/CdtrAgt/FinInstnId/BICFI", "999057", "String", 11, false, false, "INSTITUTION_CODE", "Creditor Agent BICFI"),
                 new IsoFieldDef("Creditor Agent Member ID", "GrpHdr.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
                 new IsoFieldDef("Original Message ID", "OrgnlGrpInfAndSts.OrgnlMsgId", "//OrgnlGrpInfAndSts/OrgnlMsgId", "99905820260105102349998878725905163", "String", 35, true, false, "NPS_ID", "Original pain.013 Msg ID"),
                 new IsoFieldDef("Original Message Name ID", "OrgnlGrpInfAndSts.OrgnlMsgNmId", "//OrgnlGrpInfAndSts/OrgnlMsgNmId", "pain.013.001.11", "String", 35, true, false, null, "Original Message Name ID"),
@@ -1339,8 +1343,24 @@ public class IsoMessageRegistry {
                             <CdtrAcct><Id><IBAN>5555544443</IBAN></Id><Nm>CreditorCorp</Nm></CdtrAcct>
                             <Dbtr><Nm>Debtor Customer</Nm></Dbtr>
                             <DbtrAcct><Id><IBAN>8888899999</IBAN></Id><Nm>Debtor Customer</Nm></DbtrAcct>
-                            <DbtrAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></DbtrAgt>
-                            <CdtrAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></CdtrAgt>
+                            <FwdgAgt>
+                                <FinInstnId>
+                                    <BICFI>999058</BICFI>
+                                    <ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </FwdgAgt>
+                            <DbtrAgt>
+                                <FinInstnId>
+                                    <BICFI>999058</BICFI>
+                                    <ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </DbtrAgt>
+                            <CdtrAgt>
+                                <FinInstnId>
+                                    <BICFI>999057</BICFI>
+                                    <ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </CdtrAgt>
                         </GrpHdr>
                         <OrgnlGrpInfAndSts>
                             <OrgnlMsgId>99905820260105102349998878725905163</OrgnlMsgId>

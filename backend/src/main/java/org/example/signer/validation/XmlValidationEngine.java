@@ -2214,6 +2214,7 @@ public class XmlValidationEngine {
         // 6. Cross-validate Agent FinInstnId containers in all messages
         validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
         validateAgentFinInstnId(doc, "Assgne", issues, passedRules);
+        validateAgentFinInstnId(doc, "FwdgAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "InstgAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "InstdAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "DbtrAgt", issues, passedRules);
@@ -2223,6 +2224,7 @@ public class XmlValidationEngine {
     private void validateAgentFinInstnId(Document doc, String agentRole, List<ValidationIssueDto> issues, List<String> passedRules) {
         String roleName = "Assgnr".equalsIgnoreCase(agentRole) ? "Assigner Agent" :
                           "Assgne".equalsIgnoreCase(agentRole) ? "Assignee Agent" :
+                          "FwdgAgt".equalsIgnoreCase(agentRole) ? "Forwarding Agent" :
                           "InstgAgt".equalsIgnoreCase(agentRole) ? "Instructing Agent" :
                           "InstdAgt".equalsIgnoreCase(agentRole) ? "Instructed Agent" :
                           "DbtrAgt".equalsIgnoreCase(agentRole) ? "Debtor Agent" :
@@ -2373,7 +2375,15 @@ public class XmlValidationEngine {
                     "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
             );
         }
-        if (key.contains("pain.014") || key.contains("pain.001") || key.contains("pain.002")) {
+        if (key.contains("pain.014")) {
+            return findFirstElementText(doc,
+                    "FwdgAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.FwdgAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("pain.001") || key.contains("pain.002")) {
             return findFirstElementText(doc,
                     "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                     "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",

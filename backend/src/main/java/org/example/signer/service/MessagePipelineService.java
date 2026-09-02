@@ -167,7 +167,12 @@ public class MessagePipelineService {
     }
 
     public XmlGenerationResponseDto generateActivationStatusReportPain014(PaymentActivationStatusReportDto requestDto) throws Exception {
-        String srcId = requestDto.getForwardingAgentMemberId() != null ? requestDto.getForwardingAgentMemberId() : "999057";
+        String srcId = requestDto.getSourceId() != null && !requestDto.getSourceId().trim().isEmpty()
+                ? requestDto.getSourceId().trim()
+                : (requestDto.getForwardingAgentMemberId() != null && !requestDto.getForwardingAgentMemberId().trim().isEmpty()
+                        ? requestDto.getForwardingAgentMemberId().trim()
+                        : (requestDto.getDebtorAgentMemberId() != null && !requestDto.getDebtorAgentMemberId().trim().isEmpty()
+                                ? requestDto.getDebtorAgentMemberId().trim() : "999057"));
         String msgId = generateMsgId(srcId);
         PaymentActivationStatusReport model = PaymentActivationStatusReportXmlGenerator.generate(requestDto, msgId);
         return buildXmlGenerationResponse("pain.014", msgId, model);

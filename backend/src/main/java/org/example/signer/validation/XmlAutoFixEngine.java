@@ -888,7 +888,14 @@ public class XmlAutoFixEngine {
             syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
         }
 
+        if (key.contains("pain.014")) {
+            syncAgentBicfiWithMmbId(doc, "FwdgAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+        }
+
         // Global Agent BICFI sync for any remaining agents
+        syncAgentBicfiWithMmbId(doc, "FwdgAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);

@@ -1097,4 +1097,31 @@ public class XmlValidationEngineTest {
         assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
         assertTrue(fixBicResp.getValidationReport().isValid());
     }
+
+    @Test
+    public void testPain014ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.014");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.014");
+        assertTrue(report.isValid(), "pain.014 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in FwdgAgt is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.014");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("pain.014")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+    }
 }

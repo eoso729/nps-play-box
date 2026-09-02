@@ -4,6 +4,9 @@ import lombok.Data;
 
 @Data
 public class PaymentActivationStatusReportDto {
+    private String sourceId;
+    private String destinationId;
+
     private String initiatingPartyName;
     private String creditorName;
     private String creditorAccountNumber;
