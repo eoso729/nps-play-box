@@ -612,7 +612,7 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
   'acmt.023': {
     key: 'acmt.023',
     label: 'Identification Verification Request',
-    isoCode: 'acmt.023.001.03',
+    isoCode: 'acmt.023.001.04',
     category: 'Account Services & Statements',
     sections: [
       {
@@ -673,6 +673,25 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
           { key: 'verifiedAccountName', label: 'Resolved Account Name', type: 'text', placeholder: 'JOHN DOE ENTERPRISES', maxLength: 100, fullWidth: true, helperText: 'Verified beneficiary name' },
         ],
       },
+      {
+        title: '3. Supplementary Data (KYC & Risk)',
+        fields: [
+          { key: 'creditorAccountDesignation', label: 'Account Designation', type: 'text', placeholder: '1', maxLength: 1, ruleType: 'ACCOUNT_DESIGNATION', helperText: '1 (Individual), 2 (Corporate), etc.' },
+          {
+            key: 'creditorIdType',
+            label: 'ID Type',
+            type: 'select',
+            options: [
+              { value: 'BVN', label: 'BVN - Bank Verification Number' },
+              { value: 'NIN', label: 'NIN - National Identity Number' },
+              { value: 'RC', label: 'RC - Corporate Registration Number' },
+            ],
+          },
+          { key: 'creditorIdValue', label: 'ID Value', type: 'text', placeholder: '22112323460', maxLength: 35, ruleType: 'ID_VALUE' },
+          { key: 'creditorAccountTier', label: 'Account Tier', type: 'text', placeholder: '1', maxLength: 1, ruleType: 'ACCOUNT_TIER', helperText: 'Tier 1, 2, or 3' },
+          { key: 'transactionRiskRating', label: 'Risk Rating', type: 'text', placeholder: 'R000000000000000000B9', maxLength: 35 },
+        ],
+      },
     ],
     prefill: {
       sendingInstitutionId: '999012',
@@ -683,6 +702,11 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       verificationResponse: 'true',
       verifiedAccountNumber: '1000000001',
       verifiedAccountName: 'JOHN DOE ENTERPRISES',
+      creditorAccountDesignation: '1',
+      creditorIdType: 'BVN',
+      creditorIdValue: '22112323460',
+      creditorAccountTier: '1',
+      transactionRiskRating: 'R000000000000000000B9',
     },
   },
 
@@ -749,15 +773,16 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       {
         title: '1. Header & Agents',
         fields: [
-          { key: 'sourceId', label: 'Instructing Agent ID', type: 'text', required: true, placeholder: '090004', maxLength: 6, ruleType: 'MEMBER_ID' },
-          { key: 'destinationId', label: 'Instructed Agent ID', type: 'text', required: true, placeholder: '100022', maxLength: 6, ruleType: 'MEMBER_ID' },
+          { key: 'sourceId', label: 'Instructing Agent ID', type: 'text', required: true, placeholder: '090004', maxLength: 6, ruleType: 'MEMBER_ID', helperText: 'Sending participant institution code' },
+          { key: 'destinationId', label: 'Instructed Agent ID', type: 'text', required: true, placeholder: '100022', maxLength: 6, ruleType: 'MEMBER_ID', helperText: 'Receiving participant institution code' },
         ],
       },
       {
         title: '2. Original Message Details',
         fields: [
-          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '10002220260402170095982371426577881', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', placeholder: 'pacs.008.001.12', maxLength: 35 },
+          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '10002220260402170095982371426577881', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: '35-char MsgId of the original pacs.008' },
+          { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', required: true, placeholder: 'pacs.008.001.12', maxLength: 35, helperText: 'e.g. pacs.008.001.12' },
+          { key: 'originalCreDtTm', label: 'Original Creation DateTime', type: 'text', required: true, placeholder: '2025-08-01T16:41:01.954Z', fullWidth: true, maxLength: 35, ruleType: 'DATETIME', helperText: 'Creation timestamp of original pacs.008' },
           {
             key: 'groupStatus',
             label: 'Group Status',
@@ -767,18 +792,31 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
               { value: 'ACSC', label: 'ACSC - Accepted Settlement Completed' },
               { value: 'RJCT', label: 'RJCT - Rejected' },
               { value: 'ACCP', label: 'ACCP - Accepted Customer Profile' },
+              { value: 'ACTC', label: 'ACTC - Accepted Technical Validation' },
+              { value: 'PDNG', label: 'PDNG - Pending' },
             ],
+            helperText: 'Acceptance status code',
           },
         ],
       },
       {
-        title: '3. Transaction Information',
+        title: '3. Transaction Information & Status',
         fields: [
-          { key: 'statusId', label: 'Status ID', type: 'text', placeholder: 'AUTH', maxLength: 35 },
-          { key: 'originalInstrId', label: 'Original Instruction ID', type: 'text', placeholder: '10002209000420260402170095982371426', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'originalTxId', label: 'Original Transaction ID', type: 'text', placeholder: '10002220260331170095982371426577885', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', placeholder: '10002221234519115702293163242525113', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'settlementDate', label: 'Settlement Date', type: 'date' },
+          {
+            key: 'statusId',
+            label: 'Status ID',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'AUTH', label: 'AUTH - Authorized' },
+              { value: 'NAUT', label: 'NAUT - Non-Authorized' },
+            ],
+            helperText: 'Unique status ID (AUTH or NAUT)',
+          },
+          { key: 'originalInstrId', label: 'Original Instruction ID', type: 'text', required: true, placeholder: '10002209000420260402170095982371426', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: 'Instruction ID from pacs.008' },
+          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', required: true, placeholder: '10002221234519115702293163242525113', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: 'EndToEnd ID from pacs.008' },
+          { key: 'originalTxId', label: 'Original Transaction ID', type: 'text', required: true, placeholder: '10002220260402170095982371426577881', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: 'Transaction ID from pacs.008' },
+          { key: 'settlementDate', label: 'Settlement Date', type: 'date', required: true, helperText: 'Settlement date of original payment' },
         ],
       },
     ],
@@ -787,11 +825,12 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       destinationId: '100022',
       originalMsgId: '10002220260402170095982371426577881',
       originalMsgNmId: 'pacs.008.001.12',
+      originalCreDtTm: '2026-03-27T16:30:35.072+01:00',
       groupStatus: 'ACSC',
       statusId: 'AUTH',
       originalInstrId: '10002209000420260402170095982371426',
-      originalTxId: '10002220260331170095982371426577885',
       originalEndToEndId: '10002221234519115702293163242525113',
+      originalTxId: '10002220260402170095982371426577881',
       settlementDate: '2026-04-02',
     },
   },
@@ -799,23 +838,24 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
   'pacs.028': {
     key: 'pacs.028',
     label: 'Payment Status Request',
-    isoCode: 'pacs.028.001.05',
+    isoCode: 'pacs.028.001.06',
     category: 'Credit Transfer & Returns',
     sections: [
       {
         title: '1. Header & Agents',
         fields: [
-          { key: 'sourceId', label: 'Instructing Agent Member ID', type: 'text', required: true, placeholder: '999057', maxLength: 6, ruleType: 'MEMBER_ID' },
-          { key: 'destinationId', label: 'Instructed Agent Member ID', type: 'text', required: true, placeholder: '999012', maxLength: 6, ruleType: 'MEMBER_ID' },
+          { key: 'sourceId', label: 'Instructing Agent Member ID', type: 'text', required: true, placeholder: '999057', maxLength: 6, ruleType: 'MEMBER_ID', helperText: 'Sending participant institution code' },
+          { key: 'destinationId', label: 'Instructed Agent Member ID', type: 'text', required: true, placeholder: '999012', maxLength: 6, ruleType: 'MEMBER_ID', helperText: 'Receiving participant institution code' },
         ],
       },
       {
         title: '2. Original Transaction References',
         fields: [
-          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905820250802112346977904433112345', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', placeholder: 'pacs.008.001.12', maxLength: 35 },
-          { key: 'originalTxId', label: 'Original Transaction ID', type: 'text', required: true, placeholder: '99905820250802112346977904433112345', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'settlementDate', label: 'Settlement Date', type: 'date', required: true },
+          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905820250802112346977904433112345', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: '35-char MsgId of the original pacs.008' },
+          { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', placeholder: 'pacs.008.001.12', maxLength: 35, helperText: 'e.g. pacs.008.001.12' },
+          { key: 'originalCreDtTm', label: 'Original Creation DateTime', type: 'text', placeholder: '2025-02-25T00:02:35.072Z', fullWidth: true, maxLength: 35, ruleType: 'DATETIME', helperText: 'Creation timestamp of original pacs.008' },
+          { key: 'originalTxId', label: 'Original Transaction ID', type: 'text', required: true, placeholder: '99905820250802112346977904433112345', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: 'TxId of the original pacs.008' },
+          { key: 'settlementDate', label: 'Settlement Date', type: 'date', required: true, helperText: 'Settlement date of the original transaction' },
         ],
       },
     ],
@@ -824,6 +864,7 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
       destinationId: '999012',
       originalMsgId: '99905820250802112346977904433112345',
       originalMsgNmId: 'pacs.008.001.12',
+      originalCreDtTm: '2025-02-25T00:02:35.072Z',
       originalTxId: '99905820250802112346977904433112345',
       settlementDate: '2025-02-25',
     },

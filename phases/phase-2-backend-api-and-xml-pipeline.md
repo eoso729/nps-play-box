@@ -102,7 +102,7 @@ public class ServicePushResult {
 | `pacs.008.001.10` | Credit Transfer | `TransferRequestDto` |
 | `pacs.003.001.09` | Customer Direct Debit | `CustomerDirectDebitRequestDto` |
 | `pacs.004.001.11` | Payment Return | `PaymentReturnRequestDto` |
-| `acmt.023.001.03` | Name Verification | `NameVerificationRequestDto` |
+| `acmt.023.001.04` | Name Verification | `NameVerificationRequestDto` |
 | `camt.060.001.05` | Balance Enquiry | `AccountReportingRequestDto` |
 
 ---

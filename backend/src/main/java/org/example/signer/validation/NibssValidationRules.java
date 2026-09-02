@@ -18,6 +18,8 @@ public class NibssValidationRules {
     public static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?\\d{10,15}$");
     public static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     public static final Pattern LOCATION_PATTERN = Pattern.compile("^[0-9A-Za-z]{12,30}$");
+    public static final Pattern INSTITUTION_CODE_PATTERN = Pattern.compile("^\\d{6}$");
+    public static final Pattern SESSION_ID_PATTERN = Pattern.compile("^\\d{6}\\d{12}\\d{12}$");
 
     // NPS ID Patterns (exactly 35 characters)
     // MsgId / TxId: Source Inst ID (6) + yyyyMMddHHmmss (14) + randomized 15 digits = 35 chars
@@ -355,8 +357,15 @@ public class NibssValidationRules {
         addTag("CdtrAgt");
         addTag("Cdtr");
         addTag("CdtrAcct");
-        addTag("UltmtDbtr");
-        addTag("UltmtCdtr");
+        addTag("InstrForNxtAgt");
+        addTag("InstrInf");
+        addTag("BtchBookg");
+        addTag("NbOfTxs");
+        addTag("SttlmMtd");
+        addTag("SttlmInf");
+        addTag("DebtorMetadata");
+        addTag("CreditorMetadata");
+        addTag("BiometricData");
         addTag("Purp");
         addTag("RmtInf");
         addTag("Ustrd");
@@ -497,6 +506,8 @@ public class NibssValidationRules {
         addTag("ReasonProprietary");
         addTag("VerifiedAccountNumber");
         addTag("VerifiedAccountName");
+        addTag("SessionID");
+        addTag("SessionId");
     }
 
     // Universal Tag Character Length Limits according to ISO 20022 and NIBSS NPS Specifications
@@ -533,10 +544,13 @@ public class NibssValidationRules {
         setLengthRule("OrgnlMsgNmId", 35, null, 4);
         setLengthRule("ReqdMsgNmId", 35, null, 4);
         setLengthRule("PlcAndNm", 35, null, 1);
+        setLengthRule("SessionID", 30, 30, 30);
+        setLengthRule("SessionId", 30, 30, 30);
 
         // Account & Member Identifiers
         setLengthRule("IBAN", 10, 10, 10); // NUBAN account number (exact 10 digits)
-        setLengthRule("MmbId", 11, null, 3); // Clearing System Member ID (6-11 chars)
+        setLengthRule("MmbId", 6, 6, 6); // Clearing System Member ID (exact 6 numeric digits)
+        setLengthRule("ClrSysMmbId", 6, 6, 6);
         setLengthRule("BICFI", 11, null, 6);
         setLengthRule("BIC", 11, null, 6);
         setLengthRule("IdValue", 35, null, 1); // 11 if BVN/NIN, up to 35 for others

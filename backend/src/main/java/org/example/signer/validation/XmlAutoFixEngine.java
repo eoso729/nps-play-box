@@ -124,7 +124,12 @@ public class XmlAutoFixEngine {
                 injectSupplementaryDataIfNeeded(doc, def, fixesApplied);
             }
 
-            // 4. Format and Pretty Print XML (with DOM whitespace stripping to prevent extra indentation/spaces)
+            // 5. Cross-field synchronization (e.g. Vrfctn.Id to MsgId in acmt.023)
+            if (request.isFixIds()) {
+                fixAcmtCrossFieldSync(doc, def, fixesApplied);
+            }
+
+            // 6. Format and Pretty Print XML (with DOM whitespace stripping to prevent extra indentation/spaces)
             String fixedXml = prettyPrint(doc);
             fixesApplied.add("Formatted XML hierarchy with clean 4-space indentation.");
 
@@ -287,6 +292,68 @@ public class XmlAutoFixEngine {
                 }
             }
 
+            // H2. Institution Code / Member ID (exact 6 numeric digits)
+            if ("MmbId".equalsIgnoreCase(tagName) || "ClrSysMmbId".equalsIgnoreCase(tagName)) {
+                String digitsOnly = text.replaceAll("\\D", "");
+                if (digitsOnly.length() > 6) {
+                    String fixedMmb = digitsOnly.substring(0, 6);
+                    element.setTextContent(fixedMmb);
+                    fixesApplied.add("Truncated <" + tagName + "> from " + text.length() + " chars to 6-digit Institution Code: '" + fixedMmb + "'");
+                    text = fixedMmb;
+                } else if (digitsOnly.length() < 6 && !digitsOnly.isEmpty() && request.isFixIds()) {
+                    String fixedMmb = String.format("%06d", Long.parseLong(digitsOnly));
+                    element.setTextContent(fixedMmb);
+                    fixesApplied.add("Formatted <" + tagName + "> with leading zeros to 6-digit Institution Code: '" + fixedMmb + "'");
+                    text = fixedMmb;
+                } else if (digitsOnly.isEmpty() && request.isFixIds()) {
+                    String fixedMmb = extractSourceInstCode(element.getOwnerDocument());
+                    element.setTextContent(fixedMmb);
+                    fixesApplied.add("Injected 6-digit Institution Code '" + fixedMmb + "' into empty <" + tagName + ">.");
+                    text = fixedMmb;
+                }
+            }
+
+            // H2-b. BICFI (6-digit numeric institution code or 8/11 alphanumeric BIC)
+            if ("BICFI".equalsIgnoreCase(tagName) || "BIC".equalsIgnoreCase(tagName)) {
+                String digitsOnly = text.replaceAll("\\D", "");
+                if (!digitsOnly.isEmpty() && digitsOnly.length() == text.length()) {
+                    if (digitsOnly.length() > 6) {
+                        String fixedBic = digitsOnly.substring(0, 6);
+                        element.setTextContent(fixedBic);
+                        fixesApplied.add("Truncated <" + tagName + "> to 6-digit Institution Code: '" + fixedBic + "'");
+                        text = fixedBic;
+                    } else if (digitsOnly.length() < 6 && request.isFixIds()) {
+                        String fixedBic = String.format("%06d", Long.parseLong(digitsOnly));
+                        element.setTextContent(fixedBic);
+                        fixesApplied.add("Formatted <" + tagName + "> with leading zeros to 6-digit Institution Code: '" + fixedBic + "'");
+                        text = fixedBic;
+                    }
+                }
+            }
+
+            // H3. Session ID (exact 30 numeric digits)
+            if ("SessionID".equalsIgnoreCase(tagName) || "SessionId".equalsIgnoreCase(tagName)) {
+                String digitsOnly = text.replaceAll("\\D", "");
+                if (digitsOnly.length() > 30) {
+                    String fixedSession = digitsOnly.substring(0, 30);
+                    element.setTextContent(fixedSession);
+                    fixesApplied.add("Truncated <" + tagName + "> to 30 digits: '" + fixedSession + "'");
+                    text = fixedSession;
+                } else if (digitsOnly.length() < 30 && request.isFixIds()) {
+                    String srcInst = extractSourceInstCode(element.getOwnerDocument());
+                    String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
+                    Random random = new Random();
+                    StringBuilder rand = new StringBuilder();
+                    for (int i = 0; i < 12; i++) {
+                        rand.append(random.nextInt(10));
+                    }
+                    String fixedSession = srcInst + ts + rand;
+                    element.setTextContent(fixedSession);
+                    fixesApplied.add("Regenerated valid 30-digit NIP Session ID for <" + tagName + ">: '" + fixedSession + "'");
+                    text = fixedSession;
+                }
+            }
+
             // I. NPS ID Character Length & Format Fix (MsgId, TxId, EndToEndId, InstrId, etc.)
             boolean isIdField = "MsgId".equalsIgnoreCase(tagName) || "TxId".equalsIgnoreCase(tagName)
                     || "EndToEndId".equalsIgnoreCase(tagName) || "InstrId".equalsIgnoreCase(tagName)
@@ -303,7 +370,7 @@ public class XmlAutoFixEngine {
                     fixesApplied.add("Truncated <" + tagName + "> length from " + text.length() + " to allowed 35 characters: '" + truncatedId + "'");
                     text = truncatedId;
                 } else if (text.length() < 35 && request.isFixIds() && ("MsgId".equalsIgnoreCase(tagName) || "TxId".equalsIgnoreCase(tagName) || "EndToEndId".equalsIgnoreCase(tagName) || "InstrId".equalsIgnoreCase(tagName) || "NameEnquiryMsgId".equalsIgnoreCase(tagName))) {
-                    String fixedId = generateCompliantNpsId(text, tagName);
+                    String fixedId = generateCompliantNpsId(element.getOwnerDocument(), text, tagName);
                     element.setTextContent(fixedId);
                     fixesApplied.add("Regenerated valid 35-character NPS ID for <" + tagName + ">: '" + fixedId + "'");
                     text = fixedId;
@@ -380,7 +447,7 @@ public class XmlAutoFixEngine {
             Element loc = doc.createElement("TransactionLocation");
             loc.setTextContent("01080652440N020900337921E");
             Element nameEnq = doc.createElement("NameEnquiryMsgId");
-            nameEnq.setTextContent(generateCompliantNpsId("999058", "MsgId"));
+            nameEnq.setTextContent(generateCompliantNpsId(doc, extractSourceInstCode(doc), "NameEnquiryMsgId"));
             Element chan = doc.createElement("ChannelCode");
             chan.setTextContent("1");
             txInfo.appendChild(loc);
@@ -491,18 +558,103 @@ public class XmlAutoFixEngine {
         return clean;
     }
 
-    private String generateCompliantNpsId(String seed, String tag) {
-        String instId = "999058";
+    private String generateCompliantNpsId(Document doc, String seed, String tag) {
+        String srcInst = extractSourceInstCode(doc);
+        String dstInst = extractDestInstCode(doc);
+
         if (seed != null && seed.length() >= 6 && seed.substring(0, 6).matches("\\d{6}")) {
-            instId = seed.substring(0, 6);
+            srcInst = seed.substring(0, 6);
         }
+
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         Random random = new Random();
-        StringBuilder rand = new StringBuilder();
-        for (int i = 0; i < 15; i++) {
-            rand.append(random.nextInt(10));
+
+        if ("InstrId".equalsIgnoreCase(tag) || "OrgnlInstrId".equalsIgnoreCase(tag)) {
+            // InstrId: Source Inst (6) + Dest Inst (6) + Timestamp yyyyMMddHHmmss (14) + 9 random digits = 35 chars
+            StringBuilder rand = new StringBuilder();
+            for (int i = 0; i < 9; i++) {
+                rand.append(random.nextInt(10));
+            }
+            return srcInst + dstInst + timestamp + rand;
+        } else if ("EndToEndId".equalsIgnoreCase(tag) || "OrgnlEndToEndId".equalsIgnoreCase(tag)) {
+            // EndToEndId: Source Inst (6) + 29 random digits = 35 chars
+            StringBuilder rand = new StringBuilder();
+            for (int i = 0; i < 29; i++) {
+                rand.append(random.nextInt(10));
+            }
+            return srcInst + rand;
+        } else {
+            // MsgId / TxId / NameEnquiryMsgId / OriginalMsgId: Source Inst (6) + Timestamp (14) + 15 random digits = 35 chars
+            StringBuilder rand = new StringBuilder();
+            for (int i = 0; i < 15; i++) {
+                rand.append(random.nextInt(10));
+            }
+            return srcInst + timestamp + rand;
         }
-        return instId + timestamp + rand;
+    }
+
+    public static String extractSourceInstCode(Document doc) {
+        if (doc == null) return "999058";
+        String[] candidateTags = {
+                "InstgAgt", "DbtrAgt", "Assgnr", "MsgSndr"
+        };
+        for (String cTag : candidateTags) {
+            NodeList list = doc.getElementsByTagName(cTag);
+            if (list.getLength() > 0) {
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.item(i) instanceof Element agt) {
+                        NodeList mmbList = agt.getElementsByTagName("MmbId");
+                        if (mmbList.getLength() > 0) {
+                            String val = mmbList.item(0).getTextContent();
+                            if (val != null && val.trim().matches("\\d{6}")) {
+                                return val.trim();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Fallback: search all MmbId tags
+        NodeList mmbList = doc.getElementsByTagName("MmbId");
+        if (mmbList.getLength() > 0) {
+            String val = mmbList.item(0).getTextContent();
+            if (val != null && val.trim().matches("\\d{6}")) {
+                return val.trim();
+            }
+        }
+        return "999058";
+    }
+
+    public static String extractDestInstCode(Document doc) {
+        if (doc == null) return "999057";
+        String[] candidateTags = {
+                "InstdAgt", "CdtrAgt", "Assgne", "Svcr"
+        };
+        for (String cTag : candidateTags) {
+            NodeList list = doc.getElementsByTagName(cTag);
+            if (list.getLength() > 0) {
+                for (int i = 0; i < list.getLength(); i++) {
+                    if (list.item(i) instanceof Element agt) {
+                        NodeList mmbList = agt.getElementsByTagName("MmbId");
+                        if (mmbList.getLength() > 0) {
+                            String val = mmbList.item(0).getTextContent();
+                            if (val != null && val.trim().matches("\\d{6}")) {
+                                return val.trim();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Fallback: search 2nd MmbId tag if available
+        NodeList mmbList = doc.getElementsByTagName("MmbId");
+        if (mmbList.getLength() > 1) {
+            String val = mmbList.item(1).getTextContent();
+            if (val != null && val.trim().matches("\\d{6}")) {
+                return val.trim();
+            }
+        }
+        return "999057";
     }
 
     /**
@@ -567,5 +719,168 @@ public class XmlAutoFixEngine {
             fixesApplied.add("Inserted default ISO namespace attribute into <Document>.");
         }
         return fixed;
+    }
+
+    private void fixAcmtCrossFieldSync(Document doc, IsoMessageDefinition def, List<String> fixesApplied) {
+        if (def == null || doc == null) return;
+        String key = def.getKey().toLowerCase();
+        if (key.contains("acmt.023")) {
+            // 1. Synchronize Vrfctn.Id with Assgnmt.MsgId
+            NodeList msgIdNodes = doc.getElementsByTagName("MsgId");
+            if (msgIdNodes.getLength() == 0) msgIdNodes = doc.getElementsByTagNameNS("*", "MsgId");
+            NodeList vrfctnNodes = doc.getElementsByTagName("Vrfctn");
+            if (vrfctnNodes.getLength() == 0) vrfctnNodes = doc.getElementsByTagNameNS("*", "Vrfctn");
+
+            if (msgIdNodes.getLength() > 0 && vrfctnNodes.getLength() > 0) {
+                String msgIdVal = msgIdNodes.item(0).getTextContent();
+                if (msgIdVal != null && !msgIdVal.trim().isEmpty()) {
+                    msgIdVal = msgIdVal.trim();
+                    Element vrfctn = (Element) vrfctnNodes.item(0);
+                    NodeList idList = vrfctn.getElementsByTagName("Id");
+                    if (idList.getLength() > 0) {
+                        Element idElem = (Element) idList.item(0);
+                        if (!msgIdVal.equals(idElem.getTextContent())) {
+                            idElem.setTextContent(msgIdVal);
+                            fixesApplied.add("Synchronized Verification ID <Vrfctn><Id> to match Assignment Message ID (" + msgIdVal + ").");
+                        }
+                    }
+                }
+            }
+
+            // 2. Synchronize Assgnr BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "Assgnr", fixesApplied);
+            // 3. Synchronize Assgne BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "Assgne", fixesApplied);
+        }
+
+        if (key.contains("acmt.024")) {
+            // 1. Synchronize Rpt.OrgnlId with OrgnlAssgnmt.MsgId
+            NodeList orgnlAssgnmtNodes = doc.getElementsByTagName("OrgnlAssgnmt");
+            if (orgnlAssgnmtNodes.getLength() == 0) orgnlAssgnmtNodes = doc.getElementsByTagNameNS("*", "OrgnlAssgnmt");
+            NodeList rptNodes = doc.getElementsByTagName("Rpt");
+            if (rptNodes.getLength() == 0) rptNodes = doc.getElementsByTagNameNS("*", "Rpt");
+
+            if (orgnlAssgnmtNodes.getLength() > 0 && rptNodes.getLength() > 0) {
+                Element orgnlAssgnmt = (Element) orgnlAssgnmtNodes.item(0);
+                NodeList msgIdList = orgnlAssgnmt.getElementsByTagName("MsgId");
+                if (msgIdList.getLength() > 0) {
+                    String orgnlMsgIdVal = msgIdList.item(0).getTextContent();
+                    if (orgnlMsgIdVal != null && !orgnlMsgIdVal.trim().isEmpty()) {
+                        orgnlMsgIdVal = orgnlMsgIdVal.trim();
+                        Element rpt = (Element) rptNodes.item(0);
+                        NodeList orgnlIdList = rpt.getElementsByTagName("OrgnlId");
+                        if (orgnlIdList.getLength() > 0) {
+                            Element orgnlIdElem = (Element) orgnlIdList.item(0);
+                            if (!orgnlMsgIdVal.equals(orgnlIdElem.getTextContent())) {
+                                orgnlIdElem.setTextContent(orgnlMsgIdVal);
+                                fixesApplied.add("Synchronized Report Original ID <Rpt><OrgnlId> to match Original Assignment Message ID (" + orgnlMsgIdVal + ").");
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Synchronize Assgnr BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "Assgnr", fixesApplied);
+            // 3. Synchronize Assgne BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "Assgne", fixesApplied);
+        }
+
+        if (key.contains("pacs.028")) {
+            // 1. Synchronize TxInf.StsReqId with GrpHdr.MsgId
+            NodeList msgIdNodes = doc.getElementsByTagName("MsgId");
+            if (msgIdNodes.getLength() == 0) msgIdNodes = doc.getElementsByTagNameNS("*", "MsgId");
+            NodeList stsReqIdNodes = doc.getElementsByTagName("StsReqId");
+            if (stsReqIdNodes.getLength() == 0) stsReqIdNodes = doc.getElementsByTagNameNS("*", "StsReqId");
+
+            if (msgIdNodes.getLength() > 0 && stsReqIdNodes.getLength() > 0) {
+                String msgIdVal = msgIdNodes.item(0).getTextContent();
+                if (msgIdVal != null && !msgIdVal.trim().isEmpty()) {
+                    msgIdVal = msgIdVal.trim();
+                    Element stsReqIdElem = (Element) stsReqIdNodes.item(0);
+                    if (!msgIdVal.equals(stsReqIdElem.getTextContent())) {
+                        stsReqIdElem.setTextContent(msgIdVal);
+                        fixesApplied.add("Synchronized Status Request ID <TxInf><StsReqId> to match Message ID (" + msgIdVal + ").");
+                    }
+                }
+            }
+
+            // 2. Synchronize TxInf.OrgnlTxId with OrgnlGrpInf.OrgnlMsgId
+            NodeList orgnlMsgIdNodes = doc.getElementsByTagName("OrgnlMsgId");
+            if (orgnlMsgIdNodes.getLength() == 0) orgnlMsgIdNodes = doc.getElementsByTagNameNS("*", "OrgnlMsgId");
+            NodeList orgnlTxIdNodes = doc.getElementsByTagName("OrgnlTxId");
+            if (orgnlTxIdNodes.getLength() == 0) orgnlTxIdNodes = doc.getElementsByTagNameNS("*", "OrgnlTxId");
+
+            if (orgnlMsgIdNodes.getLength() > 0 && orgnlTxIdNodes.getLength() > 0) {
+                String orgnlMsgIdVal = orgnlMsgIdNodes.item(0).getTextContent();
+                if (orgnlMsgIdVal != null && !orgnlMsgIdVal.trim().isEmpty()) {
+                    orgnlMsgIdVal = orgnlMsgIdVal.trim();
+                    Element orgnlTxIdElem = (Element) orgnlTxIdNodes.item(0);
+                    if (!orgnlMsgIdVal.equals(orgnlTxIdElem.getTextContent())) {
+                        orgnlTxIdElem.setTextContent(orgnlMsgIdVal);
+                        fixesApplied.add("Synchronized Original Transaction ID <TxInf><OrgnlTxId> to match Original Message ID (" + orgnlMsgIdVal + ").");
+                    }
+                }
+            }
+
+            // 3. Synchronize InstgAgt and InstdAgt BICFI with MmbId if numeric
+            syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
+        }
+
+        if (key.contains("pacs.002")) {
+            // 1. Synchronize TxInfAndSts.OrgnlTxId with OrgnlGrpInfAndSts.OrgnlMsgId
+            NodeList orgnlMsgIdNodes = doc.getElementsByTagName("OrgnlMsgId");
+            if (orgnlMsgIdNodes.getLength() == 0) orgnlMsgIdNodes = doc.getElementsByTagNameNS("*", "OrgnlMsgId");
+            NodeList orgnlTxIdNodes = doc.getElementsByTagName("OrgnlTxId");
+            if (orgnlTxIdNodes.getLength() == 0) orgnlTxIdNodes = doc.getElementsByTagNameNS("*", "OrgnlTxId");
+
+            if (orgnlMsgIdNodes.getLength() > 0 && orgnlTxIdNodes.getLength() > 0) {
+                String orgnlMsgIdVal = orgnlMsgIdNodes.item(0).getTextContent();
+                if (orgnlMsgIdVal != null && !orgnlMsgIdVal.trim().isEmpty()) {
+                    orgnlMsgIdVal = orgnlMsgIdVal.trim();
+                    Element orgnlTxIdElem = (Element) orgnlTxIdNodes.item(0);
+                    if (!orgnlMsgIdVal.equals(orgnlTxIdElem.getTextContent())) {
+                        orgnlTxIdElem.setTextContent(orgnlMsgIdVal);
+                        fixesApplied.add("Synchronized Original Transaction ID <TxInfAndSts><OrgnlTxId> to match Original Message ID (" + orgnlMsgIdVal + ").");
+                    }
+                }
+            }
+
+            // 2. Synchronize InstgAgt and InstdAgt BICFI with MmbId
+            syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
+        }
+
+        // Global Agent BICFI sync for any remaining agents
+        syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+    }
+
+    private void syncAgentBicfiWithMmbId(Document doc, String agentRole, List<String> fixesApplied) {
+        NodeList agentNodes = doc.getElementsByTagName(agentRole);
+        if (agentNodes.getLength() == 0) agentNodes = doc.getElementsByTagNameNS("*", agentRole);
+        for (int i = 0; i < agentNodes.getLength(); i++) {
+            Element agent = (Element) agentNodes.item(i);
+            NodeList mmbList = agent.getElementsByTagName("MmbId");
+            if (mmbList.getLength() == 0) mmbList = agent.getElementsByTagNameNS("*", "MmbId");
+            NodeList bicList = agent.getElementsByTagName("BICFI");
+            if (bicList.getLength() == 0) bicList = agent.getElementsByTagNameNS("*", "BICFI");
+
+            if (mmbList.getLength() > 0 && bicList.getLength() > 0) {
+                String mmbVal = mmbList.item(0).getTextContent();
+                Element bicElem = (Element) bicList.item(0);
+                String bicVal = bicElem.getTextContent();
+                if (mmbVal != null && !mmbVal.trim().isEmpty()) {
+                    mmbVal = mmbVal.trim();
+                    if (bicVal == null || bicVal.trim().isEmpty() || (bicVal.trim().matches("\\d+") && !bicVal.trim().equals(mmbVal))) {
+                        bicElem.setTextContent(mmbVal);
+                        fixesApplied.add("Synchronized " + agentRole + " BICFI to match Member ID (" + mmbVal + ").");
+                    }
+                }
+            }
+        }
     }
 }

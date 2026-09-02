@@ -87,5 +87,5 @@ Fill Form Fields
 | `pacs.008.001.10` | Credit Transfer |
 | `pacs.003.001.09` | Customer Direct Debit |
 | `pacs.004.001.11` | Payment Return |
-| `acmt.023.001.03` | Name Verification |
+| `acmt.023.001.04` | Name Verification |
 | `camt.060.001.05` | Balance Enquiry |

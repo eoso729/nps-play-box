@@ -83,7 +83,8 @@ public class DirectDebitXmlGenerator {
         DirectDebit.FinInstnId cdtrFinInstnId = new DirectDebit.FinInstnId();
         cdtrFinInstnId.setBicfi("AA123456");
         DirectDebit.ClrSysMmbId cdtrClrSysMmbId = new DirectDebit.ClrSysMmbId();
-        cdtrClrSysMmbId.setMmbId(requestDto.getCreditorId() != null ? requestDto.getCreditorId() : "000058");
+        String srcInst = requestDto.getCreditorId() != null ? requestDto.getCreditorId() : (requestDto.getInitiatorId() != null ? requestDto.getInitiatorId() : "999057");
+        cdtrClrSysMmbId.setMmbId(srcInst);
         cdtrFinInstnId.setClrSysMmbId(cdtrClrSysMmbId);
         cdtrAgt.setFinInstnId(cdtrFinInstnId);
         pmtInf.setCdtrAgt(cdtrAgt);
@@ -108,8 +109,8 @@ public class DirectDebitXmlGenerator {
         DirectDebit.MndtRltdInf mndtRltdInf = new DirectDebit.MndtRltdInf();
         mndtRltdInf.setMndtId(requestDto.getMandateId() != null ? requestDto.getMandateId() : "0000004/001/0000070986");
         mndtRltdInf.setDtOfSgntr(requestDto.getDtOfSgntr() != null ? requestDto.getDtOfSgntr() : "2025-02-01Z");
-        mndtRltdInf.setFrstColltnDt(requestDto.getFrstColltnDt() != null ? requestDto.getFrstColltnDt() : "2026-04-16Z");
-        mndtRltdInf.setFnlColltnDt(requestDto.getFnlColltnDt() != null ? requestDto.getFnlColltnDt() : "2026-12-31Z");
+        mndtRltdInf.setFrstColltnDt(requestDto.getFrstColltnDt() != null ? requestDto.getFrstColltnDt() : "2025-02-16Z");
+        mndtRltdInf.setFnlColltnDt(requestDto.getFnlColltnDt() != null ? requestDto.getFnlColltnDt() : "2025-12-31Z");
         DirectDebit.Frqcy frqcy = new DirectDebit.Frqcy();
         frqcy.setTp(requestDto.getFreqTp() != null ? requestDto.getFreqTp() : "MNTH");
         mndtRltdInf.setFrqcy(frqcy);
@@ -120,7 +121,8 @@ public class DirectDebitXmlGenerator {
         DirectDebit.DbtrAgt dbtrAgt = new DirectDebit.DbtrAgt();
         DirectDebit.FinInstnId dbtrFinInstnId = new DirectDebit.FinInstnId();
         DirectDebit.ClrSysMmbId dbtrClrSysMmbId = new DirectDebit.ClrSysMmbId();
-        dbtrClrSysMmbId.setMmbId(requestDto.getDebtorId() != null ? requestDto.getDebtorId() : "999997");
+        String dstInst = requestDto.getDebtorId() != null ? requestDto.getDebtorId() : "999058";
+        dbtrClrSysMmbId.setMmbId(dstInst);
         dbtrFinInstnId.setClrSysMmbId(dbtrClrSysMmbId);
         dbtrAgt.setFinInstnId(dbtrFinInstnId);
         drctDbtTxInf.setDbtrAgt(dbtrAgt);

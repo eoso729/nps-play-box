@@ -117,16 +117,16 @@ function validateRuleType(ruleType: ValidationRuleType, value: string, fieldLabe
       if (!NPS_ID_REGEX.test(value) || value.length > 35) {
         return {
           valid: false,
-          error: `${fieldLabel} must be alphanumeric and max 35 characters`,
+          error: `${fieldLabel} must not exceed 35 characters`,
         };
       }
       break;
 
     case 'MEMBER_ID':
-      if (value.length > 11 || value.length < 3) {
+      if (!/^\d{6}$/.test(value)) {
         return {
           valid: false,
-          error: `${fieldLabel} must be a 3–11 character participant code`,
+          error: `${fieldLabel} must be exactly 6 numeric digits (Clearing Member ID)`,
         };
       }
       break;
@@ -217,6 +217,24 @@ function validateRuleType(ruleType: ValidationRuleType, value: string, fieldLabe
         return {
           valid: false,
           error: `${fieldLabel} must be one of: ${VALID_CHARGE_BEARERS.join(', ')}`,
+        };
+      }
+      break;
+
+    case 'REASON_CODE':
+      if (!/^[A-Z0-9]{3,4}$/.test(value.toUpperCase())) {
+        return {
+          valid: false,
+          error: `${fieldLabel} must be 3–4 alphanumeric characters (e.g. AC04, AG01)`,
+        };
+      }
+      break;
+
+    case 'ID_VALUE':
+      if (value.length > 35) {
+        return {
+          valid: false,
+          error: `${fieldLabel} must not exceed 35 characters`,
         };
       }
       break;

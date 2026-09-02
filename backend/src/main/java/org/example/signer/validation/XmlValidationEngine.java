@@ -199,6 +199,9 @@ public class XmlValidationEngine {
             validateSupplementaryDataPresence(doc, issues, passedRules);
         }
 
+        // 8. Cross-Field Source & Destination Institution Code Consistency Validation
+        validateCrossFieldInstitutionCodes(doc, def, issues, passedRules);
+
         boolean isValid = issues.stream().noneMatch(i -> "ERROR".equalsIgnoreCase(i.getSeverity()));
         return buildReport(isValid,
                 def != null ? def.getKey() : messageType,
@@ -327,27 +330,43 @@ public class XmlValidationEngine {
             int col = getNodeCol(elem);
             String xpath = getElementXPath(elem) + (isAttribute ? "/@" + attributeName : "");
 
-            // Empty check for mandatory field
-            if (text.isEmpty() && field.isMandatory()) {
-                issues.add(ValidationIssueDto.builder()
-                        .id("ERR-EMPTY-" + sanitizeId(field.getXmlPath()))
-                        .severity("ERROR")
-                        .category("SCHEMA_STRUCTURE")
-                        .xpath(xpath)
-                        .fieldPath(field.getXmlPath())
-                        .fieldName(field.getFieldName())
-                        .lineNumber(line)
-                        .columnNumber(col)
-                        .currentValue("")
-                        .expected("Non-empty value")
-                        .message("Mandatory field '" + field.getFieldName() + "' cannot be empty.")
-                        .ruleCode("MANDATORY_FIELD_EMPTY")
-                        .autoFixable(true)
-                        .build());
+            // Empty check for present field
+            if (text.isEmpty()) {
+                if (field.isMandatory()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-EMPTY-" + sanitizeId(field.getXmlPath()))
+                            .severity("ERROR")
+                            .category("SCHEMA_STRUCTURE")
+                            .xpath(xpath)
+                            .fieldPath(field.getXmlPath())
+                            .fieldName(field.getFieldName())
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue("[EMPTY]")
+                            .expected("Non-empty value")
+                            .message("Mandatory field '" + field.getFieldName() + "' cannot be empty.")
+                            .ruleCode("MANDATORY_FIELD_EMPTY")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-EMPTY-OPTIONAL-" + sanitizeId(field.getXmlPath()))
+                            .severity("ERROR")
+                            .category("SCHEMA_STRUCTURE")
+                            .xpath(xpath)
+                            .fieldPath(field.getXmlPath())
+                            .fieldName(field.getFieldName())
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue("[EMPTY]")
+                            .expected("Non-empty value")
+                            .message("Field '" + field.getFieldName() + "' is present in XML but contains no value. Either populate it with a valid value or remove the tag.")
+                            .ruleCode("EMPTY_TAG_NOT_ALLOWED")
+                            .autoFixable(true)
+                            .build());
+                }
                 continue;
             }
-
-            if (text.isEmpty()) continue;
 
             // Field length check (allow 10-11 for Date with trailing Z)
             int effectiveMaxLen = field.getMaxLength();
@@ -612,24 +631,91 @@ public class XmlValidationEngine {
                 break;
 
             case "NPS_ID":
-                if (text.length() != 35) {
+                if (text.length() > 35) {
                     issues.add(ValidationIssueDto.builder()
-                            .id("WARN-NPS-ID-LEN-" + line)
-                            .severity("WARNING")
-                            .category("BUSINESS_RULE")
+                            .id("ERR-NPS-ID-LEN-" + line)
+                            .severity("ERROR")
+                            .category("FIELD_LENGTH")
                             .xpath(xpath)
                             .fieldPath(elem.getNodeName())
                             .fieldName(fieldName)
                             .lineNumber(line)
                             .columnNumber(col)
                             .currentValue(text + " (length: " + text.length() + ")")
-                            .expected("Exactly 35 characters (Source Inst ID + Timestamp/Random)")
-                            .message("NPS specification requires 35-character IDs for " + fieldName + ".")
-                            .ruleCode("NPS_ID_FORMAT")
+                            .expected("Maximum 35 characters")
+                            .message("NPS specification requires maximum 35-character IDs for " + fieldName + ".")
+                            .ruleCode("FIELD_LENGTH_EXCEEDED")
                             .autoFixable(true)
                             .build());
                 } else {
-                    passedRules.add("35-character NPS ID format valid (" + fieldName + ")");
+                    passedRules.add("NPS ID length compliant (" + fieldName + ")");
+                }
+                break;
+
+            case "ID_VALUE":
+                String idType = findSiblingIdType(elem);
+                if ("BVN".equalsIgnoreCase(idType) || "NIN".equalsIgnoreCase(idType) || idType == null || idType.isEmpty()) {
+                    if (!NibssValidationRules.BVN_PATTERN.matcher(text).matches()) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-BVN-" + line)
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(xpath)
+                                .fieldPath(elem.getNodeName())
+                                .fieldName(fieldName)
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text + " (" + text.length() + " digits)")
+                                .expected("Exactly 11 numeric digits")
+                                .message("NIBSS BVN/NIN ID Value must be exactly 11 numeric digits.")
+                                .ruleCode("NIBSS_BVN_LEN")
+                                .autoFixable(false)
+                                .build());
+                    } else {
+                        passedRules.add("11-digit BVN/NIN verification passed (" + text + ")");
+                    }
+                } else {
+                    if (text.length() > 35) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ID-VAL-LEN-" + line)
+                                .severity("ERROR")
+                                .category("FIELD_LENGTH")
+                                .xpath(xpath)
+                                .fieldPath(elem.getNodeName())
+                                .fieldName(fieldName)
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text + " (" + text.length() + " chars)")
+                                .expected("Maximum 35 characters for " + idType)
+                                .message(idType + " identification code exceeds maximum allowed 35 characters.")
+                                .ruleCode("FIELD_LENGTH_EXCEEDED")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Valid " + idType + " ID Value (" + text + ")");
+                    }
+                }
+                break;
+
+            case "SESSION_ID":
+                if (!NibssValidationRules.SESSION_ID_PATTERN.matcher(text).matches()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-SESSION-ID-" + line)
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(xpath)
+                            .fieldPath(elem.getNodeName())
+                            .fieldName(fieldName)
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text + " (" + text.length() + " chars)")
+                            .expected("Exactly 30 numeric digits (6-digit Source Inst + 12-digit Timestamp YYMMDDHHmmss + 12-digit Seq)")
+                            .message("NIP Session ID must be exactly 30 numeric digits.")
+                            .ruleCode("INVALID_SESSION_ID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Valid 30-digit Session ID: " + text);
                 }
                 break;
 
@@ -850,7 +936,8 @@ public class XmlValidationEngine {
                 break;
 
             case "MEMBER_ID":
-                if (text.length() < 3 || text.length() > 11) {
+            case "INSTITUTION_CODE":
+                if (!NibssValidationRules.INSTITUTION_CODE_PATTERN.matcher(text).matches()) {
                     issues.add(ValidationIssueDto.builder()
                             .id("ERR-MMB-ID-" + line)
                             .severity("ERROR")
@@ -861,13 +948,13 @@ public class XmlValidationEngine {
                             .lineNumber(line)
                             .columnNumber(col)
                             .currentValue(text + " (" + text.length() + " chars)")
-                            .expected("3 to 11 characters (6-digit standard institution code)")
-                            .message("Clearing System Member ID must be 3 to 11 characters.")
-                            .ruleCode("FIELD_LENGTH_INVALID")
+                            .expected("Exactly 6 numeric digits (CBN/NIBSS Institution Code, e.g. 000014, 090110, 999058)")
+                            .message("Clearing System Member ID / Institution Code must be exactly 6 numeric digits.")
+                            .ruleCode("FIELD_LENGTH_MISMATCH")
                             .autoFixable(true)
                             .build());
                 } else {
-                    passedRules.add("Valid Member ID: " + text);
+                    passedRules.add("Valid 6-digit Institution Code: " + text);
                 }
                 break;
 
@@ -886,6 +973,11 @@ public class XmlValidationEngine {
         int line = getNodeLine(element);
         int col = getNodeCol(element);
         String text = element.getTextContent() != null ? element.getTextContent().trim() : "";
+
+        // Skip digital signature elements
+        if ((element.getNamespaceURI() != null && element.getNamespaceURI().contains("xmldsig")) || "Signature".equalsIgnoreCase(tagName)) {
+            return;
+        }
 
         // 1. Tag Name Case Validation (Check exact PascalCase / Uppercase against canonical ISO 20022 & NIBSS dictionary)
         String canonicalTag = NibssValidationRules.getCanonicalTagName(tagName);
@@ -917,7 +1009,33 @@ public class XmlValidationEngine {
             }
         }
 
-        if (isLeaf && !text.isEmpty()) {
+        if (isLeaf && text.isEmpty()) {
+            Integer minLen = NibssValidationRules.getMinTagLength(tagName);
+            Integer exactLen = NibssValidationRules.getExactTagLength(tagName);
+            boolean isKnownSimple = (minLen != null && minLen > 0) || exactLen != null
+                    || NibssValidationRules.isUppercaseField(tagName) || "BICFI".equalsIgnoreCase(tagName)
+                    || "IBAN".equalsIgnoreCase(tagName) || "MmbId".equalsIgnoreCase(tagName)
+                    || "MsgId".equalsIgnoreCase(tagName) || "Id".equalsIgnoreCase(tagName)
+                    || "ClrSysMmbId".equalsIgnoreCase(tagName);
+
+            if (isKnownSimple) {
+                issues.add(ValidationIssueDto.builder()
+                        .id("ERR-EMPTY-TAG-" + line + "-" + sanitizeId(tagName))
+                        .severity("ERROR")
+                        .category("SCHEMA_STRUCTURE")
+                        .xpath(getElementXPath(element))
+                        .fieldPath(path)
+                        .fieldName(canonicalTag != null ? canonicalTag : tagName)
+                        .lineNumber(line)
+                        .columnNumber(col)
+                        .currentValue("[EMPTY]")
+                        .expected(exactLen != null ? exactLen + " characters" : (minLen != null ? "At least " + minLen + " characters" : "Non-empty value"))
+                        .message("XML tag <" + tagName + "> is present but contains no value. Either populate it with a valid value or remove the empty tag.")
+                        .ruleCode("EMPTY_TAG_NOT_ALLOWED")
+                        .autoFixable(true)
+                        .build());
+            }
+        } else if (isLeaf && !text.isEmpty()) {
             // A. Uppercase normalization checks
             if (NibssValidationRules.isUppercaseField(tagName) || "IdType".equalsIgnoreCase(tagName)) {
                 if (!text.equals(text.toUpperCase())) {
@@ -1037,6 +1155,90 @@ public class XmlValidationEngine {
                             .expected("1, 2, or 3")
                             .message("Invalid Account Tier '" + text + "'.")
                             .ruleCode("NIBSS_ACCOUNT_TIER")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+
+            // G. Institution Code / Member ID Numeric Check
+            if ("MmbId".equalsIgnoreCase(tagName) || "ClrSysMmbId".equalsIgnoreCase(tagName)) {
+                if (!NibssValidationRules.INSTITUTION_CODE_PATTERN.matcher(text).matches()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-MMB-NUMERIC-" + line)
+                            .severity("ERROR")
+                            .category("FIELD_LENGTH")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName("Institution Code")
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text + " (" + text.length() + " chars)")
+                            .expected("Exactly 6 numeric digits (e.g. 000014, 090110, 999058)")
+                            .message("Institution code <" + tagName + "> must be exactly 6 numeric digits.")
+                            .ruleCode("FIELD_LENGTH_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+
+            // G2. Institution BICFI Format Check (6-digit numeric institution code or 8/11-character BIC)
+            if ("BICFI".equalsIgnoreCase(tagName) || "BIC".equalsIgnoreCase(tagName)) {
+                boolean isNumeric = text.matches("\\d+");
+                if (isNumeric) {
+                    if (!NibssValidationRules.INSTITUTION_CODE_PATTERN.matcher(text).matches()) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-BICFI-NUMERIC-" + line)
+                                .severity("ERROR")
+                                .category("FIELD_LENGTH")
+                                .xpath(getElementXPath(element))
+                                .fieldPath(path)
+                                .fieldName("Institution BICFI")
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text + " (" + text.length() + " chars)")
+                                .expected("Exactly 6 numeric digits (CBN/NIBSS Institution Code)")
+                                .message("Numeric BICFI <" + tagName + "> must be exactly 6 numeric digits.")
+                                .ruleCode("FIELD_LENGTH_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    }
+                } else {
+                    if (text.length() < 6 || text.length() > 11) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-BICFI-LEN-" + line)
+                                .severity("ERROR")
+                                .category("FIELD_LENGTH")
+                                .xpath(getElementXPath(element))
+                                .fieldPath(path)
+                                .fieldName("Institution BICFI")
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text + " (" + text.length() + " chars)")
+                                .expected("Between 6 and 11 characters for BICFI")
+                                .message("Alphanumeric BICFI <" + tagName + "> must be between 6 and 11 characters.")
+                                .ruleCode("FIELD_LENGTH_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    }
+                }
+            }
+
+            // H. Session ID Check
+            if ("SessionID".equalsIgnoreCase(tagName) || "SessionId".equalsIgnoreCase(tagName)) {
+                if (!NibssValidationRules.SESSION_ID_PATTERN.matcher(text).matches()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-SESSION-ID-" + line)
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(element))
+                            .fieldPath(path)
+                            .fieldName("Session ID")
+                            .lineNumber(line)
+                            .columnNumber(col)
+                            .currentValue(text + " (" + text.length() + " chars)")
+                            .expected("Exactly 30 numeric digits (6-digit Source Inst + 12-digit Timestamp YYMMDDHHmmss + 12-digit Seq)")
+                            .message("NIP Session ID <" + tagName + "> must be exactly 30 numeric digits.")
+                            .ruleCode("INVALID_SESSION_ID")
                             .autoFixable(true)
                             .build());
                 }
@@ -1357,6 +1559,720 @@ public class XmlValidationEngine {
         if (fieldPath == null) return "";
         int idx = fieldPath.lastIndexOf('.');
         return idx >= 0 ? fieldPath.substring(idx + 1) : fieldPath;
+    }
+
+    private static String findSiblingIdType(Element elem) {
+        if (elem == null || elem.getParentNode() == null) return null;
+        Node parent = elem.getParentNode();
+        NodeList siblings = parent.getChildNodes();
+        for (int i = 0; i < siblings.getLength(); i++) {
+            Node s = siblings.item(i);
+            if (s instanceof Element el) {
+                String name = el.getLocalName() != null ? el.getLocalName() : el.getTagName();
+                if ("IdType".equalsIgnoreCase(name)) {
+                    return el.getTextContent() != null ? el.getTextContent().trim() : null;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void validateCrossFieldInstitutionCodes(Document doc, IsoMessageDefinition def, List<ValidationIssueDto> issues, List<String> passedRules) {
+        if (doc == null) return;
+
+        // 1. Find Source Institution Code
+        String sourceInstCode = extractSourceInstCodeForDef(doc, def);
+
+        // 2. Find Destination Institution Code
+        String destInstCode = extractDestInstCodeForDef(doc, def);
+
+        // 3. Cross-validate MsgId / TxId starts with Source Institution Code
+        List<Element> msgIdElems = findElementsByPath(doc, "GrpHdr.MsgId");
+        if (msgIdElems.isEmpty()) msgIdElems = findElementsByPath(doc, "Assgnmt.MsgId");
+        if (msgIdElems.isEmpty()) msgIdElems = findElementsByPath(doc, "MsgId");
+        for (Element el : msgIdElems) {
+            String p = getElementXPath(el);
+            if (p.contains("Orgnl") || p.contains("Original")) continue;
+            String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+            if (sourceInstCode != null && sourceInstCode.matches("\\d{6}") && val.length() >= 6) {
+                String prefix = val.substring(0, 6);
+                if (!prefix.equals(sourceInstCode)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("WARN-MSGID-SRC-MISMATCH-" + getNodeLine(el))
+                            .severity("WARNING")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("MsgId")
+                            .fieldName("Message ID Source Code")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(prefix)
+                            .expected(sourceInstCode)
+                            .message("Message ID prefix (" + prefix + ") does not match document Source Institution Code (" + sourceInstCode + ").")
+                            .ruleCode("SOURCE_INSTITUTION_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("MsgId prefix matches Source Institution Code (" + sourceInstCode + ")");
+                }
+            }
+        }
+
+        // 4. Cross-validate InstrId contains Source Inst Code (chars 1-6) and Destination Inst Code (chars 7-12)
+        List<Element> instrIdElems = findElementsByPath(doc, "InstrId");
+        for (Element el : instrIdElems) {
+            String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+            if (val.length() >= 12) {
+                String srcPrefix = val.substring(0, 6);
+                String dstPrefix = val.substring(6, 12);
+                if (sourceInstCode != null && sourceInstCode.matches("\\d{6}") && !srcPrefix.equals(sourceInstCode)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("WARN-INSTRID-SRC-MISMATCH-" + getNodeLine(el))
+                            .severity("WARNING")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("InstrId")
+                            .fieldName("Instruction ID Source Institution")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(srcPrefix)
+                            .expected(sourceInstCode)
+                            .message("Instruction ID source prefix (" + srcPrefix + ") does not match document Source Institution Code (" + sourceInstCode + ").")
+                            .ruleCode("INSTR_ID_SOURCE_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                }
+                if (destInstCode != null && destInstCode.matches("\\d{6}") && !dstPrefix.equals(destInstCode)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("WARN-INSTRID-DST-MISMATCH-" + getNodeLine(el))
+                            .severity("WARNING")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("InstrId")
+                            .fieldName("Instruction ID Destination Institution")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(dstPrefix)
+                            .expected(destInstCode)
+                            .message("Instruction ID destination prefix (" + dstPrefix + ") does not match document Destination Institution Code (" + destInstCode + ").")
+                            .ruleCode("INSTR_ID_DEST_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                }
+            }
+        }
+
+        // 5. Cross-validate Vrfctn.Id must match Assgnmt.MsgId for acmt.023
+        String key = def != null ? def.getKey().toLowerCase() : "";
+        if (key.contains("acmt.023")) {
+            List<Element> msgIdList = findElementsByPath(doc, "Assgnmt.MsgId");
+            List<Element> vrfctnIdList = findElementsByPath(doc, "Vrfctn.Id");
+            if (!msgIdList.isEmpty() && !vrfctnIdList.isEmpty()) {
+                String msgIdVal = msgIdList.get(0).getTextContent() != null ? msgIdList.get(0).getTextContent().trim() : "";
+                Element vrfctnIdElem = vrfctnIdList.get(0);
+                String vrfctnIdVal = vrfctnIdElem.getTextContent() != null ? vrfctnIdElem.getTextContent().trim() : "";
+
+                if (!msgIdVal.isEmpty() && !vrfctnIdVal.isEmpty()) {
+                    if (!msgIdVal.equals(vrfctnIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-VRFCTN-ID-MISMATCH-" + getNodeLine(vrfctnIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(vrfctnIdElem))
+                                .fieldPath("IdVrfctnReq.Vrfctn.Id")
+                                .fieldName("Verification ID")
+                                .lineNumber(getNodeLine(vrfctnIdElem))
+                                .columnNumber(getNodeCol(vrfctnIdElem))
+                                .currentValue(vrfctnIdVal)
+                                .expected(msgIdVal)
+                                .message("Verification ID <Vrfctn><Id> ('" + vrfctnIdVal + "') must be identical to Assignment Message ID <Assgnmt><MsgId> ('" + msgIdVal + "').")
+                                .ruleCode("VERIFICATION_ID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Verification ID <Vrfctn><Id> matches Assignment Message ID <Assgnmt><MsgId> (" + msgIdVal + ")");
+                    }
+                }
+            }
+        }
+
+        // 5b. Cross-validate Rpt.OrgnlId must match OrgnlAssgnmt.MsgId for acmt.024
+        if (key.contains("acmt.024")) {
+            List<Element> orgnlMsgIdList = findElementsByPath(doc, "OrgnlAssgnmt.MsgId");
+            List<Element> orgnlIdList = findElementsByPath(doc, "Rpt.OrgnlId");
+            if (!orgnlMsgIdList.isEmpty() && !orgnlIdList.isEmpty()) {
+                String orgnlMsgIdVal = orgnlMsgIdList.get(0).getTextContent() != null ? orgnlMsgIdList.get(0).getTextContent().trim() : "";
+                Element orgnlIdElem = orgnlIdList.get(0);
+                String orgnlIdVal = orgnlIdElem.getTextContent() != null ? orgnlIdElem.getTextContent().trim() : "";
+
+                if (!orgnlMsgIdVal.isEmpty() && !orgnlIdVal.isEmpty()) {
+                    if (!orgnlMsgIdVal.equals(orgnlIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ORGNL-ID-MISMATCH-" + getNodeLine(orgnlIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(orgnlIdElem))
+                                .fieldPath("IdVrfctnRpt.Rpt.OrgnlId")
+                                .fieldName("Report Original ID")
+                                .lineNumber(getNodeLine(orgnlIdElem))
+                                .columnNumber(getNodeCol(orgnlIdElem))
+                                .currentValue(orgnlIdVal)
+                                .expected(orgnlMsgIdVal)
+                                .message("Report Original ID <Rpt><OrgnlId> ('" + orgnlIdVal + "') must be identical to Original Assignment Message ID <OrgnlAssgnmt><MsgId> ('" + orgnlMsgIdVal + "').")
+                                .ruleCode("ORIGINAL_ID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Report Original ID <Rpt><OrgnlId> matches Original Assignment Message ID <OrgnlAssgnmt><MsgId> (" + orgnlMsgIdVal + ")");
+                    }
+                }
+            }
+
+            // Cross-validate OrgnlAssgnmt.MsgId starts with Destination/Receiving Institution Code (the original requester)
+            for (Element el : orgnlMsgIdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (destInstCode != null && destInstCode.matches("\\d{6}") && val.length() >= 6) {
+                    String prefix = val.substring(0, 6);
+                    if (!prefix.equals(destInstCode)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("WARN-ORGNL-MSGID-DST-MISMATCH-" + getNodeLine(el))
+                                .severity("WARNING")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(el))
+                                .fieldPath("OrgnlAssgnmt.MsgId")
+                                .fieldName("Original Message ID Requesting Institution")
+                                .lineNumber(getNodeLine(el))
+                                .columnNumber(getNodeCol(el))
+                                .currentValue(prefix)
+                                .expected(destInstCode)
+                                .message("Original Message ID prefix (" + prefix + ") does not match Receiving Institution Code (" + destInstCode + ").")
+                                .ruleCode("SOURCE_INSTITUTION_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("OrgnlAssgnmt.MsgId prefix matches Receiving Institution Code (" + destInstCode + ")");
+                    }
+                }
+            }
+
+            // Cross-validate Vrfctn boolean and UpdtdPtyAndAcctId
+            List<Element> vrfctnList = findElementsByPath(doc, "Rpt.Vrfctn");
+            for (Element vrfctnElem : vrfctnList) {
+                String vrfctnText = vrfctnElem.getTextContent() != null ? vrfctnElem.getTextContent().trim() : "";
+                boolean isValidBool = "true".equalsIgnoreCase(vrfctnText) || "false".equalsIgnoreCase(vrfctnText);
+                if (!isValidBool) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-VRFCTN-BOOL-" + getNodeLine(vrfctnElem))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(vrfctnElem))
+                            .fieldPath("IdVrfctnRpt.Rpt.Vrfctn")
+                            .fieldName("Verification Result")
+                            .lineNumber(getNodeLine(vrfctnElem))
+                            .columnNumber(getNodeCol(vrfctnElem))
+                            .currentValue(vrfctnText)
+                            .expected("'true' or 'false'")
+                            .message("Verification result <Vrfctn> must be a valid boolean ('true' or 'false').")
+                            .ruleCode("INVALID_BOOLEAN")
+                            .autoFixable(true)
+                            .build());
+                } else if ("true".equalsIgnoreCase(vrfctnText)) {
+                    // When verification is successful, updated party name must be present
+                    List<Element> updtdNmList = findElementsByPath(doc, "UpdtdPtyAndAcctId.Pty.Nm");
+                    if (updtdNmList.isEmpty() || updtdNmList.get(0).getTextContent() == null || updtdNmList.get(0).getTextContent().trim().isEmpty()) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-UPDTD-NM-MISSING")
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath("/Document/IdVrfctnRpt/Rpt/UpdtdPtyAndAcctId/Pty/Nm")
+                                .fieldPath("IdVrfctnRpt.Rpt.UpdtdPtyAndAcctId.Pty.Nm")
+                                .fieldName("Updated Party Name")
+                                .lineNumber(getNodeLine(vrfctnElem))
+                                .columnNumber(getNodeCol(vrfctnElem))
+                                .currentValue("[MISSING]")
+                                .expected("Verified Account Holder Name")
+                                .message("When verification result <Vrfctn> is 'true', verified account name <UpdtdPtyAndAcctId><Pty><Nm> is mandatory.")
+                                .ruleCode("MANDATORY_FIELD_MISSING")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Verified account name is present for successful verification");
+                    }
+                }
+            }
+        }
+
+        // 5c. Cross-validate pacs.008 specific rules (NbOfTxs, BtchBookg, SttlmMtd, NameEnquiryMsgId)
+        if (key.contains("pacs.008")) {
+            // Check NbOfTxs == 1
+            List<Element> nbOfTxsList = findElementsByPath(doc, "GrpHdr.NbOfTxs");
+            for (Element el : nbOfTxsList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"1".equals(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-NBOFTXS-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("GrpHdr.NbOfTxs")
+                            .fieldName("Number of Transactions")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("1")
+                            .message("Single customer credit transfer (pacs.008) requires NbOfTxs to be exactly 1. Current value is '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Number of transactions is 1 for single customer credit");
+                }
+            }
+
+            // Check BtchBookg == false
+            List<Element> btchBookgList = findElementsByPath(doc, "GrpHdr.BtchBookg");
+            for (Element el : btchBookgList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"false".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-BTCHBOOKG-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("GrpHdr.BtchBookg")
+                            .fieldName("Batch Booking")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("false")
+                            .message("Single customer credit transfer (pacs.008) requires BtchBookg to be false.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Batch booking flag is false");
+                }
+            }
+
+            // Check SttlmMtd == CLRG
+            List<Element> sttlmMtdList = findElementsByPath(doc, "GrpHdr.SttlmInf.SttlmMtd");
+            for (Element el : sttlmMtdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!"CLRG".equalsIgnoreCase(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-STTLMMTD-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("GrpHdr.SttlmInf.SttlmMtd")
+                            .fieldName("Settlement Method")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("CLRG")
+                            .message("Settlement method must be 'CLRG' (Clearing).")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Settlement method is CLRG");
+                }
+            }
+
+            // Check NameEnquiryMsgId is present and non-empty in TransactionInfo
+            List<Element> nameEnquiryMsgIdList = findElementsByPath(doc, "TransactionInfo.NameEnquiryMsgId");
+            for (Element el : nameEnquiryMsgIdList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (val.isEmpty()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-NAMEENQUIRYMSGID-EMPTY-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("SplmtryData.Envlp.CustomData.TransactionInfo.NameEnquiryMsgId")
+                            .fieldName("Name Enquiry Message ID")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue("[EMPTY]")
+                            .expected("35-character NPS Message ID from previous acmt.023")
+                            .message("Name Enquiry Message ID <NameEnquiryMsgId> is mandatory and cannot be empty.")
+                            .ruleCode("EMPTY_TAG_NOT_ALLOWED")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Name Enquiry Message ID is present (" + val + ")");
+                }
+            }
+        }
+
+        // 5d. Cross-validate pacs.028 specific rules (StsReqId == MsgId)
+        if (key.contains("pacs.028")) {
+            List<Element> msgIdList = findElementsByPath(doc, "GrpHdr.MsgId");
+            List<Element> stsReqIdList = findElementsByPath(doc, "TxInf.StsReqId");
+            if (!msgIdList.isEmpty() && !stsReqIdList.isEmpty()) {
+                String msgIdVal = msgIdList.get(0).getTextContent() != null ? msgIdList.get(0).getTextContent().trim() : "";
+                Element stsReqIdElem = stsReqIdList.get(0);
+                String stsReqIdVal = stsReqIdElem.getTextContent() != null ? stsReqIdElem.getTextContent().trim() : "";
+
+                if (!msgIdVal.isEmpty() && !stsReqIdVal.isEmpty()) {
+                    if (!msgIdVal.equals(stsReqIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-STSREQID-MISMATCH-" + getNodeLine(stsReqIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(stsReqIdElem))
+                                .fieldPath("FIToFIPmtStsReq.TxInf.StsReqId")
+                                .fieldName("Status Request ID")
+                                .lineNumber(getNodeLine(stsReqIdElem))
+                                .columnNumber(getNodeCol(stsReqIdElem))
+                                .currentValue(stsReqIdVal)
+                                .expected(msgIdVal)
+                                .message("Status Request ID <TxInf><StsReqId> ('" + stsReqIdVal + "') must be identical to Message ID <GrpHdr><MsgId> ('" + msgIdVal + "').")
+                                .ruleCode("STATUS_REQUEST_ID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Status Request ID <TxInf><StsReqId> matches Message ID <GrpHdr><MsgId> (" + msgIdVal + ")");
+                    }
+                }
+            }
+
+            // Check OrgnlTxId == OrgnlMsgId for single transfer inquiry
+            List<Element> orgnlMsgIdList = findElementsByPath(doc, "OrgnlGrpInf.OrgnlMsgId");
+            List<Element> orgnlTxIdList = findElementsByPath(doc, "TxInf.OrgnlTxId");
+            if (!orgnlMsgIdList.isEmpty() && !orgnlTxIdList.isEmpty()) {
+                String orgnlMsgIdVal = orgnlMsgIdList.get(0).getTextContent() != null ? orgnlMsgIdList.get(0).getTextContent().trim() : "";
+                Element orgnlTxIdElem = orgnlTxIdList.get(0);
+                String orgnlTxIdVal = orgnlTxIdElem.getTextContent() != null ? orgnlTxIdElem.getTextContent().trim() : "";
+
+                if (!orgnlMsgIdVal.isEmpty() && !orgnlTxIdVal.isEmpty()) {
+                    if (!orgnlMsgIdVal.equals(orgnlTxIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ORGNL-TXID-MISMATCH-" + getNodeLine(orgnlTxIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(orgnlTxIdElem))
+                                .fieldPath("FIToFIPmtStsReq.TxInf.OrgnlTxId")
+                                .fieldName("Original Transaction ID")
+                                .lineNumber(getNodeLine(orgnlTxIdElem))
+                                .columnNumber(getNodeCol(orgnlTxIdElem))
+                                .currentValue(orgnlTxIdVal)
+                                .expected(orgnlMsgIdVal)
+                                .message("Original Transaction ID <TxInf><OrgnlTxId> ('" + orgnlTxIdVal + "') does not match Original Message ID <OrgnlGrpInf><OrgnlMsgId> ('" + orgnlMsgIdVal + "'). For single direct credit status inquiries, OrgnlTxId must match OrgnlMsgId.")
+                                .ruleCode("ORIGINAL_TXID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Original Transaction ID <TxInf><OrgnlTxId> matches Original Message ID <OrgnlGrpInf><OrgnlMsgId> (" + orgnlMsgIdVal + ")");
+                    }
+                }
+            }
+        }
+
+        // 5e. Cross-validate pacs.002 specific rules (OrgnlTxId == OrgnlMsgId, GrpSts)
+        if (key.contains("pacs.002")) {
+            // Check OrgnlTxId == OrgnlMsgId for single transfer status reports
+            List<Element> orgnlMsgIdList = findElementsByPath(doc, "OrgnlGrpInfAndSts.OrgnlMsgId");
+            List<Element> orgnlTxIdList = findElementsByPath(doc, "TxInfAndSts.OrgnlTxId");
+            if (!orgnlMsgIdList.isEmpty() && !orgnlTxIdList.isEmpty()) {
+                String orgnlMsgIdVal = orgnlMsgIdList.get(0).getTextContent() != null ? orgnlMsgIdList.get(0).getTextContent().trim() : "";
+                Element orgnlTxIdElem = orgnlTxIdList.get(0);
+                String orgnlTxIdVal = orgnlTxIdElem.getTextContent() != null ? orgnlTxIdElem.getTextContent().trim() : "";
+
+                if (!orgnlMsgIdVal.isEmpty() && !orgnlTxIdVal.isEmpty()) {
+                    if (!orgnlMsgIdVal.equals(orgnlTxIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ORGNL-TXID-MISMATCH-" + getNodeLine(orgnlTxIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(orgnlTxIdElem))
+                                .fieldPath("FIToFIPmtStsRpt.TxInfAndSts.OrgnlTxId")
+                                .fieldName("Original Transaction ID")
+                                .lineNumber(getNodeLine(orgnlTxIdElem))
+                                .columnNumber(getNodeCol(orgnlTxIdElem))
+                                .currentValue(orgnlTxIdVal)
+                                .expected(orgnlMsgIdVal)
+                                .message("Original Transaction ID <TxInfAndSts><OrgnlTxId> ('" + orgnlTxIdVal + "') does not match Original Message ID <OrgnlGrpInfAndSts><OrgnlMsgId> ('" + orgnlMsgIdVal + "'). For single direct credit status reports, OrgnlTxId must match OrgnlMsgId.")
+                                .ruleCode("ORIGINAL_TXID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Original Transaction ID <TxInfAndSts><OrgnlTxId> matches Original Message ID <OrgnlGrpInfAndSts><OrgnlMsgId> (" + orgnlMsgIdVal + ")");
+                    }
+                }
+            }
+
+            // Check GrpSts is valid code (ACSC, RJCT, ACCP, ACTC, PDNG)
+            List<Element> grpStsList = findElementsByPath(doc, "OrgnlGrpInfAndSts.GrpSts");
+            Set<String> validGrpStatuses = Set.of("ACSC", "RJCT", "ACCP", "ACTC", "PDNG");
+            for (Element el : grpStsList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim().toUpperCase() : "";
+                if (!validGrpStatuses.contains(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-GRPSTS-INVALID-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("FIToFIPmtStsRpt.OrgnlGrpInfAndSts.GrpSts")
+                            .fieldName("Group Status")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("ACSC, RJCT, ACCP, ACTC, or PDNG")
+                            .message("Group Status <GrpSts> ('" + val + "') is invalid. Expected one of: ACSC, RJCT, ACCP, ACTC, PDNG.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Group Status <GrpSts> is valid code (" + val + ")");
+                }
+            }
+        }
+
+        // 6. Cross-validate Agent FinInstnId containers in all messages
+        validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
+        validateAgentFinInstnId(doc, "Assgne", issues, passedRules);
+        validateAgentFinInstnId(doc, "InstgAgt", issues, passedRules);
+        validateAgentFinInstnId(doc, "InstdAgt", issues, passedRules);
+        validateAgentFinInstnId(doc, "DbtrAgt", issues, passedRules);
+        validateAgentFinInstnId(doc, "CdtrAgt", issues, passedRules);
+    }
+
+    private void validateAgentFinInstnId(Document doc, String agentRole, List<ValidationIssueDto> issues, List<String> passedRules) {
+        String roleName = "Assgnr".equalsIgnoreCase(agentRole) ? "Assigner Agent" :
+                          "Assgne".equalsIgnoreCase(agentRole) ? "Assignee Agent" :
+                          "InstgAgt".equalsIgnoreCase(agentRole) ? "Instructing Agent" :
+                          "InstdAgt".equalsIgnoreCase(agentRole) ? "Instructed Agent" :
+                          "DbtrAgt".equalsIgnoreCase(agentRole) ? "Debtor Agent" :
+                          "CdtrAgt".equalsIgnoreCase(agentRole) ? "Creditor Agent" : agentRole;
+
+        List<Element> agentElems = new ArrayList<>();
+        NodeList nodes = doc.getElementsByTagName(agentRole);
+        if (nodes.getLength() == 0) nodes = doc.getElementsByTagNameNS("*", agentRole);
+        for (int i = 0; i < nodes.getLength(); i++) {
+            agentElems.add((Element) nodes.item(i));
+        }
+
+        for (Element agentEl : agentElems) {
+            Element finInstnId = findChildElement(agentEl, "FinInstnId");
+            boolean hasAgtWrapper = false;
+            if (finInstnId == null) {
+                Element agtEl = findChildElement(agentEl, "Agt");
+                if (agtEl != null) {
+                    finInstnId = findChildElement(agtEl, "FinInstnId");
+                    hasAgtWrapper = true;
+                }
+            }
+            if (finInstnId == null) continue;
+
+            String basePath = hasAgtWrapper ? agentRole + ".Agt.FinInstnId" : agentRole + ".FinInstnId";
+
+            Element bicfiElem = findChildElement(finInstnId, "BICFI");
+            String bicfi = bicfiElem != null ? (bicfiElem.getTextContent() != null ? bicfiElem.getTextContent().trim() : "") : null;
+            String mmbId = findChildText(finInstnId, "MmbId");
+            if (mmbId == null || mmbId.isEmpty()) {
+                Element clrSys = findChildElement(finInstnId, "ClrSysMmbId");
+                if (clrSys != null) {
+                    mmbId = findChildText(clrSys, "MmbId");
+                }
+            }
+
+            if (bicfiElem == null && (mmbId == null || mmbId.isEmpty())) {
+                issues.add(ValidationIssueDto.builder()
+                        .id("ERR-" + agentRole.toUpperCase() + "-INST-MISSING-" + getNodeLine(finInstnId))
+                        .severity("ERROR")
+                        .category("SCHEMA_STRUCTURE")
+                        .xpath(getElementXPath(finInstnId))
+                        .fieldPath(basePath)
+                        .fieldName(roleName + " Financial Institution Identifier")
+                        .lineNumber(getNodeLine(finInstnId))
+                        .columnNumber(getNodeCol(finInstnId))
+                        .currentValue("[MISSING]")
+                        .expected("<BICFI> and/or <ClrSysMmbId><MmbId>")
+                        .message(roleName + " Financial Institution Identifier (<BICFI> or <ClrSysMmbId><MmbId>) is missing.")
+                        .ruleCode("MANDATORY_FIELD_MISSING")
+                        .autoFixable(true)
+                        .build());
+            } else {
+                passedRules.add(roleName + " Financial Institution Identifier is present");
+            }
+
+            // Check if BICFI is present but empty
+            if (bicfiElem != null && bicfi.isEmpty()) {
+                issues.add(ValidationIssueDto.builder()
+                        .id("ERR-" + agentRole.toUpperCase() + "-BICFI-EMPTY-" + getNodeLine(bicfiElem))
+                        .severity("ERROR")
+                        .category("BUSINESS_RULE")
+                        .xpath(getElementXPath(bicfiElem))
+                        .fieldPath(basePath + ".BICFI")
+                        .fieldName(roleName + " BICFI")
+                        .lineNumber(getNodeLine(bicfiElem))
+                        .columnNumber(getNodeCol(bicfiElem))
+                        .currentValue("[EMPTY]")
+                        .expected(mmbId != null && !mmbId.isEmpty() ? mmbId : "6-digit Institution Code (e.g. 991040)")
+                        .message(roleName + " <BICFI> is present but contains no value. Either populate with the 6-digit institution code (" + (mmbId != null && !mmbId.isEmpty() ? mmbId : "e.g. 991040") + ") or remove the empty <BICFI> tag.")
+                        .ruleCode("EMPTY_TAG_NOT_ALLOWED")
+                        .autoFixable(true)
+                        .build());
+            } else if (bicfi != null && !bicfi.isEmpty() && mmbId != null && !mmbId.isEmpty()) {
+                if (bicfi.matches("\\d{6}") && mmbId.matches("\\d{6}") && !bicfi.equals(mmbId)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-" + agentRole.toUpperCase() + "-BICFI-MISMATCH-" + getNodeLine(bicfiElem))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(bicfiElem))
+                            .fieldPath(basePath + ".BICFI")
+                            .fieldName(roleName + " BICFI")
+                            .lineNumber(getNodeLine(bicfiElem))
+                            .columnNumber(getNodeCol(bicfiElem))
+                            .currentValue(bicfi)
+                            .expected(mmbId)
+                            .message(roleName + " BICFI ('" + bicfi + "') does not match Member ID ('" + mmbId + "'). Numeric BICFI and Clearing Member ID must match.")
+                            .ruleCode("INSTITUTION_CODE_MISMATCH")
+                            .autoFixable(true)
+                            .build());
+                } else if (bicfi.equals(mmbId)) {
+                    passedRules.add(roleName + " BICFI matches Member ID (" + bicfi + ")");
+                }
+            }
+        }
+    }
+
+    private static String findChildText(Element parent, String childTag) {
+        if (parent == null || childTag == null) return null;
+        NodeList list = parent.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+            if (list.item(i) instanceof Element el) {
+                String name = el.getLocalName() != null ? el.getLocalName() : el.getTagName();
+                if (childTag.equalsIgnoreCase(name)) {
+                    String t = el.getTextContent();
+                    return t != null ? t.trim() : "";
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Element findChildElement(Element parent, String childTag) {
+        if (parent == null || childTag == null) return null;
+        NodeList list = parent.getChildNodes();
+        for (int i = 0; i < list.getLength(); i++) {
+            if (list.item(i) instanceof Element el) {
+                String name = el.getLocalName() != null ? el.getLocalName() : el.getTagName();
+                if (childTag.equalsIgnoreCase(name)) {
+                    return el;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String findFirstElementText(Document doc, String... paths) {
+        if (doc == null || paths == null) return null;
+        for (String path : paths) {
+            List<Element> list = findElementsByPath(doc, path);
+            if (!list.isEmpty()) {
+                String text = list.get(0).getTextContent();
+                if (text != null && !text.trim().isEmpty()) {
+                    return text.trim();
+                }
+            }
+        }
+        return null;
+    }
+
+    private static String extractSourceInstCodeForDef(Document doc, IsoMessageDefinition def) {
+        if (doc == null) return null;
+        String key = def != null ? def.getKey().toLowerCase() : "";
+        if (key.contains("pain.008") || key.contains("pain.009") || key.contains("pain.010") || key.contains("pain.013")) {
+            return findFirstElementText(doc,
+                    "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "PmtInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("pain.014") || key.contains("pain.001") || key.contains("pain.002")) {
+            return findFirstElementText(doc,
+                    "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("acmt.023") || key.contains("acmt.024")) {
+            return findFirstElementText(doc,
+                    "Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                    "Assgnmt.Assgnr.Agt.FinInstnId.BICFI",
+                    "OrgnlAssgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                    "OrgnlAssgnmt.Assgnr.Agt.FinInstnId.BICFI"
+            );
+        }
+        if (key.contains("camt.060")) {
+            return findFirstElementText(doc,
+                    "AcctRptgReq.GrpHdr.MsgSndr.Agt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("camt.052") || key.contains("camt.053")) {
+            return findFirstElementText(doc,
+                    "BkToCstmrAcctRpt.Rpt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
+                    "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        return findFirstElementText(doc,
+                "GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtTrfTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtTrfTxInf.InstgAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "Assgnmt.Assgnr.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                "AcctRptgReq.GrpHdr.MsgSndr.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "PmtRtr.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId"
+        );
+    }
+
+    private static String extractDestInstCodeForDef(Document doc, IsoMessageDefinition def) {
+        if (doc == null) return null;
+        String key = def != null ? def.getKey().toLowerCase() : "";
+        if (key.contains("pain.008") || key.contains("pain.009") || key.contains("pain.010") || key.contains("pain.013")) {
+            return findFirstElementText(doc,
+                    "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "PmtInf.DrctDbtTxInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("pain.014") || key.contains("pain.001") || key.contains("pain.002")) {
+            return findFirstElementText(doc,
+                    "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                    "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        if (key.contains("acmt.023") || key.contains("acmt.024")) {
+            return findFirstElementText(doc,
+                    "Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                    "Assgnmt.Assgne.Agt.FinInstnId.BICFI",
+                    "OrgnlAssgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                    "OrgnlAssgnmt.Assgne.Agt.FinInstnId.BICFI"
+            );
+        }
+        if (key.contains("camt.060")) {
+            return findFirstElementText(doc,
+                    "AcctRptgReq.RptgReq.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
+                    "Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId"
+            );
+        }
+        return findFirstElementText(doc,
+                "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtTrfTxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId",
+                "BkToCstmrAcctRpt.Rpt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
+                "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
+                "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
+                "PmtRtr.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"
+        );
     }
 
     private static String sanitizeId(String path) {
