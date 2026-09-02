@@ -1886,22 +1886,22 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
   'pain.002': {
     key: 'pain.002',
     label: 'Customer Payment Status Report',
-    isoCode: 'pain.002.001.12',
+    isoCode: 'pain.002.001.14',
     category: 'Payment Initiation & Activation',
     sections: [
       {
         title: '1. Initiator & Agents',
         fields: [
-          { key: 'initiatingPartyName', label: 'Initiating Party Name', type: 'text', required: true, placeholder: 'Musa', maxLength: 100 },
-          { key: 'debtorAgentBIC', label: 'Debtor Agent BIC', type: 'text', placeholder: 'DEUTDEFF', maxLength: 8 },
-          { key: 'debtorAgentMemberId', label: 'Debtor Agent Member ID', type: 'text', placeholder: '999057', maxLength: 6, ruleType: 'MEMBER_ID' },
+          { key: 'initiatingPartyName', label: 'Initiating Party Name', type: 'text', required: true, placeholder: 'Musa', maxLength: 100, helperText: 'Name of party initiating status report' },
+          { key: 'debtorAgentMemberId', label: 'Debtor Agent Member ID', type: 'text', required: true, placeholder: '999057', maxLength: 6, ruleType: 'MEMBER_ID', helperText: 'Debtor institution clearing member code' },
+          { key: 'debtorAgentBIC', label: 'Debtor Agent BICFI', type: 'text', placeholder: '999057', maxLength: 11, helperText: 'BIC of debtor agent (optional/conditional)' },
         ],
       },
       {
         title: '2. Original Group Details',
         fields: [
-          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905720260225192650869851166984847', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', placeholder: 'pain.001.001.12', maxLength: 35 },
+          { key: 'originalMsgId', label: 'Original Message ID', type: 'text', required: true, placeholder: '99905720260225192650869851166984847', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: 'Original pain.001 GrpHdr/MsgId' },
+          { key: 'originalMsgNmId', label: 'Original Message Name ID', type: 'text', required: true, placeholder: 'pain.001.001.12', maxLength: 35, helperText: 'Target message format (Fixed: pain.001.001.12)' },
           {
             key: 'groupStatus',
             label: 'Group Status',
@@ -1911,16 +1911,19 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
               { value: 'ACSC', label: 'ACSC - Accepted Settlement Completed' },
               { value: 'RJCT', label: 'RJCT - Rejected' },
               { value: 'ACCP', label: 'ACCP - Accepted Customer Profile' },
+              { value: 'ACTC', label: 'ACTC - Accepted Technical Validation' },
+              { value: 'PDNG', label: 'PDNG - Pending' },
             ],
+            helperText: 'Overall status of the original group',
           },
         ],
       },
       {
         title: '3. Transaction Status & Reasons',
         fields: [
-          { key: 'originalPmtInfId', label: 'Original Payment Info ID', type: 'text', required: true, placeholder: 'PMT-20251016-001-SINGLE', maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'statusId', label: 'Status ID', type: 'text', placeholder: '99905774143804655117506058383208278', maxLength: 35, ruleType: 'NPS_ID' },
-          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', required: true, placeholder: '99905774143804655117506058383208278', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID' },
+          { key: 'originalPmtInfId', label: 'Original Payment Info ID', type: 'text', required: true, placeholder: 'PMT-20251016-001-SINGLE', maxLength: 35, helperText: 'Original payment info block reference from pain.001' },
+          { key: 'statusId', label: 'Status ID', type: 'text', placeholder: '99905774143804655117506058383208278', maxLength: 35, ruleType: 'NPS_ID', helperText: 'Unique status identifier (generated if blank)' },
+          { key: 'originalEndToEndId', label: 'Original End-to-End ID', type: 'text', required: true, placeholder: '99905774143804655117506058383208278', fullWidth: true, maxLength: 35, ruleType: 'NPS_ID', helperText: 'End-to-End ID from original pain.001' },
           {
             key: 'transactionStatus',
             label: 'Transaction Status',
@@ -1929,18 +1932,21 @@ export const MESSAGE_CONFIGS: Record<string, MessageConfig> = {
             options: [
               { value: 'ACSC', label: 'ACSC - Accepted Settlement Completed' },
               { value: 'RJCT', label: 'RJCT - Rejected' },
-              { value: 'ACCP', label: 'ACCP - Accepted' },
+              { value: 'ACCP', label: 'ACCP - Accepted Customer Profile' },
+              { value: 'ACTC', label: 'ACTC - Accepted Technical Validation' },
+              { value: 'PDNG', label: 'PDNG - Pending' },
             ],
+            helperText: 'Transaction-level execution status',
           },
-          { key: 'statusCode', label: 'Status Reason Code', type: 'text', placeholder: '000', maxLength: 4, ruleType: 'REASON_CODE' },
-          { key: 'additionalInformation', label: 'Additional Information', type: 'text', placeholder: 'Accepted', fullWidth: true, maxLength: 140 },
+          { key: 'statusCode', label: 'Status Reason Code', type: 'text', placeholder: '000', maxLength: 4, ruleType: 'REASON_CODE', helperText: 'Required if rejected: e.g. 000 (Success), AM09, MD01' },
+          { key: 'additionalInformation', label: 'Additional Information', type: 'text', placeholder: 'Accepted', fullWidth: true, maxLength: 140, helperText: 'Status narrative (max 140 chars)' },
         ],
       },
     ],
     prefill: {
       initiatingPartyName: 'Musa',
-      debtorAgentBIC: 'DEUTDEFF',
       debtorAgentMemberId: '999057',
+      debtorAgentBIC: '999057',
       originalMsgId: '99905720260225192650869851166984847',
       originalMsgNmId: 'pain.001.001.12',
       groupStatus: 'ACSC',

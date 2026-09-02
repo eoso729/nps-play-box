@@ -1279,4 +1279,28 @@ public class XmlValidationEngineTest {
         assertFalse(chrgBrReport.isValid());
         assertTrue(chrgBrReport.getIssues().stream().anyMatch(i -> i.getFieldPath().contains("ChrgBr")));
     }
+
+    @Test
+    public void testPain002ValidationAndRules() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pain.002");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pain.002");
+        assertTrue(report.isValid(), "pain.002 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. RJCT status without reason code is flagged
+        String rejectedNoRsnXml = sampleXml.replace("<TxSts>ACSC</TxSts>", "<TxSts>RJCT</TxSts>")
+                .replaceAll("(?s)<StsRsnInf>.*?</StsRsnInf>", "");
+        ValidationReportDto rjctReport = validationEngine.validate(rejectedNoRsnXml, "pain.002");
+        assertFalse(rjctReport.isValid());
+        assertTrue(rjctReport.getIssues().stream().anyMatch(i -> "REASON_CODE_MISSING".equals(i.getRuleCode())));
+
+        // 3. Mismatched numeric BICFI in DbtrAgt is flagged
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999057</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pain.002");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+    }
 }

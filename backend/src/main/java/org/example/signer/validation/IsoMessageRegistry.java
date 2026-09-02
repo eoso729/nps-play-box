@@ -2008,6 +2008,7 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Message ID", "CstmrPmtStsRpt.GrpHdr.MsgId", "//GrpHdr/MsgId", "99999920260225192657029842136833211", "String", 35, true, false, "NPS_ID", "Status Report Msg ID"),
                 new IsoFieldDef("Creation DateTime", "CstmrPmtStsRpt.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-02-25T18:26:57.390+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
                 new IsoFieldDef("Initiating Party Name", "CstmrPmtStsRpt.GrpHdr.InitgPty.Nm", "//GrpHdr/InitgPty/Nm", "Musa", "String", 100, true, false, null, "Initiator Name"),
+                new IsoFieldDef("Debtor Agent BICFI", "CstmrPmtStsRpt.GrpHdr.DbtrAgt.FinInstnId.BICFI", "//GrpHdr/DbtrAgt/FinInstnId/BICFI", "999057", "String", 11, false, false, null, "Debtor Agent BICFI"),
                 new IsoFieldDef("Debtor Agent Member ID", "CstmrPmtStsRpt.GrpHdr.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Debtor Member ID"),
                 new IsoFieldDef("Original Message ID", "CstmrPmtStsRpt.OrgnlGrpInfAndSts.OrgnlMsgId", "//OrgnlGrpInfAndSts/OrgnlMsgId", "99905720260225192650869851166984847", "String", 35, true, false, "NPS_ID", "Original pain.001 Msg ID"),
                 new IsoFieldDef("Original Message Name ID", "CstmrPmtStsRpt.OrgnlGrpInfAndSts.OrgnlMsgNmId", "//OrgnlGrpInfAndSts/OrgnlMsgNmId", "pain.001.001.12", "String", 35, true, false, null, "Original Message Name ID"),
@@ -2015,18 +2016,25 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Original Payment Information ID", "CstmrPmtStsRpt.OrgnlPmtInfAndSts.OrgnlPmtInfId", "//OrgnlPmtInfAndSts/OrgnlPmtInfId", "PMT-20251016-001-SINGLE", "String", 35, true, false, null, "Original PmtInf ID"),
                 new IsoFieldDef("Status ID", "CstmrPmtStsRpt.OrgnlPmtInfAndSts.TxInfAndSts.StsId", "//TxInfAndSts/StsId", "99905774143804655117506058383208278", "String", 35, true, false, "NPS_ID", "Status ID"),
                 new IsoFieldDef("Original End-to-End ID", "CstmrPmtStsRpt.OrgnlPmtInfAndSts.TxInfAndSts.OrgnlEndToEndId", "//TxInfAndSts/OrgnlEndToEndId", "99905774143804655117506058383208278", "String", 35, true, false, "NPS_ID", "Original EndToEnd ID"),
-                new IsoFieldDef("Transaction Status", "CstmrPmtStsRpt.OrgnlPmtInfAndSts.TxInfAndSts.TxSts", "//TxInfAndSts/TxSts", "ACSC", "String", 4, true, false, "GROUP_STATUS", "Transaction Status")
+                new IsoFieldDef("Transaction Status", "CstmrPmtStsRpt.OrgnlPmtInfAndSts.TxInfAndSts.TxSts", "//TxInfAndSts/TxSts", "ACSC", "String", 4, true, false, "GROUP_STATUS", "Transaction Status"),
+                new IsoFieldDef("Status Reason Code", "CstmrPmtStsRpt.OrgnlPmtInfAndSts.TxInfAndSts.StsRsnInf.Rsn.Cd", "//TxInfAndSts/StsRsnInf/Rsn/Cd", "000", "String", 4, false, false, "REASON_CODE", "Reason Code"),
+                new IsoFieldDef("Additional Information", "CstmrPmtStsRpt.OrgnlPmtInfAndSts.TxInfAndSts.StsRsnInf.AddtlInf", "//TxInfAndSts/StsRsnInf/AddtlInf", "Accepted", "String", 140, false, false, null, "Additional Information")
         );
 
         String sampleXml = """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.12">
+                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.002.001.14">
                     <CstmrPmtStsRpt>
                         <GrpHdr>
                             <MsgId>99999920260225192657029842136833211</MsgId>
                             <CreDtTm>2026-02-25T18:26:57.390+01:00</CreDtTm>
                             <InitgPty><Nm>Musa</Nm></InitgPty>
-                            <DbtrAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></DbtrAgt>
+                            <DbtrAgt>
+                                <FinInstnId>
+                                    <BICFI>999057</BICFI>
+                                    <ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </DbtrAgt>
                         </GrpHdr>
                         <OrgnlGrpInfAndSts>
                             <OrgnlMsgId>99905720260225192650869851166984847</OrgnlMsgId>
@@ -2052,11 +2060,11 @@ public class IsoMessageRegistry {
         register(IsoMessageDefinition.builder()
                 .key("pain.002")
                 .name("Customer Payment Status Report")
-                .isoCode("pain.002.001.12")
+                .isoCode("pain.002.001.14")
                 .category("Payment Initiation")
                 .rootElement("Document")
                 .mainElement("CstmrPmtStsRpt")
-                .namespace("urn:iso:std:iso:20022:tech:xsd:pain.002.001.12")
+                .namespace("urn:iso:std:iso:20022:tech:xsd:pain.002.001.14")
                 .fields(fields)
                 .sampleXml(sampleXml)
                 .build());

@@ -1598,7 +1598,7 @@ public class XmlValidationEngine {
             String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
             if (sourceInstCode != null && sourceInstCode.matches("\\d{6}") && val.length() >= 6) {
                 String prefix = val.substring(0, 6);
-                if (!prefix.equals(sourceInstCode)) {
+                if (!prefix.equals(sourceInstCode) && !"999999".equals(prefix)) {
                     issues.add(ValidationIssueDto.builder()
                             .id("WARN-MSGID-SRC-MISMATCH-" + getNodeLine(el))
                             .severity("WARNING")
@@ -1609,13 +1609,13 @@ public class XmlValidationEngine {
                             .lineNumber(getNodeLine(el))
                             .columnNumber(getNodeCol(el))
                             .currentValue(prefix)
-                            .expected(sourceInstCode)
+                            .expected(sourceInstCode + " or 999999 (NIBSS Switch)")
                             .message("Message ID prefix (" + prefix + ") does not match document Source Institution Code (" + sourceInstCode + ").")
                             .ruleCode("SOURCE_INSTITUTION_MISMATCH")
                             .autoFixable(true)
                             .build());
                 } else {
-                    passedRules.add("MsgId prefix matches Source Institution Code (" + sourceInstCode + ")");
+                    passedRules.add("MsgId prefix matches Source Institution Code (" + prefix + ")");
                 }
             }
         }
@@ -2426,6 +2426,57 @@ public class XmlValidationEngine {
                             .build());
                 } else {
                     passedRules.add("Charge bearer code is valid (" + val + ")");
+                }
+            }
+        }
+
+        // 5n. Cross-validate pain.002 specific rules (GrpSts, TxSts, StsRsnInf when rejected)
+        if (key.contains("pain.002")) {
+            List<Element> txStsList = findElementsByPath(doc, "TxInfAndSts.TxSts");
+            List<Element> rsnCdList = findElementsByPath(doc, "TxInfAndSts.StsRsnInf.Rsn.Cd");
+            for (Element el : txStsList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if ("RJCT".equalsIgnoreCase(val) && rsnCdList.isEmpty()) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-RJCT-RSN-MISSING-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("CstmrPmtStsRpt.OrgnlPmtInfAndSts.TxInfAndSts.StsRsnInf.Rsn.Cd")
+                            .fieldName("Status Reason Code")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue("[MISSING]")
+                            .expected("Reason code required when transaction is rejected (e.g. AM09, MD01)")
+                            .message("Transaction status is RJCT (Rejected) but no reason code (<StsRsnInf><Rsn><Cd>) was provided.")
+                            .ruleCode("REASON_CODE_MISSING")
+                            .autoFixable(true)
+                            .build());
+                } else if (!val.isEmpty()) {
+                    passedRules.add("Transaction status consistency verified (" + val + ")");
+                }
+            }
+
+            List<Element> orgnlMsgNmList = findElementsByPath(doc, "OrgnlGrpInfAndSts.OrgnlMsgNmId");
+            for (Element el : orgnlMsgNmList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim() : "";
+                if (!val.isEmpty() && !val.contains("pain.001")) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-ORGNLMSGNM-" + getNodeLine(el))
+                            .severity("WARN")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("OrgnlGrpInfAndSts.OrgnlMsgNmId")
+                            .fieldName("Original Message Name ID")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("pain.001.001.12")
+                            .message("Original message name ID should refer to pain.001 (e.g. pain.001.001.12). Current: '" + val + "'.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .build());
+                } else if (!val.isEmpty()) {
+                    passedRules.add("Original message name ID matches expected target (" + val + ")");
                 }
             }
         }
