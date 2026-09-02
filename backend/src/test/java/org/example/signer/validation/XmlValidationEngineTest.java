@@ -858,4 +858,48 @@ public class XmlValidationEngineTest {
         assertTrue(fixUserResp.getFixedXml().contains("<BICFI>999012</BICFI>"));
         assertTrue(fixUserResp.getValidationReport().isValid());
     }
+
+    @Test
+    public void testPacs002ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("pacs.002");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "pacs.002");
+        assertTrue(report.isValid(), "pacs.002 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched OrgnlTxId vs OrgnlMsgId is flagged
+        String mismatchTxIdXml = sampleXml.replace(
+                "<OrgnlTxId>10002220260402170095982371426577881</OrgnlTxId>",
+                "<OrgnlTxId>10002220260402170095982371426577999</OrgnlTxId>"
+        );
+        ValidationReportDto mismatchReport = validationEngine.validate(mismatchTxIdXml, "pacs.002");
+        assertFalse(mismatchReport.isValid());
+        assertTrue(mismatchReport.getIssues().stream().anyMatch(i -> "ORIGINAL_TXID_MISMATCH".equals(i.getRuleCode())),
+                "Must flag ORIGINAL_TXID_MISMATCH when OrgnlTxId != OrgnlMsgId");
+
+        // 3. Auto-fix repairs OrgnlTxId
+        XmlAutoFixRequestDto fixReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchTxIdXml)
+                .messageType("pacs.002")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixResp = autoFixEngine.autoFix(fixReq);
+        assertTrue(fixResp.isSuccess());
+        assertTrue(fixResp.getFixedXml().contains("<OrgnlTxId>10002220260402170095982371426577881</OrgnlTxId>"));
+        assertTrue(fixResp.getValidationReport().isValid());
+
+        // 4. Invalid GrpSts is flagged
+        String invalidGrpStsXml = sampleXml.replace("<GrpSts>ACSC</GrpSts>", "<GrpSts>INVALID</GrpSts>");
+        ValidationReportDto grpStsReport = validationEngine.validate(invalidGrpStsXml, "pacs.002");
+        assertFalse(grpStsReport.isValid());
+        assertTrue(grpStsReport.getIssues().stream().anyMatch(i -> "FIELD_VALUE_INVALID".equals(i.getRuleCode()) && i.getMessage().contains("GrpSts")));
+
+        // 5. Mismatched BICFI in InstgAgt is flagged
+        String mismatchBicfiXml = sampleXml.replace("<BICFI>090004</BICFI>", "<BICFI>090001</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "pacs.002");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+    }
 }

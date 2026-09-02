@@ -1969,6 +1969,66 @@ public class XmlValidationEngine {
             }
         }
 
+        // 5e. Cross-validate pacs.002 specific rules (OrgnlTxId == OrgnlMsgId, GrpSts)
+        if (key.contains("pacs.002")) {
+            // Check OrgnlTxId == OrgnlMsgId for single transfer status reports
+            List<Element> orgnlMsgIdList = findElementsByPath(doc, "OrgnlGrpInfAndSts.OrgnlMsgId");
+            List<Element> orgnlTxIdList = findElementsByPath(doc, "TxInfAndSts.OrgnlTxId");
+            if (!orgnlMsgIdList.isEmpty() && !orgnlTxIdList.isEmpty()) {
+                String orgnlMsgIdVal = orgnlMsgIdList.get(0).getTextContent() != null ? orgnlMsgIdList.get(0).getTextContent().trim() : "";
+                Element orgnlTxIdElem = orgnlTxIdList.get(0);
+                String orgnlTxIdVal = orgnlTxIdElem.getTextContent() != null ? orgnlTxIdElem.getTextContent().trim() : "";
+
+                if (!orgnlMsgIdVal.isEmpty() && !orgnlTxIdVal.isEmpty()) {
+                    if (!orgnlMsgIdVal.equals(orgnlTxIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-ORGNL-TXID-MISMATCH-" + getNodeLine(orgnlTxIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(orgnlTxIdElem))
+                                .fieldPath("FIToFIPmtStsRpt.TxInfAndSts.OrgnlTxId")
+                                .fieldName("Original Transaction ID")
+                                .lineNumber(getNodeLine(orgnlTxIdElem))
+                                .columnNumber(getNodeCol(orgnlTxIdElem))
+                                .currentValue(orgnlTxIdVal)
+                                .expected(orgnlMsgIdVal)
+                                .message("Original Transaction ID <TxInfAndSts><OrgnlTxId> ('" + orgnlTxIdVal + "') does not match Original Message ID <OrgnlGrpInfAndSts><OrgnlMsgId> ('" + orgnlMsgIdVal + "'). For single direct credit status reports, OrgnlTxId must match OrgnlMsgId.")
+                                .ruleCode("ORIGINAL_TXID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Original Transaction ID <TxInfAndSts><OrgnlTxId> matches Original Message ID <OrgnlGrpInfAndSts><OrgnlMsgId> (" + orgnlMsgIdVal + ")");
+                    }
+                }
+            }
+
+            // Check GrpSts is valid code (ACSC, RJCT, ACCP, ACTC, PDNG)
+            List<Element> grpStsList = findElementsByPath(doc, "OrgnlGrpInfAndSts.GrpSts");
+            Set<String> validGrpStatuses = Set.of("ACSC", "RJCT", "ACCP", "ACTC", "PDNG");
+            for (Element el : grpStsList) {
+                String val = el.getTextContent() != null ? el.getTextContent().trim().toUpperCase() : "";
+                if (!validGrpStatuses.contains(val)) {
+                    issues.add(ValidationIssueDto.builder()
+                            .id("ERR-GRPSTS-INVALID-" + getNodeLine(el))
+                            .severity("ERROR")
+                            .category("BUSINESS_RULE")
+                            .xpath(getElementXPath(el))
+                            .fieldPath("FIToFIPmtStsRpt.OrgnlGrpInfAndSts.GrpSts")
+                            .fieldName("Group Status")
+                            .lineNumber(getNodeLine(el))
+                            .columnNumber(getNodeCol(el))
+                            .currentValue(val)
+                            .expected("ACSC, RJCT, ACCP, ACTC, or PDNG")
+                            .message("Group Status <GrpSts> ('" + val + "') is invalid. Expected one of: ACSC, RJCT, ACCP, ACTC, PDNG.")
+                            .ruleCode("FIELD_VALUE_INVALID")
+                            .autoFixable(true)
+                            .build());
+                } else {
+                    passedRules.add("Group Status <GrpSts> is valid code (" + val + ")");
+                }
+            }
+        }
+
         // 6. Cross-validate Agent FinInstnId containers in all messages
         validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
         validateAgentFinInstnId(doc, "Assgne", issues, passedRules);

@@ -828,6 +828,30 @@ public class XmlAutoFixEngine {
             syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
         }
 
+        if (key.contains("pacs.002")) {
+            // 1. Synchronize TxInfAndSts.OrgnlTxId with OrgnlGrpInfAndSts.OrgnlMsgId
+            NodeList orgnlMsgIdNodes = doc.getElementsByTagName("OrgnlMsgId");
+            if (orgnlMsgIdNodes.getLength() == 0) orgnlMsgIdNodes = doc.getElementsByTagNameNS("*", "OrgnlMsgId");
+            NodeList orgnlTxIdNodes = doc.getElementsByTagName("OrgnlTxId");
+            if (orgnlTxIdNodes.getLength() == 0) orgnlTxIdNodes = doc.getElementsByTagNameNS("*", "OrgnlTxId");
+
+            if (orgnlMsgIdNodes.getLength() > 0 && orgnlTxIdNodes.getLength() > 0) {
+                String orgnlMsgIdVal = orgnlMsgIdNodes.item(0).getTextContent();
+                if (orgnlMsgIdVal != null && !orgnlMsgIdVal.trim().isEmpty()) {
+                    orgnlMsgIdVal = orgnlMsgIdVal.trim();
+                    Element orgnlTxIdElem = (Element) orgnlTxIdNodes.item(0);
+                    if (!orgnlMsgIdVal.equals(orgnlTxIdElem.getTextContent())) {
+                        orgnlTxIdElem.setTextContent(orgnlMsgIdVal);
+                        fixesApplied.add("Synchronized Original Transaction ID <TxInfAndSts><OrgnlTxId> to match Original Message ID (" + orgnlMsgIdVal + ").");
+                    }
+                }
+            }
+
+            // 2. Synchronize InstgAgt and InstdAgt BICFI with MmbId
+            syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
+        }
+
         // Global Agent BICFI sync for any remaining agents
         syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);

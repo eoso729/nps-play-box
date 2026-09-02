@@ -65,6 +65,7 @@ public class TransferResponseXmlGenerator {
         TransferResponse.ClrSysMmbId clrSysMmbId = new TransferResponse.ClrSysMmbId();
         clrSysMmbId.setMmbId(mmbId);
         finInstnId.setClrSysMmbId(clrSysMmbId);
+        finInstnId.setBicfi(mmbId);
         agt.setFinInstnId(finInstnId);
         return agt;
     }

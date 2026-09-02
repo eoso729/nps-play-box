@@ -313,7 +313,9 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "FIToFIPmtStsRpt.GrpHdr.MsgId", "//GrpHdr/MsgId", "09000420260402112316902158352242175", "String", 35, true, false, "NPS_ID", "Status Report Msg ID"),
                 new IsoFieldDef("Creation Date Time", "FIToFIPmtStsRpt.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-04-02T10:30:00.000+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
+                new IsoFieldDef("Instructing Agent BICFI", "FIToFIPmtStsRpt.GrpHdr.InstgAgt.FinInstnId.BICFI", "//GrpHdr/InstgAgt/FinInstnId/BICFI", "090004", "String", 11, true, false, "INSTITUTION_CODE", "Instructing Agent BICFI"),
                 new IsoFieldDef("Instructing Agent Member ID", "FIToFIPmtStsRpt.GrpHdr.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "090004", "String", 6, true, false, "MEMBER_ID", "Instructing agent ID"),
+                new IsoFieldDef("Instructed Agent BICFI", "FIToFIPmtStsRpt.GrpHdr.InstdAgt.FinInstnId.BICFI", "//GrpHdr/InstdAgt/FinInstnId/BICFI", "100022", "String", 11, false, false, "INSTITUTION_CODE", "Instructed Agent BICFI"),
                 new IsoFieldDef("Instructed Agent Member ID", "FIToFIPmtStsRpt.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//GrpHdr/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "100022", "String", 6, true, false, "MEMBER_ID", "Instructed agent ID"),
                 new IsoFieldDef("Original Message ID", "FIToFIPmtStsRpt.OrgnlGrpInfAndSts.OrgnlMsgId", "//OrgnlGrpInfAndSts/OrgnlMsgId", "10002220260402170095982371426577881", "String", 35, true, false, "NPS_ID", "Original message ID"),
                 new IsoFieldDef("Original Message Name ID", "FIToFIPmtStsRpt.OrgnlGrpInfAndSts.OrgnlMsgNmId", "//OrgnlGrpInfAndSts/OrgnlMsgNmId", "pacs.008.001.12", "String", 35, true, false, null, "Original message name"),
@@ -322,8 +324,10 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Status ID", "FIToFIPmtStsRpt.TxInfAndSts.StsId", "//TxInfAndSts/StsId", "AUTH", "String", 35, true, false, null, "Status ID"),
                 new IsoFieldDef("Original Instruction ID", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlInstrId", "//TxInfAndSts/OrgnlInstrId", "10002299905720260331122123453011923", "String", 35, true, false, "NPS_ID", "Original instruction ID"),
                 new IsoFieldDef("Original End-to-End ID", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlEndToEndId", "//TxInfAndSts/OrgnlEndToEndId", "10002221234519115702293163242525113", "String", 35, true, false, "NPS_ID", "Original EndToEnd ID"),
-                new IsoFieldDef("Original Transaction ID", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlTxId", "//TxInfAndSts/OrgnlTxId", "10002220260331170095982371426577885", "String", 35, true, false, "NPS_ID", "Original Transaction ID"),
+                new IsoFieldDef("Original Transaction ID", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlTxId", "//TxInfAndSts/OrgnlTxId", "10002220260402170095982371426577881", "String", 35, true, false, "NPS_ID", "Original Transaction ID"),
+                new IsoFieldDef("Tx Instructing Agent BICFI", "FIToFIPmtStsRpt.TxInfAndSts.InstgAgt.FinInstnId.BICFI", "//TxInfAndSts/InstgAgt/FinInstnId/BICFI", "090004", "String", 11, false, false, "INSTITUTION_CODE", "Tx Instructing Agent BICFI"),
                 new IsoFieldDef("Tx Instructing Agent Member ID", "FIToFIPmtStsRpt.TxInfAndSts.InstgAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInfAndSts/InstgAgt/FinInstnId/ClrSysMmbId/MmbId", "090004", "String", 6, true, false, "MEMBER_ID", "Tx Instructing Agent Member ID"),
+                new IsoFieldDef("Tx Instructed Agent BICFI", "FIToFIPmtStsRpt.TxInfAndSts.InstdAgt.FinInstnId.BICFI", "//TxInfAndSts/InstdAgt/FinInstnId/BICFI", "100022", "String", 11, false, false, "INSTITUTION_CODE", "Tx Instructed Agent BICFI"),
                 new IsoFieldDef("Tx Instructed Agent Member ID", "FIToFIPmtStsRpt.TxInfAndSts.InstdAgt.FinInstnId.ClrSysMmbId.MmbId", "//TxInfAndSts/InstdAgt/FinInstnId/ClrSysMmbId/MmbId", "100022", "String", 6, true, false, "MEMBER_ID", "Tx Instructed Agent Member ID"),
                 new IsoFieldDef("Original Transaction Settlement Date", "FIToFIPmtStsRpt.TxInfAndSts.OrgnlTxRef.IntrBkSttlmDt", "//OrgnlTxRef/IntrBkSttlmDt", "2026-04-02Z", "Date", 10, true, false, "DATE", "Settlement date")
         );
@@ -336,10 +340,16 @@ public class IsoMessageRegistry {
                             <MsgId>09000420260402112316902158352242175</MsgId>
                             <CreDtTm>2026-04-02T10:30:00.000+01:00</CreDtTm>
                             <InstgAgt>
-                                <FinInstnId><ClrSysMmbId><MmbId>090004</MmbId></ClrSysMmbId></FinInstnId>
+                                <FinInstnId>
+                                    <BICFI>090004</BICFI>
+                                    <ClrSysMmbId><MmbId>090004</MmbId></ClrSysMmbId>
+                                </FinInstnId>
                             </InstgAgt>
                             <InstdAgt>
-                                <FinInstnId><ClrSysMmbId><MmbId>100022</MmbId></ClrSysMmbId></FinInstnId>
+                                <FinInstnId>
+                                    <BICFI>100022</BICFI>
+                                    <ClrSysMmbId><MmbId>100022</MmbId></ClrSysMmbId>
+                                </FinInstnId>
                             </InstdAgt>
                         </GrpHdr>
                         <OrgnlGrpInfAndSts>
@@ -352,12 +362,18 @@ public class IsoMessageRegistry {
                             <StsId>AUTH</StsId>
                             <OrgnlInstrId>10002299905720260331122123453011923</OrgnlInstrId>
                             <OrgnlEndToEndId>10002221234519115702293163242525113</OrgnlEndToEndId>
-                            <OrgnlTxId>10002220260331170095982371426577885</OrgnlTxId>
+                            <OrgnlTxId>10002220260402170095982371426577881</OrgnlTxId>
                             <InstgAgt>
-                                <FinInstnId><ClrSysMmbId><MmbId>090004</MmbId></ClrSysMmbId></FinInstnId>
+                                <FinInstnId>
+                                    <BICFI>090004</BICFI>
+                                    <ClrSysMmbId><MmbId>090004</MmbId></ClrSysMmbId>
+                                </FinInstnId>
                             </InstgAgt>
                             <InstdAgt>
-                                <FinInstnId><ClrSysMmbId><MmbId>100022</MmbId></ClrSysMmbId></FinInstnId>
+                                <FinInstnId>
+                                    <BICFI>100022</BICFI>
+                                    <ClrSysMmbId><MmbId>100022</MmbId></ClrSysMmbId>
+                                </FinInstnId>
                             </InstdAgt>
                             <OrgnlTxRef>
                                 <IntrBkSttlmDt>2026-04-02Z</IntrBkSttlmDt>
