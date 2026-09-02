@@ -1190,4 +1190,37 @@ public class XmlValidationEngineTest {
         assertFalse(dateReport.isValid());
         assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
     }
+
+    @Test
+    public void testCamt052ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("camt.052");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "camt.052");
+        assertTrue(report.isValid(), "camt.052 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in Svcr is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999058</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "camt.052");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("camt.052")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+
+        // 3. Invalid date range in FrToDt
+        String invalidDateXml = sampleXml.replace("<ToDtTm>2026-03-02T12:39:14.000+01:00</ToDtTm>", "<ToDtTm>2026-02-20T12:39:14.000+01:00</ToDtTm>");
+        ValidationReportDto dateReport = validationEngine.validate(invalidDateXml, "camt.052");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
+    }
 }

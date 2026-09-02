@@ -909,6 +909,7 @@ public class XmlAutoFixEngine {
         syncAgentBicfiWithMmbId(doc, "MsgSndr", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "AcctOwnr", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "AcctSvcr", fixesApplied);
+        syncAgentBicfiWithMmbId(doc, "Svcr", fixesApplied);
     }
 
     private void syncAgentBicfiWithMmbId(Document doc, String agentRole, List<String> fixesApplied) {

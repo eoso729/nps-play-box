@@ -2285,6 +2285,45 @@ public class XmlValidationEngine {
             }
         }
 
+        // 5l. Cross-validate camt.052 / camt.053 specific rules (FrDtTm vs ToDtTm)
+        if (key.contains("camt.052") || key.contains("camt.053")) {
+            List<Element> frDtList = findElementsByPath(doc, "FrToDt.FrDtTm");
+            List<Element> toDtList = findElementsByPath(doc, "FrToDt.ToDtTm");
+            if (!frDtList.isEmpty() && !toDtList.isEmpty()) {
+                Element frElem = frDtList.get(0);
+                Element toElem = toDtList.get(0);
+                String frVal = frElem.getTextContent() != null ? frElem.getTextContent().trim() : "";
+                String toVal = toElem.getTextContent() != null ? toElem.getTextContent().trim() : "";
+                if (!frVal.isEmpty() && !toVal.isEmpty()) {
+                    try {
+                        String frDatePart = frVal.length() >= 10 ? frVal.substring(0, 10) : frVal;
+                        String toDatePart = toVal.length() >= 10 ? toVal.substring(0, 10) : toVal;
+                        LocalDate d1 = LocalDate.parse(frDatePart);
+                        LocalDate d2 = LocalDate.parse(toDatePart);
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(toElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(toElem))
+                                    .fieldPath("BkToCstmrAcctRpt.Rpt.FrToDt.ToDtTm")
+                                    .fieldName("Report To DateTime")
+                                    .lineNumber(getNodeLine(toElem))
+                                    .columnNumber(getNodeCol(toElem))
+                                    .currentValue(toVal)
+                                    .expected("On or after " + frVal)
+                                    .message("Report to datetime (" + toVal + ") cannot be earlier than from datetime (" + frVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Report datetime range is valid (" + frVal + " to " + toVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
         // 6. Cross-validate Agent FinInstnId containers in all messages
         validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
         validateAgentFinInstnId(doc, "Assgne", issues, passedRules);
@@ -2296,6 +2335,7 @@ public class XmlValidationEngine {
         validateAgentFinInstnId(doc, "MsgSndr", issues, passedRules);
         validateAgentFinInstnId(doc, "AcctOwnr", issues, passedRules);
         validateAgentFinInstnId(doc, "AcctSvcr", issues, passedRules);
+        validateAgentFinInstnId(doc, "Svcr", issues, passedRules);
     }
 
     private void validateAgentFinInstnId(Document doc, String agentRole, List<ValidationIssueDto> issues, List<String> passedRules) {
@@ -2308,7 +2348,8 @@ public class XmlValidationEngine {
                           "CdtrAgt".equalsIgnoreCase(agentRole) ? "Creditor Agent" :
                           "MsgSndr".equalsIgnoreCase(agentRole) ? "Message Sender" :
                           "AcctOwnr".equalsIgnoreCase(agentRole) ? "Account Owner" :
-                          "AcctSvcr".equalsIgnoreCase(agentRole) ? "Account Servicer" : agentRole;
+                          "AcctSvcr".equalsIgnoreCase(agentRole) ? "Account Servicer" :
+                          "Svcr".equalsIgnoreCase(agentRole) ? "Account Servicer" : agentRole;
 
         List<Element> agentElems = new ArrayList<>();
         NodeList nodes = doc.getElementsByTagName(agentRole);
@@ -2536,14 +2577,22 @@ public class XmlValidationEngine {
                     "Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId"
             );
         }
+        if (key.contains("camt.052") || key.contains("camt.053")) {
+            return findFirstElementText(doc,
+                    "BkToCstmrAcctRpt.Rpt.Acct.Ownr.Id.OrgId.Othr.SchmeNm.Cd",
+                    "BkToCstmrAcctRpt.Rpt.Acct.Ownr.Id.OrgId.Othr.SchmeNm.Prtry",
+                    "BkToCstmrAcctRpt.GrpHdr.MsgRcpt.Id.OrgId.AnyBIC",
+                    "BkToCstmrStmt.Stmt.Acct.Ownr.Id.OrgId.Othr.SchmeNm.Cd",
+                    "BkToCstmrStmt.Stmt.Acct.Ownr.Id.OrgId.Othr.SchmeNm.Prtry",
+                    "BkToCstmrStmt.GrpHdr.MsgRcpt.Id.OrgId.AnyBIC"
+            );
+        }
         return findFirstElementText(doc,
                 "GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "CdtTrfTxInf.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "CdtTrfTxInf.InstdAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "Assgnmt.Assgne.Agt.FinInstnId.ClrSysMmbId.MmbId",
-                "BkToCstmrAcctRpt.Rpt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
-                "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
                 "CdtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "DbtrAgt.FinInstnId.ClrSysMmbId.MmbId",
                 "PmtRtr.GrpHdr.InstdAgt.FinInstnId.ClrSysMmbId.MmbId"

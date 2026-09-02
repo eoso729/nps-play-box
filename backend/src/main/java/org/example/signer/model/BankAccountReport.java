@@ -6,7 +6,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.util.List;
 
-@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:camt.052.001.08")
+@XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:camt.052.001.12")
 @XmlAccessorType(XmlAccessType.FIELD)
 @Data
 public class BankAccountReport {
@@ -264,6 +264,9 @@ public class BankAccountReport {
 
         @XmlElement(name = "BkTxCd")
         private BkTxCd bkTxCd;
+
+        @XmlElement(name = "NtryDtls")
+        private NtryDtls ntryDtls;
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)
@@ -305,5 +308,33 @@ public class BankAccountReport {
 
         @XmlElement(name = "SubFmlyCd")
         private String subFmlyCd;
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
+    public static class NtryDtls {
+        @XmlElement(name = "TxDtls")
+        private TxDtls txDtls;
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
+    public static class TxDtls {
+        @XmlElement(name = "RltdAgts")
+        private RltdAgts rltdAgts;
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
+    public static class RltdAgts {
+        @XmlElement(name = "InstdAgt")
+        private InstdAgt instdAgt;
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
+    public static class InstdAgt {
+        @XmlElement(name = "FinInstnId")
+        private FinInstnId finInstnId;
     }
 }
