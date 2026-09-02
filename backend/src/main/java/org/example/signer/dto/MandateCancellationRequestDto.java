@@ -10,6 +10,7 @@ public class MandateCancellationRequestDto {
     
     // Original Message Info
     private String originalMsgId;
+    private String originalMsgNmId;
     private String originalCreDtTm;
     
     // Cancellation Reason
@@ -26,12 +27,14 @@ public class MandateCancellationRequestDto {
     
     // Creditor Info
     private String creditorName;
+    private String creditorAccountName;
     private String creditorAccountNumber;
     private String creditorAgentBIC;
     private String creditorAgentMemberId;
     
     // Debtor Info
     private String debtorName;
+    private String debtorAccountName;
     private String debtorAccountNumber;
     private String debtorAgentBIC;
     private String debtorAgentMemberId;

@@ -72,6 +72,24 @@ public class MandateCancellation {
     public static class OrgnlMndtDetails {
         @XmlElement(name = "OrgnlMndtId")
         private String orgnlMndtId;
+
+        @XmlElement(name = "OrgnlMndt")
+        private InnerOrgnlMndt orgnlMndt;
+
+        // Convenience getters for backward compatibility
+        public Party getDbtr() { return orgnlMndt != null ? orgnlMndt.getDbtr() : null; }
+        public CashAccount getDbtrAcct() { return orgnlMndt != null ? orgnlMndt.getDbtrAcct() : null; }
+        public Agent getDbtrAgt() { return orgnlMndt != null ? orgnlMndt.getDbtrAgt() : null; }
+        public Agent getCdtrAgt() { return orgnlMndt != null ? orgnlMndt.getCdtrAgt() : null; }
+        public Party getCdtr() { return orgnlMndt != null ? orgnlMndt.getCdtr() : null; }
+        public CashAccount getCdtrAcct() { return orgnlMndt != null ? orgnlMndt.getCdtrAcct() : null; }
+        public Ocrncs getOcrncs() { return orgnlMndt != null ? orgnlMndt.getOcrncs() : null; }
+        public String getTrckgInd() { return orgnlMndt != null ? orgnlMndt.getTrckgInd() : null; }
+    }
+
+    @XmlAccessorType(XmlAccessType.FIELD)
+    @Data
+    public static class InnerOrgnlMndt {
         @XmlElement(name = "Ocrncs")
         private Ocrncs ocrncs;
         @XmlElement(name = "TrckgInd")

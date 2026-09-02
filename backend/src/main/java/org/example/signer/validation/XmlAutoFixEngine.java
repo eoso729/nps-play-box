@@ -873,6 +873,11 @@ public class XmlAutoFixEngine {
             syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
         }
 
+        if (key.contains("pain.011")) {
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        }
+
         // Global Agent BICFI sync for any remaining agents
         syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
