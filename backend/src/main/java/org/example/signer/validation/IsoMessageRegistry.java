@@ -1713,6 +1713,8 @@ public class IsoMessageRegistry {
         List<IsoFieldDef> fields = Arrays.asList(
                 new IsoFieldDef("Message ID", "BkToCstmrStmt.GrpHdr.MsgId", "//GrpHdr/MsgId", "99905820260223092508470151175400802", "String", 35, true, false, "NPS_ID", "Message ID"),
                 new IsoFieldDef("Creation DateTime", "BkToCstmrStmt.GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2026-03-02T11:40:55.308+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp"),
+                new IsoFieldDef("Message Recipient Name", "BkToCstmrStmt.GrpHdr.MsgRcpt.Nm", "//GrpHdr/MsgRcpt/Nm", "Debtor Bank Name", "String", 100, false, false, null, "Message Recipient Name"),
+                new IsoFieldDef("Message Recipient BIC", "BkToCstmrStmt.GrpHdr.MsgRcpt.Id.OrgId.AnyBIC", "//GrpHdr/MsgRcpt/Id/OrgId/AnyBIC", "999057", "String", 11, false, false, "INSTITUTION_CODE", "Recipient BIC"),
                 new IsoFieldDef("Original Query Message ID", "BkToCstmrStmt.GrpHdr.OrgnlBizQry.MsgId", "//OrgnlBizQry/MsgId", "99905820260302123735603795909182287", "String", 35, true, false, "NPS_ID", "Original query Msg ID"),
                 new IsoFieldDef("Original Query Message Name ID", "BkToCstmrStmt.GrpHdr.OrgnlBizQry.MsgNmId", "//OrgnlBizQry/MsgNmId", "camt.060.001.07", "String", 35, true, false, null, "Original Message Type"),
                 new IsoFieldDef("Statement ID", "BkToCstmrStmt.Stmt.Id", "//Stmt/Id", "99905899905720260302124055216285423", "String", 35, true, false, "NPS_ID", "Statement ID"),
@@ -1720,6 +1722,7 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("To DateTime", "BkToCstmrStmt.Stmt.FrToDt.ToDtTm", "//Stmt/FrToDt/ToDtTm", "2026-02-27T05:59:59.000+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Statement To DateTime"),
                 new IsoFieldDef("Account Number (IBAN)", "BkToCstmrStmt.Stmt.Acct.Id.IBAN", "//Stmt/Acct/Id/IBAN", "8887788778", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Account Currency", "BkToCstmrStmt.Stmt.Acct.Ccy", "//Stmt/Acct/Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
+                new IsoFieldDef("Account Servicer BICFI", "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.BICFI", "//Stmt/Acct/Svcr/FinInstnId/BICFI", "999058", "String", 11, false, false, "INSTITUTION_CODE", "Servicer BICFI"),
                 new IsoFieldDef("Account Servicer Member ID", "BkToCstmrStmt.Stmt.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId", "//Stmt/Acct/Svcr/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Servicer Member ID"),
                 new IsoFieldDef("Balance Type", "BkToCstmrStmt.Stmt.Bal.Tp.CdOrPrtry.Prtry", "//Stmt/Bal/Tp/CdOrPrtry/Prtry", "CLRG", "String", 35, true, false, null, "Balance Type"),
                 new IsoFieldDef("Opening Balance Amount", "BkToCstmrStmt.Stmt.Bal.Amt", "//Stmt/Bal/Amt", "482000.00", "Decimal", 18, true, false, "AMOUNT", "Balance amount"),
@@ -1728,37 +1731,127 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Entry Amount", "BkToCstmrStmt.Stmt.Ntry.Amt", "//Stmt/Ntry/Amt", "30000.00", "Decimal", 18, true, false, "AMOUNT", "Entry amount"),
                 new IsoFieldDef("Entry Currency", "BkToCstmrStmt.Stmt.Ntry.Amt@Ccy", "//Stmt/Ntry/Amt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Entry currency code"),
                 new IsoFieldDef("Entry Credit/Debit Indicator", "BkToCstmrStmt.Stmt.Ntry.CdtDbtInd", "//Stmt/Ntry/CdtDbtInd", "CRDT", "Enum", 4, true, false, "CREDIT_DEBIT", "Entry Credit/Debit"),
+                new IsoFieldDef("Entry Status Code", "BkToCstmrStmt.Stmt.Ntry.Sts.Cd", "//Stmt/Ntry/Sts/Cd", "BOOK", "String", 35, false, false, null, "Entry status code"),
                 new IsoFieldDef("Booking Date", "BkToCstmrStmt.Stmt.Ntry.BookgDt.Dt", "//Stmt/Ntry/BookgDt/Dt", "2026-02-19Z", "Date", 10, true, false, "DATE", "Booking date"),
-                new IsoFieldDef("Value Date", "BkToCstmrStmt.Stmt.Ntry.ValDt.Dt", "//Stmt/Ntry/ValDt/Dt", "2026-02-19Z", "Date", 10, true, false, "DATE", "Value date")
+                new IsoFieldDef("Value Date", "BkToCstmrStmt.Stmt.Ntry.ValDt.Dt", "//Stmt/Ntry/ValDt/Dt", "2026-02-19Z", "Date", 10, true, false, "DATE", "Value date"),
+                new IsoFieldDef("Account Servicer Reference", "BkToCstmrStmt.Stmt.Ntry.AcctSvcrRef", "//Stmt/Ntry/AcctSvcrRef", "99905820260223092508470151175400802", "String", 35, false, false, "NPS_ID", "Account Servicer Reference"),
+                new IsoFieldDef("Instructed Agent BICFI", "BkToCstmrStmt.Stmt.Ntry.NtryDtls.TxDtls.RltdAgts.InstdAgt.FinInstnId.BICFI", "//NtryDtls/TxDtls/RltdAgts/InstdAgt/FinInstnId/BICFI", "999057", "String", 11, false, false, "INSTITUTION_CODE", "Instructed Agent BICFI")
         );
 
         String sampleXml = """
                 <?xml version="1.0" encoding="UTF-8"?>
-                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+                <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.12">
                     <BkToCstmrStmt>
                         <GrpHdr>
                             <MsgId>99905820260223092508470151175400802</MsgId>
                             <CreDtTm>2026-03-02T11:40:55.308+01:00</CreDtTm>
+                            <MsgRcpt>
+                                <Nm>Debtor Bank Name</Nm>
+                                <Id>
+                                    <OrgId>
+                                        <AnyBIC>999057</AnyBIC>
+                                    </OrgId>
+                                </Id>
+                            </MsgRcpt>
                             <OrgnlBizQry>
                                 <MsgId>99905820260302123735603795909182287</MsgId>
                                 <MsgNmId>camt.060.001.07</MsgNmId>
+                                <CreDtTm>2026-02-13T13:32:00.000Z</CreDtTm>
                             </OrgnlBizQry>
                         </GrpHdr>
                         <Stmt>
                             <Id>99905899905720260302124055216285423</Id>
-                            <FrToDt><FrDtTm>2026-02-01T00:00:00.000+01:00</FrDtTm><ToDtTm>2026-02-27T05:59:59.000+01:00</ToDtTm></FrToDt>
-                            <Acct><Id><IBAN>8887788778</IBAN></Id><Ccy>NGN</Ccy><Svcr><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></Svcr></Acct>
+                            <FrToDt>
+                                <FrDtTm>2026-02-01T00:00:00.000+01:00</FrDtTm>
+                                <ToDtTm>2026-02-27T05:59:59.000+01:00</ToDtTm>
+                            </FrToDt>
+                            <Acct>
+                                <Id>
+                                    <IBAN>8887788778</IBAN>
+                                </Id>
+                                <Ccy>NGN</Ccy>
+                                <Ownr>
+                                    <Id>
+                                        <OrgId>
+                                            <Othr>
+                                                <SchmeNm>
+                                                    <Cd>999057</Cd>
+                                                    <Prtry>999057</Prtry>
+                                                </SchmeNm>
+                                            </Othr>
+                                        </OrgId>
+                                    </Id>
+                                </Ownr>
+                                <Svcr>
+                                    <FinInstnId>
+                                        <BICFI>999058</BICFI>
+                                        <ClrSysMmbId>
+                                            <MmbId>999058</MmbId>
+                                        </ClrSysMmbId>
+                                    </FinInstnId>
+                                </Svcr>
+                            </Acct>
                             <Bal>
-                                <Tp><CdOrPrtry><Cd>OPBD</Cd><Prtry>CLRG</Prtry></CdOrPrtry></Tp>
+                                <Tp>
+                                    <CdOrPrtry>
+                                        <Cd>OPBD</Cd>
+                                        <Prtry>CLRG</Prtry>
+                                    </CdOrPrtry>
+                                </Tp>
                                 <Amt Ccy="NGN">482000.00</Amt>
                                 <CdtDbtInd>CRDT</CdtDbtInd>
+                                <Dt>
+                                    <DtTm>2026-02-01T00:00:00.000+01:00</DtTm>
+                                </Dt>
+                            </Bal>
+                            <Bal>
+                                <Tp>
+                                    <CdOrPrtry>
+                                        <Cd>CLBD</Cd>
+                                        <Prtry>CLRG</Prtry>
+                                    </CdOrPrtry>
+                                </Tp>
+                                <Amt Ccy="NGN">500000.00</Amt>
+                                <CdtDbtInd>CRDT</CdtDbtInd>
+                                <Dt>
+                                    <Dt>2026-02-27Z</Dt>
+                                    <DtTm>2026-02-27T05:59:59.000+01:00</DtTm>
+                                </Dt>
                             </Bal>
                             <Ntry>
                                 <Amt Ccy="NGN">30000.00</Amt>
                                 <CdtDbtInd>CRDT</CdtDbtInd>
-                                <BookgDt><Dt>2026-02-19Z</Dt></BookgDt>
-                                <ValDt><Dt>2026-02-19Z</Dt></ValDt>
-                                <BkTxCd><Domn><Cd>PMNT</Cd><Fmly><Cd>RCDT</Cd><SubFmlyCd>ESCT</SubFmlyCd></Fmly></Domn></BkTxCd>
+                                <Sts>
+                                    <Cd>BOOK</Cd>
+                                    <Prtry>BOOK</Prtry>
+                                </Sts>
+                                <BookgDt>
+                                    <Dt>2026-02-19Z</Dt>
+                                </BookgDt>
+                                <ValDt>
+                                    <Dt>2026-02-19Z</Dt>
+                                </ValDt>
+                                <AcctSvcrRef>99905820260223092508470151175400802</AcctSvcrRef>
+                                <BkTxCd>
+                                    <Domn>
+                                        <Cd>PMNT</Cd>
+                                        <Fmly>
+                                            <Cd>RCDT</Cd>
+                                            <SubFmlyCd>ESCT</SubFmlyCd>
+                                        </Fmly>
+                                    </Domn>
+                                </BkTxCd>
+                                <NtryDtls>
+                                    <TxDtls>
+                                        <RltdAgts>
+                                            <InstdAgt>
+                                                <FinInstnId>
+                                                    <BICFI>999057</BICFI>
+                                                </FinInstnId>
+                                            </InstdAgt>
+                                        </RltdAgts>
+                                    </TxDtls>
+                                </NtryDtls>
                             </Ntry>
                         </Stmt>
                     </BkToCstmrStmt>
@@ -1768,11 +1861,11 @@ public class IsoMessageRegistry {
         register(IsoMessageDefinition.builder()
                 .key("camt.053")
                 .name("Bank To Customer Statement")
-                .isoCode("camt.053.001.08")
+                .isoCode("camt.053.001.12")
                 .category("Account Services & Statements")
                 .rootElement("Document")
                 .mainElement("BkToCstmrStmt")
-                .namespace("urn:iso:std:iso:20022:tech:xsd:camt.053.001.08")
+                .namespace("urn:iso:std:iso:20022:tech:xsd:camt.053.001.12")
                 .fields(fields)
                 .sampleXml(sampleXml)
                 .build());
