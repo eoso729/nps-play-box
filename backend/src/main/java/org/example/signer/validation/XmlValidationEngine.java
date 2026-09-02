@@ -2248,6 +2248,43 @@ public class XmlValidationEngine {
             }
         }
 
+        // 5k. Cross-validate camt.060 specific rules (Reporting Period FrDt vs ToDt)
+        if (key.contains("camt.060")) {
+            List<Element> frDtList = findElementsByPath(doc, "FrToDt.FrDt");
+            List<Element> toDtList = findElementsByPath(doc, "FrToDt.ToDt");
+            if (!frDtList.isEmpty() && !toDtList.isEmpty()) {
+                Element frElem = frDtList.get(0);
+                Element toElem = toDtList.get(0);
+                String frVal = frElem.getTextContent() != null ? frElem.getTextContent().trim() : "";
+                String toVal = toElem.getTextContent() != null ? toElem.getTextContent().trim() : "";
+                if (!frVal.isEmpty() && !toVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(toVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(toElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(toElem))
+                                    .fieldPath("AcctRptgReq.RptgReq.RptgPrd.FrToDt.ToDt")
+                                    .fieldName("Reporting Period To Date")
+                                    .lineNumber(getNodeLine(toElem))
+                                    .columnNumber(getNodeCol(toElem))
+                                    .currentValue(toVal)
+                                    .expected("On or after " + frVal)
+                                    .message("Reporting period to date (" + toVal + ") cannot be earlier than from date (" + frVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Reporting period date range is valid (" + frVal + " to " + toVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
         // 6. Cross-validate Agent FinInstnId containers in all messages
         validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
         validateAgentFinInstnId(doc, "Assgne", issues, passedRules);
@@ -2256,6 +2293,9 @@ public class XmlValidationEngine {
         validateAgentFinInstnId(doc, "InstdAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "DbtrAgt", issues, passedRules);
         validateAgentFinInstnId(doc, "CdtrAgt", issues, passedRules);
+        validateAgentFinInstnId(doc, "MsgSndr", issues, passedRules);
+        validateAgentFinInstnId(doc, "AcctOwnr", issues, passedRules);
+        validateAgentFinInstnId(doc, "AcctSvcr", issues, passedRules);
     }
 
     private void validateAgentFinInstnId(Document doc, String agentRole, List<ValidationIssueDto> issues, List<String> passedRules) {
@@ -2265,7 +2305,10 @@ public class XmlValidationEngine {
                           "InstgAgt".equalsIgnoreCase(agentRole) ? "Instructing Agent" :
                           "InstdAgt".equalsIgnoreCase(agentRole) ? "Instructed Agent" :
                           "DbtrAgt".equalsIgnoreCase(agentRole) ? "Debtor Agent" :
-                          "CdtrAgt".equalsIgnoreCase(agentRole) ? "Creditor Agent" : agentRole;
+                          "CdtrAgt".equalsIgnoreCase(agentRole) ? "Creditor Agent" :
+                          "MsgSndr".equalsIgnoreCase(agentRole) ? "Message Sender" :
+                          "AcctOwnr".equalsIgnoreCase(agentRole) ? "Account Owner" :
+                          "AcctSvcr".equalsIgnoreCase(agentRole) ? "Account Servicer" : agentRole;
 
         List<Element> agentElems = new ArrayList<>();
         NodeList nodes = doc.getElementsByTagName(agentRole);
@@ -2486,6 +2529,9 @@ public class XmlValidationEngine {
         }
         if (key.contains("camt.060")) {
             return findFirstElementText(doc,
+                    "AcctRptgReq.RptgReq.AcctSvcr.FinInstnId.ClrSysMmbId.MmbId",
+                    "RptgReq.AcctSvcr.FinInstnId.ClrSysMmbId.MmbId",
+                    "AcctSvcr.FinInstnId.ClrSysMmbId.MmbId",
                     "AcctRptgReq.RptgReq.Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId",
                     "Acct.Svcr.FinInstnId.ClrSysMmbId.MmbId"
             );

@@ -1157,4 +1157,37 @@ public class XmlValidationEngineTest {
         assertFalse(dateReport.isValid());
         assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
     }
+
+    @Test
+    public void testCamt060ValidationAndAutoFix() {
+        IsoMessageDefinition def = IsoMessageRegistry.getDefinition("camt.060");
+        String sampleXml = def.getSampleXml();
+
+        // 1. Valid sample passes with 100% health
+        ValidationReportDto report = validationEngine.validate(sampleXml, "camt.060");
+        assertTrue(report.isValid(), "camt.060 sample XML should be valid");
+        assertEquals(100, report.getHealthScore());
+
+        // 2. Mismatched BICFI in MsgSndr is flagged and auto-fixed
+        String mismatchBicfiXml = sampleXml.replaceFirst("<BICFI>999057</BICFI>", "<BICFI>999054</BICFI>");
+        ValidationReportDto bicfiReport = validationEngine.validate(mismatchBicfiXml, "camt.060");
+        assertFalse(bicfiReport.isValid());
+        assertTrue(bicfiReport.getIssues().stream().anyMatch(i -> "INSTITUTION_CODE_MISMATCH".equals(i.getRuleCode())));
+
+        XmlAutoFixRequestDto fixBicReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(mismatchBicfiXml)
+                .messageType("camt.060")
+                .fixIds(true)
+                .build();
+        XmlAutoFixResponseDto fixBicResp = autoFixEngine.autoFix(fixBicReq);
+        assertTrue(fixBicResp.isSuccess());
+        assertTrue(fixBicResp.getFixedXml().contains("<BICFI>999057</BICFI>"));
+        assertTrue(fixBicResp.getValidationReport().isValid());
+
+        // 3. Invalid date range in RptgPrd FrToDt
+        String invalidDateXml = sampleXml.replace("<ToDt>2026-03-02</ToDt>", "<ToDt>2026-02-20</ToDt>");
+        ValidationReportDto dateReport = validationEngine.validate(invalidDateXml, "camt.060");
+        assertFalse(dateReport.isValid());
+        assertTrue(dateReport.getIssues().stream().anyMatch(i -> "DATE_RANGE_INVALID".equals(i.getRuleCode())));
+    }
 }

@@ -18,19 +18,23 @@ public class BalanceEnquiryXmlGenerator {
         String creDtTm = java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Lagos")).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
         grpHdr.setCreDtTm(creDtTm);
         
-        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";
-        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() : "999997";
+        String senderMmbId = requestDto.getSourceId() != null ? requestDto.getSourceId() :
+                (requestDto.getMessageSenderMemberId() != null ? requestDto.getMessageSenderMemberId() : "999998");
+        String senderBic = requestDto.getMessageSenderBIC() != null && !requestDto.getMessageSenderBIC().trim().isEmpty()
+                ? requestDto.getMessageSenderBIC().trim() : senderMmbId;
+
+        String ownerMmbId = requestDto.getAccountOwnerMemberId() != null ? requestDto.getAccountOwnerMemberId() : senderMmbId;
+        String ownerBic = requestDto.getAccountOwnerBIC() != null && !requestDto.getAccountOwnerBIC().trim().isEmpty()
+                ? requestDto.getAccountOwnerBIC().trim() : ownerMmbId;
+
+        String servicerMmbId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() :
+                (requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999997");
+        String servicerBic = requestDto.getAccountServicerBIC() != null && !requestDto.getAccountServicerBIC().trim().isEmpty()
+                ? requestDto.getAccountServicerBIC().trim() : servicerMmbId;
 
         // Message Sender
         BalanceEnquiry.MsgSndr msgSndr = new BalanceEnquiry.MsgSndr();
-        BalanceEnquiry.Agt msgSndrAgt = new BalanceEnquiry.Agt();
-        BalanceEnquiry.FinInstnId msgSndrFinInstnId = new BalanceEnquiry.FinInstnId();
-        msgSndrFinInstnId.setBicfi(srcId);
-        BalanceEnquiry.ClrSysMmbId msgSndrClrSysMmbId = new BalanceEnquiry.ClrSysMmbId();
-        msgSndrClrSysMmbId.setMmbId(srcId);
-        msgSndrFinInstnId.setClrSysMmbId(msgSndrClrSysMmbId);
-        msgSndrAgt.setFinInstnId(msgSndrFinInstnId);
-        msgSndr.setAgt(msgSndrAgt);
+        msgSndr.setAgt(createAgt(senderBic, senderMmbId));
         grpHdr.setMsgSndr(msgSndr);
         
         // --- Reporting Request ---
@@ -48,24 +52,12 @@ public class BalanceEnquiryXmlGenerator {
         
         // Account Owner
         BalanceEnquiry.AcctOwnr acctOwnr = new BalanceEnquiry.AcctOwnr();
-        BalanceEnquiry.Agt acctOwnrAgt = new BalanceEnquiry.Agt();
-        BalanceEnquiry.FinInstnId acctOwnrFinInstnId = new BalanceEnquiry.FinInstnId();
-        acctOwnrFinInstnId.setBicfi(srcId);
-        BalanceEnquiry.ClrSysMmbId acctOwnrClrSysMmbId = new BalanceEnquiry.ClrSysMmbId();
-        acctOwnrClrSysMmbId.setMmbId(srcId);
-        acctOwnrFinInstnId.setClrSysMmbId(acctOwnrClrSysMmbId);
-        acctOwnrAgt.setFinInstnId(acctOwnrFinInstnId);
-        acctOwnr.setAgt(acctOwnrAgt);
+        acctOwnr.setAgt(createAgt(ownerBic, ownerMmbId));
         rptgReq.setAcctOwnr(acctOwnr);
         
         // Account Servicer
         BalanceEnquiry.AcctSvcr acctSvcr = new BalanceEnquiry.AcctSvcr();
-        BalanceEnquiry.FinInstnId acctSvcrFinInstnId = new BalanceEnquiry.FinInstnId();
-        acctSvcrFinInstnId.setBicfi(destId);
-        BalanceEnquiry.ClrSysMmbId acctSvcrClrSysMmbId = new BalanceEnquiry.ClrSysMmbId();
-        acctSvcrClrSysMmbId.setMmbId(destId);
-        acctSvcrFinInstnId.setClrSysMmbId(acctSvcrClrSysMmbId);
-        acctSvcr.setFinInstnId(acctSvcrFinInstnId);
+        acctSvcr.setFinInstnId(createFinInstnId(servicerBic, servicerMmbId));
         rptgReq.setAcctSvcr(acctSvcr);
 
         // Reporting Period
@@ -109,5 +101,22 @@ public class BalanceEnquiryXmlGenerator {
         doc.setAcctRptgReq(acctRptgReq);
         
         return doc;
+    }
+
+    private static BalanceEnquiry.Agt createAgt(String bic, String memberId) {
+        BalanceEnquiry.Agt agt = new BalanceEnquiry.Agt();
+        agt.setFinInstnId(createFinInstnId(bic, memberId));
+        return agt;
+    }
+
+    private static BalanceEnquiry.FinInstnId createFinInstnId(String bic, String memberId) {
+        BalanceEnquiry.FinInstnId finInstnId = new BalanceEnquiry.FinInstnId();
+        if (bic != null && !bic.trim().isEmpty()) {
+            finInstnId.setBicfi(bic.trim());
+        }
+        BalanceEnquiry.ClrSysMmbId clrSysMmbId = new BalanceEnquiry.ClrSysMmbId();
+        clrSysMmbId.setMmbId(memberId);
+        finInstnId.setClrSysMmbId(clrSysMmbId);
+        return finInstnId;
     }
 }

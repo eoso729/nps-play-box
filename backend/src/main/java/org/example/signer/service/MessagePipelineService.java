@@ -134,8 +134,10 @@ public class MessagePipelineService {
     }
 
     public XmlGenerationResponseDto generateBalanceEnquiryCamt060(AccountReportingRequestDto requestDto) throws Exception {
-        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";
-        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() : "999997";
+        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() :
+                (requestDto.getMessageSenderMemberId() != null ? requestDto.getMessageSenderMemberId() : "999998");
+        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() :
+                (requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999997");
         String msgId = generateMsgId(srcId);
         String rptgReqId = generateRptgReqId(srcId, destId);
         BalanceEnquiry model = BalanceEnquiryXmlGenerator.generate(requestDto, msgId, rptgReqId);
@@ -295,8 +297,10 @@ public class MessagePipelineService {
     }
 
     public MessageSendResponseDto sendBalanceEnquiryCamt060(AccountReportingRequestDto requestDto) throws Exception {
-        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";
-        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() : "999997";
+        String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() :
+                (requestDto.getMessageSenderMemberId() != null ? requestDto.getMessageSenderMemberId() : "999998");
+        String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() :
+                (requestDto.getAccountServicerMemberId() != null ? requestDto.getAccountServicerMemberId() : "999997");
         String msgId = generateMsgId(srcId);
         String rptgReqId = generateRptgReqId(srcId, destId);
         BalanceEnquiry model = BalanceEnquiryXmlGenerator.generate(requestDto, msgId, rptgReqId);
