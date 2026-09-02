@@ -1180,20 +1180,25 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Message ID", "GrpHdr.MsgId", "//GrpHdr/MsgId", "99905820260105102349998878725905163", "String", 35, true, false, "NPS_ID", "Message ID"),
                 new IsoFieldDef("Creation DateTime", "GrpHdr.CreDtTm", "//GrpHdr/CreDtTm", "2025-09-05T12:15:00.000+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Creation timestamp in UTC+1"),
                 new IsoFieldDef("Initiating Party Name", "GrpHdr.InitgPty.Nm", "//GrpHdr/InitgPty/Nm", "Test Initiating Party", "String", 100, true, false, null, "Initiator Name"),
+                new IsoFieldDef("Client ID", "GrpHdr.InitgPty.Id.OrgId.Othr.Id", "//GrpHdr/InitgPty/Id/OrgId/Othr/Id", "ClientID-123456", "String", 35, true, false, null, "Client Identifier"),
                 new IsoFieldDef("Payment Information ID", "PmtInf.PmtInfId", "//PmtInf/PmtInfId", "GSFPMTINF035985837", "String", 35, true, false, null, "Payment Information ID"),
                 new IsoFieldDef("Payment Method", "PmtInf.PmtMtd", "//PmtInf/PmtMtd", "TRF", "Enum", 3, true, false, null, "Payment Method (TRF)"),
+                new IsoFieldDef("Requested Execution DateTime", "PmtInf.ReqdExctnDt.DtTm", "//PmtInf/ReqdExctnDt/DtTm", "2025-09-05T12:15:00.000+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Requested execution datetime"),
                 new IsoFieldDef("Debtor Name", "PmtInf.Dbtr.Nm", "//PmtInf/Dbtr/Nm", "Test Account", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account IBAN", "PmtInf.DbtrAcct.Id.IBAN", "//PmtInf/DbtrAcct/Id/IBAN", "3293827192", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Currency", "PmtInf.DbtrAcct.Ccy", "//PmtInf/DbtrAcct/Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
                 new IsoFieldDef("Debtor Account Name", "PmtInf.DbtrAcct.Nm", "//PmtInf/DbtrAcct/Nm", "Test Account", "String", 100, true, false, null, "Debtor Account Name"),
+                new IsoFieldDef("Debtor Agent BICFI", "PmtInf.DbtrAgt.FinInstnId.BICFI", "//PmtInf/DbtrAgt/FinInstnId/BICFI", "999057", "String", 11, false, false, "INSTITUTION_CODE", "Debtor Agent BICFI"),
                 new IsoFieldDef("Debtor Agent Member ID", "PmtInf.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//PmtInf/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Debtor Member ID"),
                 new IsoFieldDef("End-to-End ID", "PmtInf.CdtTrfTx.PmtId.EndToEndId", "//CdtTrfTx/PmtId/EndToEndId", "GSF035985837-E2E", "String", 35, true, false, "NPS_ID", "EndToEnd ID"),
                 new IsoFieldDef("Instructed Amount", "PmtInf.CdtTrfTx.Amt.InstdAmt", "//CdtTrfTx/Amt/InstdAmt", "100.00", "Decimal", 18, true, false, "AMOUNT", "Instructed amount"),
                 new IsoFieldDef("Instructed Amount Currency", "PmtInf.CdtTrfTx.Amt.InstdAmt@Ccy", "//CdtTrfTx/Amt/InstdAmt/@Ccy", "NGN", "Currency Code", 3, true, false, "CURRENCY", "Currency code"),
+                new IsoFieldDef("Creditor Agent BICFI", "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.BICFI", "//CdtTrfTx/CdtrAgt/FinInstnId/BICFI", "999058", "String", 11, false, false, "INSTITUTION_CODE", "Creditor Agent BICFI"),
                 new IsoFieldDef("Creditor Agent Member ID", "PmtInf.CdtTrfTx.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//CdtTrfTx/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Creditor Member ID"),
                 new IsoFieldDef("Creditor Name", "PmtInf.CdtTrfTx.Cdtr.Nm", "//CdtTrfTx/Cdtr/Nm", "Client Name", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account IBAN", "PmtInf.CdtTrfTx.CdtrAcct.Id.IBAN", "//CdtTrfTx/CdtrAcct/Id/IBAN", "1119384738", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "PmtInf.CdtTrfTx.CdtrAcct.Nm", "//CdtTrfTx/CdtrAcct/Nm", "Client Name", "String", 100, true, false, null, "Creditor Account Name"),
+                new IsoFieldDef("Payment Purpose", "PmtInf.CdtTrfTx.Purp.Prtry", "//CdtTrfTx/Purp/Prtry", "Invoice Funding", "String", 35, false, false, null, "Payment purpose"),
                 new IsoFieldDef("Place and Name", "SplmtryData.PlcAndNm", "//SplmtryData/PlcAndNm", "AdditionalVerificationDetails", "String", 35, true, false, null, "Supplementary descriptor"),
                 new IsoFieldDef("Debtor Account Designation", "SplmtryData.Envlp.CustomData.DebtorInfo.AccountDesignation", "//DebtorInfo/AccountDesignation", "1", "Numeric", 1, true, false, "ACCOUNT_DESIGNATION", "Account Designation (1-6)"),
                 new IsoFieldDef("Debtor ID Type", "SplmtryData.Envlp.CustomData.DebtorInfo.IdType", "//DebtorInfo/IdType", "BVN", "String", 7, true, false, "ID_TYPE", "ID Type"),
@@ -1204,7 +1209,8 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Creditor ID Value", "SplmtryData.Envlp.CustomData.CreditorInfo.IdValue", "//CreditorInfo/IdValue", "22222222222", "String", 35, true, false, "ID_VALUE", "11-digit BVN"),
                 new IsoFieldDef("Creditor Account Tier", "SplmtryData.Envlp.CustomData.CreditorInfo.AccountTier", "//CreditorInfo/AccountTier", "1", "Integer", 1, true, false, "ACCOUNT_TIER", "Account Tier (1-3)"),
                 new IsoFieldDef("Transaction Location", "SplmtryData.Envlp.CustomData.TransactionInfo.TransactionLocation", "//TransactionInfo/TransactionLocation", "01080652440N020900337921E", "String", 30, true, false, null, "Location Coordinates"),
-                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "4", "String", 2, true, false, "CHANNEL_CODE", "Channel Code (1-11)")
+                new IsoFieldDef("Channel Code", "SplmtryData.Envlp.CustomData.TransactionInfo.ChannelCode", "//TransactionInfo/ChannelCode", "4", "String", 2, true, false, "CHANNEL_CODE", "Channel Code (1-11)"),
+                new IsoFieldDef("Mandate Category", "SplmtryData.Envlp.CustomData.TransactionInfo.MandateCategory", "//TransactionInfo/MandateCategory", "0", "String", 4, true, false, null, "Mandate Category")
         );
 
         String sampleXml = """
@@ -1229,11 +1235,21 @@ public class IsoMessageRegistry {
                                 <Ccy>NGN</Ccy>
                                 <Nm>Test Account</Nm>
                             </DbtrAcct>
-                            <DbtrAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></DbtrAgt>
+                            <DbtrAgt>
+                                <FinInstnId>
+                                    <BICFI>999057</BICFI>
+                                    <ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId>
+                                </FinInstnId>
+                            </DbtrAgt>
                             <CdtTrfTx>
                                 <PmtId><EndToEndId>GSF035985837-E2E</EndToEndId></PmtId>
                                 <Amt><InstdAmt Ccy="NGN">100.00</InstdAmt></Amt>
-                                <CdtrAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></CdtrAgt>
+                                <CdtrAgt>
+                                    <FinInstnId>
+                                        <BICFI>999058</BICFI>
+                                        <ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId>
+                                    </FinInstnId>
+                                </CdtrAgt>
                                 <Cdtr><Nm>Client Name</Nm></Cdtr>
                                 <CdtrAcct><Id><IBAN>1119384738</IBAN></Id><Nm>Client Name</Nm></CdtrAcct>
                                 <Purp><Prtry>Invoice Funding</Prtry></Purp>
@@ -1249,6 +1265,12 @@ public class IsoMessageRegistry {
                                         <IdValue>22222222222</IdValue>
                                         <AccountTier>1</AccountTier>
                                     </DebtorInfo>
+                                    <DebtorMetadata>
+                                        <BiometricData></BiometricData>
+                                        <AdrLine>Marina</AdrLine>
+                                        <PhneNb>08012345678</PhneNb>
+                                        <EmailAdr>mt@nibss.com</EmailAdr>
+                                    </DebtorMetadata>
                                     <CreditorInfo>
                                         <AccountDesignation>1</AccountDesignation>
                                         <IdType>BVN</IdType>

@@ -59,7 +59,8 @@ public class MessagePipelineService {
 
     public XmlGenerationResponseDto generatePaymentActivationPain013(PaymentActivationRequestDto requestDto) throws Exception {
         String msgId = generateMsgId(requestDto.getSourceId());
-        String endToEndId = generateEndToEndId(requestDto.getSourceId());
+        String endToEndId = requestDto.getEndToEndId() != null && !requestDto.getEndToEndId().trim().isEmpty()
+                ? requestDto.getEndToEndId().trim() : generateEndToEndId(requestDto.getSourceId());
         PaymentActivation model = PaymentActivationXmlGenerator.generate(requestDto, msgId, endToEndId);
         return buildXmlGenerationResponse("pain.013", msgId, model);
     }
