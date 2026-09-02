@@ -19,6 +19,7 @@ public class MandateAmendmentRequestDto {
     private String amdmntRsnProprietary;
     
     // Mandate Info
+    private String mandateId;
     private String orgnlMndtId; // Original Mandate ID
     private String sequenceType;
     private String frequencyType;
@@ -31,12 +32,14 @@ public class MandateAmendmentRequestDto {
 
     // Creditor Info
     private String creditorName;
+    private String creditorAccountName;
     private String creditorAccountNumber;
     private String creditorAgentBIC;
     private String creditorAgentMemberId;
 
     // Debtor Info
     private String debtorName;
+    private String debtorAccountName;
     private String debtorAccountNumber;
     private String debtorAgentBIC;
     private String debtorAgentMemberId;

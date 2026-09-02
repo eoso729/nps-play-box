@@ -2067,6 +2067,76 @@ public class XmlValidationEngine {
             }
         }
 
+        // 5g. Cross-validate pain.010 specific rules (MndtId == OrgnlMndtId, Date range)
+        if (key.contains("pain.010")) {
+            // Check MndtId == OrgnlMndtId
+            List<Element> mndtIdList = findElementsByPath(doc, "Mndt.MndtId");
+            List<Element> orgnlMndtIdList = findElementsByPath(doc, "OrgnlMndt.OrgnlMndtId");
+            if (!mndtIdList.isEmpty() && !orgnlMndtIdList.isEmpty()) {
+                Element mndtIdElem = mndtIdList.get(0);
+                String mndtIdVal = mndtIdElem.getTextContent() != null ? mndtIdElem.getTextContent().trim() : "";
+                Element orgnlMndtIdElem = orgnlMndtIdList.get(0);
+                String orgnlMndtIdVal = orgnlMndtIdElem.getTextContent() != null ? orgnlMndtIdElem.getTextContent().trim() : "";
+
+                if (!mndtIdVal.isEmpty() && !orgnlMndtIdVal.isEmpty()) {
+                    if (!mndtIdVal.equals(orgnlMndtIdVal)) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-MNDTID-MISMATCH-" + getNodeLine(mndtIdElem))
+                                .severity("ERROR")
+                                .category("BUSINESS_RULE")
+                                .xpath(getElementXPath(mndtIdElem))
+                                .fieldPath("MndtAmdmntReq.UndrlygAmdmntDtls.Mndt.MndtId")
+                                .fieldName("Mandate ID")
+                                .lineNumber(getNodeLine(mndtIdElem))
+                                .columnNumber(getNodeCol(mndtIdElem))
+                                .currentValue(mndtIdVal)
+                                .expected(orgnlMndtIdVal)
+                                .message("Amended Mandate ID <Mndt><MndtId> ('" + mndtIdVal + "') must match Original Mandate ID <OrgnlMndt><OrgnlMndtId> ('" + orgnlMndtIdVal + "').")
+                                .ruleCode("MANDATE_ID_MISMATCH")
+                                .autoFixable(true)
+                                .build());
+                    } else {
+                        passedRules.add("Amended Mandate ID matches Original Mandate ID (" + orgnlMndtIdVal + ")");
+                    }
+                }
+            }
+
+            // Date order check
+            List<Element> frstDtList = findElementsByPath(doc, "Ocrncs.FrstColltnDt");
+            List<Element> fnlDtList = findElementsByPath(doc, "Ocrncs.FnlColltnDt");
+            if (!frstDtList.isEmpty() && !fnlDtList.isEmpty()) {
+                Element frstElem = frstDtList.get(0);
+                Element fnlElem = fnlDtList.get(0);
+                String frstVal = frstElem.getTextContent() != null ? frstElem.getTextContent().trim() : "";
+                String fnlVal = fnlElem.getTextContent() != null ? fnlElem.getTextContent().trim() : "";
+                if (!frstVal.isEmpty() && !fnlVal.isEmpty()) {
+                    try {
+                        LocalDate d1 = LocalDate.parse(frstVal.replace("Z", ""));
+                        LocalDate d2 = LocalDate.parse(fnlVal.replace("Z", ""));
+                        if (d2.isBefore(d1)) {
+                            issues.add(ValidationIssueDto.builder()
+                                    .id("ERR-DATE-ORDER-" + getNodeLine(fnlElem))
+                                    .severity("ERROR")
+                                    .category("BUSINESS_RULE")
+                                    .xpath(getElementXPath(fnlElem))
+                                    .fieldPath("Mndt.Ocrncs.FnlColltnDt")
+                                    .fieldName("Final Collection Date")
+                                    .lineNumber(getNodeLine(fnlElem))
+                                    .columnNumber(getNodeCol(fnlElem))
+                                    .currentValue(fnlVal)
+                                    .expected("On or after " + frstVal)
+                                    .message("Final collection date (" + fnlVal + ") cannot be earlier than first collection date (" + frstVal + ").")
+                                    .ruleCode("DATE_RANGE_INVALID")
+                                    .autoFixable(false)
+                                    .build());
+                        } else {
+                            passedRules.add("Mandate collection date range is valid (" + frstVal + " to " + fnlVal + ")");
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
         // 6. Cross-validate Agent FinInstnId containers in all messages
         validateAgentFinInstnId(doc, "Assgnr", issues, passedRules);
         validateAgentFinInstnId(doc, "Assgne", issues, passedRules);

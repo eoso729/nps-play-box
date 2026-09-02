@@ -852,6 +852,27 @@ public class XmlAutoFixEngine {
             syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);
         }
 
+        if (key.contains("pain.010")) {
+            NodeList orgnlMndtNodes = doc.getElementsByTagName("OrgnlMndtId");
+            if (orgnlMndtNodes.getLength() == 0) orgnlMndtNodes = doc.getElementsByTagNameNS("*", "OrgnlMndtId");
+            NodeList mndtNodes = doc.getElementsByTagName("MndtId");
+            if (mndtNodes.getLength() == 0) mndtNodes = doc.getElementsByTagNameNS("*", "MndtId");
+
+            if (orgnlMndtNodes.getLength() > 0 && mndtNodes.getLength() > 0) {
+                String orgnlMndtVal = orgnlMndtNodes.item(0).getTextContent();
+                if (orgnlMndtVal != null && !orgnlMndtVal.trim().isEmpty()) {
+                    orgnlMndtVal = orgnlMndtVal.trim();
+                    Element mndtElem = (Element) mndtNodes.item(0);
+                    if (!orgnlMndtVal.equals(mndtElem.getTextContent())) {
+                        mndtElem.setTextContent(orgnlMndtVal);
+                        fixesApplied.add("Synchronized Amended Mandate ID <Mndt><MndtId> to match Original Mandate ID (" + orgnlMndtVal + ").");
+                    }
+                }
+            }
+            syncAgentBicfiWithMmbId(doc, "CdtrAgt", fixesApplied);
+            syncAgentBicfiWithMmbId(doc, "DbtrAgt", fixesApplied);
+        }
+
         // Global Agent BICFI sync for any remaining agents
         syncAgentBicfiWithMmbId(doc, "InstgAgt", fixesApplied);
         syncAgentBicfiWithMmbId(doc, "InstdAgt", fixesApplied);

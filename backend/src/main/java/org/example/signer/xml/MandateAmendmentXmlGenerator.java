@@ -46,7 +46,10 @@ public class MandateAmendmentXmlGenerator {
         
         // New Mandate
         MandateAmendment.Mndt mndt = new MandateAmendment.Mndt();
-        String mndtId = requestDto.getOrgnlMndtId() != null ? requestDto.getOrgnlMndtId() : "MNDT-RCUR-00061";
+        String mndtId = requestDto.getMandateId() != null && !requestDto.getMandateId().trim().isEmpty()
+                ? requestDto.getMandateId().trim()
+                : (requestDto.getOrgnlMndtId() != null && !requestDto.getOrgnlMndtId().trim().isEmpty()
+                        ? requestDto.getOrgnlMndtId().trim() : "MNDT-RCUR-00061");
         mndt.setMndtId(mndtId);
         
         // Occurrences
@@ -73,13 +76,16 @@ public class MandateAmendmentXmlGenerator {
         MandateAmendment.AcctId cdtrAcctId = new MandateAmendment.AcctId();
         cdtrAcctId.setIban(requestDto.getCreditorAccountNumber() != null ? requestDto.getCreditorAccountNumber() : "3232444422");
         cdtrAcct.setId(cdtrAcctId);
-        cdtrAcct.setNm(cdrNm);
+        String cdrAcctNm = requestDto.getCreditorAccountName() != null && !requestDto.getCreditorAccountName().trim().isEmpty()
+                ? requestDto.getCreditorAccountName().trim() : cdrNm;
+        cdtrAcct.setNm(cdrAcctNm);
         mndt.setCdtrAcct(cdtrAcct);
         
         // Creditor Agent
         String srcId = requestDto.getSourceId() != null ? requestDto.getSourceId() : "999998";
-        String cdtrBic = requestDto.getCreditorAgentBIC() != null ? requestDto.getCreditorAgentBIC() : "AA123456";
         String cdtrMmbId = requestDto.getCreditorAgentMemberId() != null ? requestDto.getCreditorAgentMemberId() : srcId;
+        String cdtrBic = requestDto.getCreditorAgentBIC() != null && !requestDto.getCreditorAgentBIC().trim().isEmpty()
+                ? requestDto.getCreditorAgentBIC().trim() : cdtrMmbId;
         
         MandateAmendment.CdtrAgt cdtrAgt = new MandateAmendment.CdtrAgt();
         cdtrAgt.setFinInstnId(createFinInstnId(cdtrBic, cdtrMmbId));
@@ -96,13 +102,16 @@ public class MandateAmendmentXmlGenerator {
         MandateAmendment.AcctId dbtrAcctId = new MandateAmendment.AcctId();
         dbtrAcctId.setIban(requestDto.getDebtorAccountNumber() != null ? requestDto.getDebtorAccountNumber() : "4343211111");
         dbtrAcct.setId(dbtrAcctId);
-        dbtrAcct.setNm(dbtNm);
+        String dbtAcctNm = requestDto.getDebtorAccountName() != null && !requestDto.getDebtorAccountName().trim().isEmpty()
+                ? requestDto.getDebtorAccountName().trim() : dbtNm;
+        dbtrAcct.setNm(dbtAcctNm);
         mndt.setDbtrAcct(dbtrAcct);
         
         // Debtor Agent
         String destId = requestDto.getDestinationId() != null ? requestDto.getDestinationId() : "999997";
-        String dbtrBic = requestDto.getDebtorAgentBIC() != null ? requestDto.getDebtorAgentBIC() : "BB123456";
         String dbtrMmbId = requestDto.getDebtorAgentMemberId() != null ? requestDto.getDebtorAgentMemberId() : destId;
+        String dbtrBic = requestDto.getDebtorAgentBIC() != null && !requestDto.getDebtorAgentBIC().trim().isEmpty()
+                ? requestDto.getDebtorAgentBIC().trim() : dbtrMmbId;
         
         MandateAmendment.DbtrAgt dbtrAgt = new MandateAmendment.DbtrAgt();
         dbtrAgt.setFinInstnId(createFinInstnId(dbtrBic, dbtrMmbId));
@@ -112,7 +121,9 @@ public class MandateAmendmentXmlGenerator {
         
         // Original Mandate
         MandateAmendment.OrgnlMndt orgnlMndt = new MandateAmendment.OrgnlMndt();
-        orgnlMndt.setOrgnlMndtId(mndtId);
+        String orgnlMndtId = requestDto.getOrgnlMndtId() != null && !requestDto.getOrgnlMndtId().trim().isEmpty()
+                ? requestDto.getOrgnlMndtId().trim() : mndtId;
+        orgnlMndt.setOrgnlMndtId(orgnlMndtId);
         undrlygAmdmntDtls.setOrgnlMndt(orgnlMndt);
         
         undrlygAmdmntDtlsList.add(undrlygAmdmntDtls);
@@ -124,7 +135,9 @@ public class MandateAmendmentXmlGenerator {
 
     private static MandateAmendment.FinInstnId createFinInstnId(String bic, String memberId) {
         MandateAmendment.FinInstnId finInstnId = new MandateAmendment.FinInstnId();
-        finInstnId.setBicfi(bic);
+        if (bic != null && !bic.trim().isEmpty()) {
+            finInstnId.setBicfi(bic.trim());
+        }
         MandateAmendment.ClrSysMmbId clrSysMmbId = new MandateAmendment.ClrSysMmbId();
         clrSysMmbId.setMmbId(memberId);
         finInstnId.setClrSysMmbId(clrSysMmbId);

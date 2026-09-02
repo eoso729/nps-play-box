@@ -761,18 +761,22 @@ public class IsoMessageRegistry {
                 new IsoFieldDef("Original Message Name ID", "UndrlygAmdmntDtls.OrgnlMsgInf.MsgNmId", "//OrgnlMsgInf/MsgNmId", "pain.009.001.08", "String", 35, true, false, null, "Original Message Name ID"),
                 new IsoFieldDef("Original Message Creation DateTime", "UndrlygAmdmntDtls.OrgnlMsgInf.CreDtTm", "//OrgnlMsgInf/CreDtTm", "2025-12-11T16:19:15.342+01:00", "DateTime", 35, true, false, "UTC1_DATETIME", "Original creation timestamp"),
                 new IsoFieldDef("Amendment Reason Code", "UndrlygAmdmntDtls.AmdmntRsn.Rsn.Cd", "//AmdmntRsn/Rsn/Cd", "AC04", "String", 4, true, false, "REASON_CODE", "Amendment Reason Code"),
+                new IsoFieldDef("Amendment Reason Description", "UndrlygAmdmntDtls.AmdmntRsn.Rsn.Prtry", "//AmdmntRsn/Rsn/Prtry", "Debtor Info update", "String", 100, false, false, null, "Amendment Reason Description"),
                 new IsoFieldDef("Mandate ID", "UndrlygAmdmntDtls.Mndt.MndtId", "//UndrlygAmdmntDtls/Mndt/MndtId", "MNDT-RCUR-00001", "String", 35, true, false, null, "Mandate ID"),
                 new IsoFieldDef("Sequence Type", "UndrlygAmdmntDtls.Mndt.Ocrncs.SeqTp", "//UndrlygAmdmntDtls/Mndt/Ocrncs/SeqTp", "RCUR", "Enum", 4, true, false, "SEQUENCE_TYPE", "Sequence Type"),
                 new IsoFieldDef("Frequency Type", "UndrlygAmdmntDtls.Mndt.Ocrncs.Frqcy.Tp", "//UndrlygAmdmntDtls/Mndt/Ocrncs/Frqcy/Tp", "WEEK", "Enum", 4, true, false, "FREQUENCY_TYPE", "Frequency Type"),
                 new IsoFieldDef("First Collection Date", "UndrlygAmdmntDtls.Mndt.Ocrncs.FrstColltnDt", "//UndrlygAmdmntDtls/Mndt/Ocrncs/FrstColltnDt", "2025-09-08", "Date", 10, true, false, "DATE", "First collection date"),
                 new IsoFieldDef("Final Collection Date", "UndrlygAmdmntDtls.Mndt.Ocrncs.FnlColltnDt", "//UndrlygAmdmntDtls/Mndt/Ocrncs/FnlColltnDt", "2025-12-31", "Date", 10, true, false, "DATE", "Final collection date"),
+                new IsoFieldDef("Tracking Indicator", "UndrlygAmdmntDtls.Mndt.TrckgInd", "//Mndt/TrckgInd", "false", "Boolean", 5, false, false, null, "Tracking indicator"),
                 new IsoFieldDef("Creditor Name", "UndrlygAmdmntDtls.Mndt.Cdtr.Nm", "//UndrlygAmdmntDtls/Mndt/Cdtr/Nm", "ABC Tech Pvt Ltd", "String", 100, true, false, null, "Creditor Name"),
                 new IsoFieldDef("Creditor Account Number (IBAN)", "UndrlygAmdmntDtls.Mndt.CdtrAcct.Id.IBAN", "//UndrlygAmdmntDtls/Mndt/CdtrAcct/Id/IBAN", "3232444422", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Creditor Account Name", "UndrlygAmdmntDtls.Mndt.CdtrAcct.Nm", "//UndrlygAmdmntDtls/Mndt/CdtrAcct/Nm", "ABC Tech Pvt Ltd", "String", 100, true, false, null, "Creditor Account Name"),
+                new IsoFieldDef("Creditor Agent BICFI", "UndrlygAmdmntDtls.Mndt.CdtrAgt.FinInstnId.BICFI", "//UndrlygAmdmntDtls/Mndt/CdtrAgt/FinInstnId/BICFI", "999058", "String", 11, false, false, "INSTITUTION_CODE", "Creditor Agent BICFI"),
                 new IsoFieldDef("Creditor Agent Member ID", "UndrlygAmdmntDtls.Mndt.CdtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//UndrlygAmdmntDtls/Mndt/CdtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999058", "String", 6, true, false, "MEMBER_ID", "Creditor Agent Member ID"),
                 new IsoFieldDef("Debtor Name", "UndrlygAmdmntDtls.Mndt.Dbtr.Nm", "//UndrlygAmdmntDtls/Mndt/Dbtr/Nm", "Mr. Fred", "String", 100, true, false, null, "Debtor Name"),
                 new IsoFieldDef("Debtor Account Number (IBAN)", "UndrlygAmdmntDtls.Mndt.DbtrAcct.Id.IBAN", "//UndrlygAmdmntDtls/Mndt/DbtrAcct/Id/IBAN", "4343211111", "String", 10, true, false, "NUBAN", "10-digit NUBAN"),
                 new IsoFieldDef("Debtor Account Name", "UndrlygAmdmntDtls.Mndt.DbtrAcct.Nm", "//UndrlygAmdmntDtls/Mndt/DbtrAcct/Nm", "Mr. Fred", "String", 100, true, false, null, "Debtor Account Name"),
+                new IsoFieldDef("Debtor Agent BICFI", "UndrlygAmdmntDtls.Mndt.DbtrAgt.FinInstnId.BICFI", "//UndrlygAmdmntDtls/Mndt/DbtrAgt/FinInstnId/BICFI", "999057", "String", 11, false, false, "INSTITUTION_CODE", "Debtor Agent BICFI"),
                 new IsoFieldDef("Debtor Agent Member ID", "UndrlygAmdmntDtls.Mndt.DbtrAgt.FinInstnId.ClrSysMmbId.MmbId", "//UndrlygAmdmntDtls/Mndt/DbtrAgt/FinInstnId/ClrSysMmbId/MmbId", "999057", "String", 6, true, false, "MEMBER_ID", "Debtor Agent Member ID"),
                 new IsoFieldDef("Original Mandate ID", "UndrlygAmdmntDtls.OrgnlMndt.OrgnlMndtId", "//OrgnlMndt/OrgnlMndtId", "MNDT-RCUR-00001", "String", 35, true, false, null, "Original Mandate ID")
         );
@@ -792,7 +796,12 @@ public class IsoMessageRegistry {
                                 <MsgNmId>pain.009.001.08</MsgNmId>
                                 <CreDtTm>2025-12-11T16:19:15.342+01:00</CreDtTm>
                             </OrgnlMsgInf>
-                            <AmdmntRsn><Rsn><Cd>AC04</Cd></Rsn><Rsn><Prtry>Debtor Info update</Prtry></Rsn></AmdmntRsn>
+                            <AmdmntRsn>
+                                <Rsn>
+                                    <Cd>AC04</Cd>
+                                    <Prtry>Debtor Info update</Prtry>
+                                </Rsn>
+                            </AmdmntRsn>
                             <Mndt>
                                 <MndtId>MNDT-RCUR-00001</MndtId>
                                 <Ocrncs>
@@ -801,12 +810,23 @@ public class IsoMessageRegistry {
                                     <FrstColltnDt>2025-09-08</FrstColltnDt>
                                     <FnlColltnDt>2025-12-31</FnlColltnDt>
                                 </Ocrncs>
+                                <TrckgInd>false</TrckgInd>
                                 <Cdtr><Nm>ABC Tech Pvt Ltd</Nm></Cdtr>
                                 <CdtrAcct><Id><IBAN>3232444422</IBAN></Id><Nm>ABC Tech Pvt Ltd</Nm></CdtrAcct>
-                                <CdtrAgt><FinInstnId><ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId></FinInstnId></CdtrAgt>
+                                <CdtrAgt>
+                                    <FinInstnId>
+                                        <BICFI>999058</BICFI>
+                                        <ClrSysMmbId><MmbId>999058</MmbId></ClrSysMmbId>
+                                    </FinInstnId>
+                                </CdtrAgt>
                                 <Dbtr><Nm>Mr. Fred</Nm></Dbtr>
                                 <DbtrAcct><Id><IBAN>4343211111</IBAN></Id><Nm>Mr. Fred</Nm></DbtrAcct>
-                                <DbtrAgt><FinInstnId><ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId></FinInstnId></DbtrAgt>
+                                <DbtrAgt>
+                                    <FinInstnId>
+                                        <BICFI>999057</BICFI>
+                                        <ClrSysMmbId><MmbId>999057</MmbId></ClrSysMmbId>
+                                    </FinInstnId>
+                                </DbtrAgt>
                             </Mndt>
                             <OrgnlMndt><OrgnlMndtId>MNDT-RCUR-00001</OrgnlMndtId></OrgnlMndt>
                         </UndrlygAmdmntDtls>
