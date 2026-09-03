@@ -258,8 +258,8 @@ export const ORCHESTRATOR_FLOWS: FlowDefinition[] = [
  * Client-side fallback context resolution and prefill calculation
  */
 export function computeClientNextStepPrefill(
-  flowId: string,
-  targetStepIndex: number,
+  _flowId: string,
+  _targetStepIndex: number,
   targetMessageType: string,
   context: Record<string, string>,
   basePayload: Record<string, any>
