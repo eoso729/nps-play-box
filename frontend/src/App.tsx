@@ -7,6 +7,7 @@ import { AuthScreen } from './components/AuthScreen';
 import { WorkbenchPage } from './components/workbench/WorkbenchPage';
 import { XmlDiffChecker } from './components/workbench/XmlDiffChecker';
 import { XmlInspectorPage } from './components/inspector/XmlInspectorPage';
+import { FlowOrchestratorPage } from './components/orchestrator/FlowOrchestratorPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,10 @@ export const App: React.FC = () => {
               <Route path="/register" element={<AuthScreen />} />
               <Route path="/workbench" element={<WorkbenchPage />} />
               <Route path="/workbench/:messageId" element={<WorkbenchPage />} />
+              <Route path="/orchestrator" element={<FlowOrchestratorPage />} />
+              <Route path="/orchestrator/:flowId" element={<FlowOrchestratorPage />} />
+              <Route path="/flows" element={<FlowOrchestratorPage />} />
+              <Route path="/flows/:flowId" element={<FlowOrchestratorPage />} />
               <Route path="/inspector" element={<XmlInspectorPage />} />
               <Route path="/health-check" element={<XmlInspectorPage />} />
               <Route path="/fix-xml" element={<XmlInspectorPage />} />

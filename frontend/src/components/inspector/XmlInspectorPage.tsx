@@ -281,6 +281,13 @@ export const XmlInspectorPage: React.FC = () => {
           </button>
           <button
             type="button"
+            onClick={() => navigate('/orchestrator')}
+            className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all cursor-pointer"
+          >
+            Flow Orchestrator
+          </button>
+          <button
+            type="button"
             className="px-3.5 py-1.5 text-[12px] font-bold rounded-lg bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)] flex items-center gap-1.5 cursor-default"
           >
             <span className="w-2 h-2 rounded-full bg-[#16a34a]"></span>

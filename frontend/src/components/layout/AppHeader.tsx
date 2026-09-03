@@ -83,6 +83,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </button>
         <button
           type="button"
+          onClick={() => navigate('/orchestrator')}
+          className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+        >
+          <span className="text-[12px]">⚡</span>
+          Flow Orchestrator
+        </button>
+        <button
+          type="button"
           onClick={() => navigate('/inspector')}
           className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
         >
