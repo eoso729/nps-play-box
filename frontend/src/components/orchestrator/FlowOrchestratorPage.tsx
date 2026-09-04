@@ -12,6 +12,9 @@ import {
   StepExecutionStatus,
 } from '../../types/orchestrator';
 import { executeFlowStep, autoRunWorkflow } from '../../api/orchestrator';
+import { MESSAGE_CONFIGS } from '../workbench/messageConfigs';
+import { FormFieldset } from '../workbench/MessageConfigurator/FormFieldset';
+import { validateFormField, validateMessageForm } from '../../utils/formValidation';
 
 export const FlowOrchestratorPage: React.FC = () => {
   const { user } = useAuth();
@@ -36,10 +39,10 @@ export const FlowOrchestratorPage: React.FC = () => {
   // Variant selections (e.g. pain.008 vs pacs.003 for direct debit step 3)
   const [stepVariants, setStepVariants] = useState<Record<number, string>>({});
 
-  // Form payloads per step
+  // Complete form payloads per step (mirroring Pipeline Execution)
   const [stepPayloads, setStepPayloads] = useState<Record<number, Record<string, any>>>({});
 
-  // Auto-injected field keys tracking
+  // Auto-injected field keys tracking per step
   const [autoInjectedKeysByStep, setAutoInjectedKeysByStep] = useState<Record<number, Set<string>>>({});
 
   // Cumulative session context
@@ -51,7 +54,12 @@ export const FlowOrchestratorPage: React.FC = () => {
   // Step statuses: pending | running | completed | error
   const [stepStatuses, setStepStatuses] = useState<Record<number, StepExecutionStatus>>({});
 
-  // UI state
+  // Form field errors & touched states for current step
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [showValidationSummary, setShowValidationSummary] = useState<boolean>(false);
+
+  // Inspector & modal states
   const [activeInspectorTab, setActiveInspectorTab] = useState<'plainXml' | 'signedXml' | 'response' | 'context'>('plainXml');
   const [isAutoRunning, setIsAutoRunning] = useState(false);
   const [isExecutingStep, setIsExecutingStep] = useState(false);
@@ -69,29 +77,46 @@ export const FlowOrchestratorPage: React.FC = () => {
     }
   }, [paramFlowId]);
 
-  // Initialize flow state
+  // Initialize flow state using full spec prefill from MESSAGE_CONFIGS
   const initFlow = (flow: FlowDefinition) => {
     const initialPayloads: Record<number, Record<string, any>> = {};
     const initialStatuses: Record<number, StepExecutionStatus> = {};
+    const initialInjected: Record<number, Set<string>> = {};
+
     flow.steps.forEach((step, idx) => {
-      initialPayloads[idx] = { ...step.defaultPayload };
+      const msgType = stepVariants[idx] || step.messageType;
+      const specPrefill = MESSAGE_CONFIGS[msgType]?.prefill ? { ...MESSAGE_CONFIGS[msgType].prefill } : {};
+      initialPayloads[idx] = { ...specPrefill, ...step.defaultPayload };
       initialStatuses[idx] = 'pending';
+      initialInjected[idx] = new Set();
     });
+
     setStepPayloads(initialPayloads);
     setStepStatuses(initialStatuses);
+    setAutoInjectedKeysByStep(initialInjected);
     setStepResults({});
     setContext({});
     setActiveStepIndex(0);
-    setAutoInjectedKeysByStep({});
+    setErrors({});
+    setTouched({});
+    setShowValidationSummary(false);
   };
 
   useEffect(() => {
     initFlow(activeFlow);
   }, [activeFlowId]);
 
+  // Reset errors/touched when active step or variant changes
+  useEffect(() => {
+    setErrors({});
+    setTouched({});
+    setShowValidationSummary(false);
+  }, [activeStepIndex, stepVariants]);
+
   const currentStep: FlowStepDefinition = activeFlow.steps[activeStepIndex] || activeFlow.steps[0];
   const activeMessageType = stepVariants[activeStepIndex] || currentStep.messageType;
-  const currentPayload = stepPayloads[activeStepIndex] || {};
+  const currentConfig = MESSAGE_CONFIGS[activeMessageType];
+  const currentPayload = stepPayloads[activeStepIndex] || (currentConfig?.prefill ? { ...currentConfig.prefill } : {});
   const currentResult = stepResults[activeStepIndex];
 
   // Switch flow
@@ -100,17 +125,38 @@ export const FlowOrchestratorPage: React.FC = () => {
     navigate(`/orchestrator/${newFlowId}`);
   };
 
-  // Update a form field in the current step
+  // Update a form field in the current step with real-time validation
   const handleFieldChange = (key: string, value: any) => {
     setStepPayloads(prev => ({
       ...prev,
       [activeStepIndex]: {
-        ...prev[activeStepIndex],
+        ...(prev[activeStepIndex] || {}),
         [key]: value,
       },
     }));
 
-    // If user manually changed an auto-injected field, clear its sparkle
+    // If field has been touched, validate immediately
+    if (touched[key] && currentConfig) {
+      let fieldDef;
+      for (const sec of currentConfig.sections) {
+        fieldDef = sec.fields.find(f => f.key === key);
+        if (fieldDef) break;
+      }
+      if (fieldDef) {
+        const res = validateFormField(fieldDef, value);
+        setErrors(prevErr => {
+          const nextErr = { ...prevErr };
+          if (!res.valid && res.error) {
+            nextErr[key] = res.error;
+          } else {
+            delete nextErr[key];
+          }
+          return nextErr;
+        });
+      }
+    }
+
+    // If user edited an auto-injected field, clear its sparkle
     if (autoInjectedKeysByStep[activeStepIndex]?.has(key)) {
       setAutoInjectedKeysByStep(prev => {
         const nextSet = new Set(prev[activeStepIndex]);
@@ -120,25 +166,135 @@ export const FlowOrchestratorPage: React.FC = () => {
     }
   };
 
-  // Switch message variant for current step
+  // On blur field validation
+  const handleFieldBlur = (key: string) => {
+    setTouched(prev => ({ ...prev, [key]: true }));
+
+    if (currentConfig) {
+      let fieldDef;
+      for (const sec of currentConfig.sections) {
+        fieldDef = sec.fields.find(f => f.key === key);
+        if (fieldDef) break;
+      }
+      if (fieldDef) {
+        const res = validateFormField(fieldDef, currentPayload[key]);
+        setErrors(prevErr => {
+          const nextErr = { ...prevErr };
+          if (!res.valid && res.error) {
+            nextErr[key] = res.error;
+          } else {
+            delete nextErr[key];
+          }
+          return nextErr;
+        });
+      }
+    }
+  };
+
+  // Reset form to spec prefill plus context overlay
+  const handleResetToPrefill = () => {
+    const specPrefill = currentConfig?.prefill ? { ...currentConfig.prefill } : {};
+    const { prefill, autoInjectedKeys } = computeClientNextStepPrefill(
+      activeFlowId,
+      activeStepIndex,
+      activeMessageType,
+      context,
+      specPrefill
+    );
+
+    setStepPayloads(prev => ({ ...prev, [activeStepIndex]: prefill }));
+    setAutoInjectedKeysByStep(prev => ({ ...prev, [activeStepIndex]: autoInjectedKeys }));
+    setErrors({});
+    setTouched({});
+    setShowValidationSummary(false);
+    showToast(`Loaded pre-filled spec data for ${activeMessageType}`, 'info');
+  };
+
+  // Clear current step form
+  const handleClearForm = () => {
+    setStepPayloads(prev => ({ ...prev, [activeStepIndex]: {} }));
+    setAutoInjectedKeysByStep(prev => ({ ...prev, [activeStepIndex]: new Set() }));
+    setErrors({});
+    setTouched({});
+    setShowValidationSummary(false);
+    showToast(`Cleared form for Step ${activeStepIndex + 1}`, 'info');
+  };
+
+  // Switch message variant for current step (e.g. pain.008 vs pacs.003)
   const handleVariantChange = (msgType: string) => {
     setStepVariants(prev => ({ ...prev, [activeStepIndex]: msgType }));
-    // Re-evaluate prefill for the selected variant
+    const specPrefill = MESSAGE_CONFIGS[msgType]?.prefill ? { ...MESSAGE_CONFIGS[msgType].prefill } : {};
     const { prefill, autoInjectedKeys } = computeClientNextStepPrefill(
       activeFlowId,
       activeStepIndex,
       msgType,
       context,
-      stepPayloads[activeStepIndex] || {}
+      specPrefill
     );
     setStepPayloads(prev => ({ ...prev, [activeStepIndex]: prefill }));
     setAutoInjectedKeysByStep(prev => ({ ...prev, [activeStepIndex]: autoInjectedKeys }));
+    setErrors({});
+    setTouched({});
+    setShowValidationSummary(false);
+  };
+
+  // Build clean payload across all sections (mirroring Pipeline Execution MessageConfigurator)
+  const buildCurrentPayload = (): Record<string, any> => {
+    const payload: Record<string, any> = {};
+    if (!currentConfig) return currentPayload;
+
+    currentConfig.sections.forEach(section => {
+      section.fields.forEach(field => {
+        const val = currentPayload[field.key];
+        if (val !== undefined && val !== '') {
+          if (field.type === 'number') {
+            const num = parseFloat(val);
+            if (!isNaN(num)) payload[field.key] = num;
+          } else {
+            payload[field.key] = val;
+          }
+        }
+      });
+    });
+
+    // Also preserve any additional keys in currentPayload (e.g. custom parameters)
+    Object.keys(currentPayload).forEach(k => {
+      if (payload[k] === undefined && currentPayload[k] !== undefined && currentPayload[k] !== '') {
+        payload[k] = currentPayload[k];
+      }
+    });
+
+    return payload;
   };
 
   // Execute single step (GENERATE or SEND)
   const handleExecuteStep = async (action: 'GENERATE' | 'SEND') => {
+    if (!currentConfig) return;
+
+    // 1. Validate all fields across all sections, exactly like MessageConfigurator
+    const formErrors = validateMessageForm(currentConfig.sections, currentPayload);
+    const errorKeys = Object.keys(formErrors);
+
+    if (errorKeys.length > 0) {
+      const allTouched: Record<string, boolean> = { ...touched };
+      currentConfig.sections.forEach(sec => {
+        sec.fields.forEach(f => {
+          allTouched[f.key] = true;
+        });
+      });
+
+      setTouched(allTouched);
+      setErrors(formErrors);
+      setShowValidationSummary(true);
+      showToast(`${errorKeys.length} validation issue(s) detected in ${activeMessageType}. Please check fields.`, 'error');
+      return;
+    }
+
+    setShowValidationSummary(false);
     setIsExecutingStep(true);
     setStepStatuses(prev => ({ ...prev, [activeStepIndex]: 'running' }));
+
+    const payload = buildCurrentPayload();
 
     try {
       const res = await executeFlowStep(
@@ -146,7 +302,7 @@ export const FlowOrchestratorPage: React.FC = () => {
         activeStepIndex,
         activeMessageType,
         action,
-        currentPayload,
+        payload,
         context
       );
 
@@ -163,17 +319,22 @@ export const FlowOrchestratorPage: React.FC = () => {
           'success'
         );
 
-        // Pre-fill next step automatically if one exists
+        // Pre-fill next step automatically with full spec data + new context
         const nextIdx = activeStepIndex + 1;
         if (nextIdx < activeFlow.steps.length) {
           const nextStepDef = activeFlow.steps[nextIdx];
           const nextMsgType = stepVariants[nextIdx] || nextStepDef.messageType;
+          const nextBaseSpec = MESSAGE_CONFIGS[nextMsgType]?.prefill
+            ? { ...MESSAGE_CONFIGS[nextMsgType].prefill }
+            : {};
+          const existingNextPayload = stepPayloads[nextIdx] || {};
+
           const { prefill, autoInjectedKeys } = computeClientNextStepPrefill(
             activeFlowId,
             nextIdx,
             nextMsgType,
             newContext,
-            stepPayloads[nextIdx] || nextStepDef.defaultPayload
+            { ...nextBaseSpec, ...existingNextPayload }
           );
           setStepPayloads(prev => ({ ...prev, [nextIdx]: prefill }));
           setAutoInjectedKeysByStep(prev => ({ ...prev, [nextIdx]: autoInjectedKeys }));
@@ -196,23 +357,22 @@ export const FlowOrchestratorPage: React.FC = () => {
     if (activeStepIndex + 1 < activeFlow.steps.length) {
       const nextIdx = activeStepIndex + 1;
       setActiveStepIndex(nextIdx);
-      // Auto-switch inspector to plain XML if the next step already has results
       if (stepResults[nextIdx]?.plainXml) {
         setActiveInspectorTab('plainXml');
       }
     }
   };
 
-  // 1-Click Auto Run Flow
+  // 1-Click Auto Run Flow with full spec data and dynamic context
   const handleAutoRun = async () => {
     setIsAutoRunning(true);
     showToast(`Starting automated journey for ${activeFlow.name}...`, 'info');
 
     try {
-      const res = await autoRunWorkflow(activeFlowId, 'GENERATE', stepPayloads[0], context);
+      const step0Payload = stepPayloads[0] || (MESSAGE_CONFIGS[activeFlow.steps[0].messageType]?.prefill ? { ...MESSAGE_CONFIGS[activeFlow.steps[0].messageType].prefill } : {});
+      const res = await autoRunWorkflow(activeFlowId, 'GENERATE', step0Payload, context);
 
       if (res.success) {
-        // Apply transcript results to steps
         const updatedResults: Record<number, StepExecutionResult> = {};
         const updatedStatuses: Record<number, StepExecutionStatus> = {};
 
@@ -241,7 +401,7 @@ export const FlowOrchestratorPage: React.FC = () => {
       }
     } catch (err: any) {
       console.warn('Auto run failed, executing sequential fallback', err);
-      // Fallback: run each step sequentially in frontend
+      // Fallback: run each step sequentially in frontend with full spec prefill
       let currentCtx = { ...context };
       for (let i = 0; i < activeFlow.steps.length; i++) {
         setActiveStepIndex(i);
@@ -249,12 +409,13 @@ export const FlowOrchestratorPage: React.FC = () => {
         const stepDef = activeFlow.steps[i];
         const msgType = stepVariants[i] || stepDef.messageType;
 
+        const specBase = MESSAGE_CONFIGS[msgType]?.prefill ? { ...MESSAGE_CONFIGS[msgType].prefill } : {};
         const { prefill, autoInjectedKeys } = computeClientNextStepPrefill(
           activeFlowId,
           i,
           msgType,
           currentCtx,
-          stepPayloads[i] || stepDef.defaultPayload
+          { ...specBase, ...(stepPayloads[i] || {}) }
         );
         setStepPayloads(prev => ({ ...prev, [i]: prefill }));
         setAutoInjectedKeysByStep(prev => ({ ...prev, [i]: autoInjectedKeys }));
@@ -348,6 +509,7 @@ export const FlowOrchestratorPage: React.FC = () => {
 
   const completedStepsCount = Object.values(stepStatuses).filter(s => s === 'completed').length;
   const progressPercent = Math.round((completedStepsCount / activeFlow.steps.length) * 100);
+  const errorCount = useMemo(() => Object.keys(errors).length, [errors]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#f6f9f7] font-sans text-gray-800">
@@ -493,7 +655,7 @@ export const FlowOrchestratorPage: React.FC = () => {
             className="px-3 py-2 text-[12px] font-semibold text-gray-600 hover:text-gray-900 border border-[#e1e9e3] rounded-xl hover:bg-gray-50 transition-all cursor-pointer"
             title="Reset Journey"
           >
-            🔄 Reset
+            🔄 Reset Journey
           </button>
 
           <button
@@ -548,7 +710,6 @@ export const FlowOrchestratorPage: React.FC = () => {
                       : 'bg-white/70 border-gray-200 hover:bg-white text-gray-500'
                   }`}
                 >
-                  {/* Step Number Circle */}
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] flex-shrink-0 ${
                       hasCompleted
@@ -592,7 +753,7 @@ export const FlowOrchestratorPage: React.FC = () => {
       </div>
 
       {/* Active Session Context Bar (Shows live accumulated context variables) */}
-      <div className="bg-[#0b2818] border-b border-[#133d26] px-6 py-2.5 text-[#dff3e6] flex items-center justify-between flex-shrink-0 gap-4 overflow-x-auto">
+      <div className="bg-[#0b2818] border-b border-[#133d26] px-6 py-2 text-[#dff3e6] flex items-center justify-between flex-shrink-0 gap-4 overflow-x-auto">
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#7fb894] flex items-center gap-1">
             <span>🔗</span> Flow Context:
@@ -691,153 +852,165 @@ export const FlowOrchestratorPage: React.FC = () => {
 
       {/* Main Split Layout: Form Configurator on Left, Output & Inspector on Right */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Pane: Form Configurator */}
+        {/* Left Pane: Full Message Form Configurator (Exactly like Pipeline Execution) */}
         <div className="w-1/2 border-r border-[#e4e9e6] flex flex-col bg-white overflow-hidden">
-          {/* Step Header */}
-          <div className="p-5 border-b border-[#e4e9e6] bg-gradient-to-b from-[#fbfdfc] to-white flex-shrink-0">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-[16px] font-bold text-[#0f3a22] m-0">
-                    {currentStep.title}
-                  </h2>
-                  <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#e6f6ec] text-[#15803d] font-bold border border-[#c4ebd3]">
-                    {activeMessageType}
-                  </span>
-                </div>
-                <p className="text-[12px] text-[#6b7280] m-0 mt-1">
-                  {currentStep.description}
-                </p>
-              </div>
-
-              <div className="text-right flex-shrink-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#15803d] bg-[#e6f6ec] px-2.5 py-1 rounded-full border border-[#c4ebd3]">
-                  Role: {currentStep.role}
+          {/* Panel Header */}
+          <div className="px-5 py-3.5 border-b border-[#e4e9e6] bg-white flex items-center justify-between flex-shrink-0">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[14px] font-bold tracking-[0.2px] text-[#111827]">
+                  {currentStep.title}
+                </span>
+                <span
+                  className="text-[11px] font-bold px-2.5 py-0.5 rounded-[6px]"
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    background: '#e6f6ec',
+                    color: '#15803d',
+                  }}
+                >
+                  ISO: {currentConfig?.isoCode.toUpperCase() || activeMessageType}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#15803d] bg-[#e6f6ec] px-2 py-0.5 rounded-full border border-[#c4ebd3]">
+                  {currentStep.role}
                 </span>
               </div>
+              <p className="text-[11.5px] text-[#6b7280] m-0 mt-0.5">
+                {currentStep.description}
+              </p>
             </div>
 
-            {/* Step Message Variant Switcher (e.g. pain.008 vs pacs.003) */}
-            {currentStep.variantOptions && currentStep.variantOptions.length > 1 && (
-              <div className="mt-3.5 pt-3 border-t border-gray-100 flex items-center gap-2">
-                <span className="text-[11.5px] font-bold text-gray-700">Message Variant:</span>
-                <div className="flex bg-[#edf2ee] p-0.5 rounded-lg border border-[#e1e9e3]">
-                  {currentStep.variantOptions.map(variant => (
-                    <button
-                      key={variant.messageType}
-                      type="button"
-                      onClick={() => handleVariantChange(variant.messageType)}
-                      className={`px-2.5 py-1 text-[11.5px] font-semibold rounded-md transition-all cursor-pointer ${
-                        activeMessageType === variant.messageType
-                          ? 'bg-white text-[#15803d] shadow-sm font-bold'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      {variant.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Context Auto-Injected Notification Banner */}
-            {autoInjectedKeysByStep[activeStepIndex] && autoInjectedKeysByStep[activeStepIndex].size > 0 && (
-              <div className="mt-3 bg-[#e8f7ee] border border-[#aee4c3] rounded-xl px-3.5 py-2 flex items-center gap-2.5 text-[11.5px] text-[#0f5132]">
-                <span className="text-[14px]">✨</span>
-                <span>
-                  <strong>Context Auto-Populated:</strong> {autoInjectedKeysByStep[activeStepIndex].size} field(s) were automatically populated from previous workflow steps.
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleClearForm}
+                className="text-[12px] text-[#6b7280] hover:text-[#dc2626] cursor-pointer flex items-center gap-1 transition-colors bg-transparent border-0"
+              >
+                &#x21BA; Clear Form
+              </button>
+            </div>
           </div>
 
-          {/* Form Fields Scroll Area */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {Object.keys(currentPayload).map(fieldKey => {
-                const isAutoInjected = autoInjectedKeysByStep[activeStepIndex]?.has(fieldKey);
-                const value = currentPayload[fieldKey] ?? '';
-
-                // Determine formatted label
-                const label = fieldKey
-                  .replace(/([A-Z])/g, ' $1')
-                  .replace(/^./, str => str.toUpperCase());
-
-                return (
-                  <div
-                    key={fieldKey}
-                    className={`flex flex-col gap-1.5 ${
-                      fieldKey === 'narration' || fieldKey === 'purpose' || fieldKey === 'returnReasonInfo'
-                        ? 'col-span-2'
-                        : ''
+          {/* Variant Switcher (e.g. pain.008 vs pacs.003 for direct debit step 3) */}
+          {currentStep.variantOptions && currentStep.variantOptions.length > 1 && (
+            <div className="px-5 py-2.5 bg-[#f8faf9] border-b border-[#e4e9e6] flex items-center gap-2 flex-shrink-0">
+              <span className="text-[11.5px] font-bold text-gray-700">Message Variant:</span>
+              <div className="flex bg-[#edf2ee] p-0.5 rounded-lg border border-[#e1e9e3]">
+                {currentStep.variantOptions.map(variant => (
+                  <button
+                    key={variant.messageType}
+                    type="button"
+                    onClick={() => handleVariantChange(variant.messageType)}
+                    className={`px-2.5 py-1 text-[11.5px] font-semibold rounded-md transition-all cursor-pointer ${
+                      activeMessageType === variant.messageType
+                        ? 'bg-white text-[#15803d] shadow-sm font-bold'
+                        : 'text-gray-600 hover:text-gray-900'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <label className="text-[12px] font-semibold text-gray-700 flex items-center gap-1.5">
-                        {label}
-                        {isAutoInjected && (
-                          <span className="text-[9.5px] bg-[#e6f6ec] text-[#15803d] border border-[#c4ebd3] px-1.5 py-0.2 rounded font-bold">
-                            ✨ Context Mapped
-                          </span>
-                        )}
-                      </label>
-                    </div>
-
-                    <input
-                      type={typeof value === 'number' ? 'number' : 'text'}
-                      value={value}
-                      onChange={e =>
-                        handleFieldChange(
-                          fieldKey,
-                          typeof value === 'number' ? Number(e.target.value) : e.target.value
-                        )
-                      }
-                      className={`px-3 py-2 text-[12.5px] rounded-lg border transition-all font-mono ${
-                        isAutoInjected
-                          ? 'border-[#22a05a] bg-[#f7fdf9] text-[#0f3a22] focus:ring-2 focus:ring-[#22a05a]/30'
-                          : 'border-gray-300 bg-white text-gray-800 focus:border-[#22a05a] focus:ring-2 focus:ring-[#22a05a]/20'
-                      }`}
-                    />
-                  </div>
-                );
-              })}
+                    {variant.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Step Execution Action Bar */}
-          <div className="p-4 border-t border-[#e4e9e6] bg-[#fbfdfc] flex items-center justify-between gap-3 flex-shrink-0">
-            <div className="flex items-center gap-2">
+          {/* Validation Summary Warning (if errors exist upon submission) */}
+          {showValidationSummary && errorCount > 0 && (
+            <div className="bg-red-50 border-b border-red-200 px-5 py-2 text-[11.5px] text-red-800 flex items-center justify-between animate-fadeIn flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <span className="text-red-600 font-bold">⚠</span>
+                <span>
+                  <strong>{errorCount} field validation error{errorCount > 1 ? 's' : ''} found.</strong> Please review the highlighted fields before executing.
+                </span>
+              </div>
               <button
                 type="button"
-                onClick={() => handleExecuteStep('GENERATE')}
-                disabled={isExecutingStep || isAutoRunning}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#22a05a] hover:bg-[#15803d] text-white text-[12.5px] font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
+                onClick={() => setShowValidationSummary(false)}
+                className="text-red-500 hover:text-red-700 font-bold text-xs cursor-pointer"
               >
-                <span>⚡</span>
-                Generate XML
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleExecuteStep('SEND')}
-                disabled={isExecutingStep || isAutoRunning}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0f3a22] hover:bg-[#1a5534] text-white text-[12.5px] font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
-              >
-                <span>🚀</span>
-                Send to Pipeline
+                ✕
               </button>
             </div>
+          )}
 
-            {activeStepIndex + 1 < activeFlow.steps.length && (
-              <button
-                type="button"
-                onClick={handleProceedNext}
-                disabled={stepStatuses[activeStepIndex] !== 'completed'}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#22a05a] bg-white text-[#15803d] hover:bg-[#e6f6ec] text-[12.5px] font-bold transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none"
-              >
-                Proceed to Step {activeStepIndex + 2} ➔
-              </button>
+          {/* Context Auto-Injected Notification Banner */}
+          {autoInjectedKeysByStep[activeStepIndex] && autoInjectedKeysByStep[activeStepIndex].size > 0 && (
+            <div className="bg-[#e8f7ee] border-b border-[#aee4c3] px-5 py-2 flex items-center gap-2.5 text-[11.5px] text-[#0f5132] flex-shrink-0">
+              <span className="text-[14px]">✨</span>
+              <span>
+                <strong>Context Auto-Populated:</strong> {autoInjectedKeysByStep[activeStepIndex].size} field(s) were automatically injected from preceding steps. You can freely modify any value.
+              </span>
+            </div>
+          )}
+
+          {/* Scrollable Form Body with All Sections from MESSAGE_CONFIGS */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {currentConfig ? (
+              currentConfig.sections.map(section => (
+                <FormFieldset
+                  key={section.title}
+                  section={section}
+                  formData={currentPayload}
+                  errors={errors}
+                  touched={touched}
+                  onChange={handleFieldChange}
+                  onBlur={handleFieldBlur}
+                  injectedKeys={autoInjectedKeysByStep[activeStepIndex]}
+                />
+              ))
+            ) : (
+              <div className="p-4 text-gray-500">Configuration not found for {activeMessageType}</div>
             )}
+
+            {/* Action Bar (Prefill + Generate + Send + Proceed) */}
+            <div className="mt-4 pt-4 border-t border-[#e4e9e6] flex flex-col gap-3">
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleResetToPrefill}
+                  className="flex-1 border border-[#16a34a] text-[#15803d] bg-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer hover:bg-[#f3faf5] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <span>📄</span>
+                  <span>Load Pre-filled Spec Data</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleExecuteStep('GENERATE')}
+                  disabled={isExecutingStep || isAutoRunning}
+                  className="flex-1 border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  style={{
+                    background: isExecutingStep ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
+                    boxShadow: isExecutingStep ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
+                  }}
+                >
+                  <span>⚡</span>
+                  <span>{isExecutingStep ? 'Generating...' : 'Generate ISO 20022 XML'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleExecuteStep('SEND')}
+                  disabled={isExecutingStep || isAutoRunning}
+                  className="flex-1 border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 bg-[#0f3a22] hover:bg-[#1a5534] shadow-md"
+                >
+                  <span>🚀</span>
+                  <span>{isExecutingStep ? 'Processing...' : 'Send to Pipeline'}</span>
+                </button>
+              </div>
+
+              {activeStepIndex + 1 < activeFlow.steps.length && (
+                <button
+                  type="button"
+                  onClick={handleProceedNext}
+                  disabled={stepStatuses[activeStepIndex] !== 'completed'}
+                  className="w-full py-2.5 rounded-lg border border-[#22a05a] bg-white text-[#15803d] hover:bg-[#e6f6ec] text-[12.5px] font-bold transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 shadow-sm"
+                >
+                  <span>Proceed to Step {activeStepIndex + 2}: {activeFlow.steps[activeStepIndex + 1].title}</span>
+                  <span>➔</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -941,7 +1114,7 @@ export const FlowOrchestratorPage: React.FC = () => {
                     <span className="text-[32px] mb-2">📄</span>
                     <p className="font-sans text-[13px] font-semibold text-gray-300">No XML Generated Yet</p>
                     <p className="font-sans text-[11.5px] text-gray-400 max-w-xs mt-1">
-                      Click <strong>Generate XML</strong> or <strong>Send to Pipeline</strong> to trigger this step and inspect the output.
+                      Click <strong>Generate ISO 20022 XML</strong> or <strong>Send to Pipeline</strong> to trigger this step and inspect the output.
                     </p>
                   </div>
                 )}

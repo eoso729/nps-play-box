@@ -8,6 +8,7 @@ interface FormFieldsetProps {
   touched?: Record<string, boolean>;
   onChange: (key: string, value: any) => void;
   onBlur?: (key: string) => void;
+  injectedKeys?: Set<string>;
 }
 
 export const FormFieldset: React.FC<FormFieldsetProps> = ({
@@ -17,6 +18,7 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
   touched = {},
   onChange,
   onBlur,
+  injectedKeys,
 }) => {
   return (
     <div className="border border-[#e4e9e6] rounded-[10px] mb-4 overflow-hidden shadow-sm bg-white">
@@ -34,6 +36,17 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
           const error = errors[field.key];
           const isInvalid = isTouched && !!error;
           const isValid = isTouched && !error && strValue.length > 0;
+          const isContextInjected = !!injectedKeys?.has(field.key);
+
+          const inputBaseClass = `w-full px-2.5 py-2 text-[12.5px] border rounded-[6px] text-[#111827] outline-none transition-all ${
+            isInvalid
+              ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+              : isValid
+              ? 'border-emerald-400/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
+              : isContextInjected
+              ? 'border-[#22a05a]/70 bg-[#f8fdfa] text-[#0f3a22] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/20'
+              : 'border-[#e4e9e6] bg-white focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/10'
+          }`;
 
           return (
             <div
@@ -41,9 +54,14 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
               className={field.fullWidth ? 'col-span-2' : ''}
             >
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-[11px] font-semibold text-[#4b5563]">
-                  {field.label}
+                <label className="block text-[11px] font-semibold text-[#4b5563] flex items-center gap-1">
+                  <span>{field.label}</span>
                   {field.required && <span className="text-[#dc2626] ml-0.5">*</span>}
+                  {isContextInjected && (
+                    <span className="text-[9px] bg-[#e6f6ec] text-[#15803d] border border-[#c4ebd3] px-1.5 py-0.5 rounded font-bold ml-1 inline-flex items-center gap-0.5">
+                      <span>✨</span> Context Mapped
+                    </span>
+                  )}
                 </label>
 
                 {field.maxLength && (
@@ -67,13 +85,7 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
                     value={value}
                     onChange={e => onChange(field.key, e.target.value)}
                     onBlur={() => onBlur?.(field.key)}
-                    className={`w-full px-2.5 py-2 text-[12.5px] border rounded-[6px] bg-white text-[#111827] outline-none transition-all font-sans cursor-pointer ${
-                      isInvalid
-                        ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                        : isValid
-                        ? 'border-emerald-400/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
-                        : 'border-[#e4e9e6] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/10'
-                    }`}
+                    className={`${inputBaseClass} font-sans cursor-pointer`}
                     style={{ fontFamily: 'inherit' }}
                   >
                     <option value="">Select...</option>
@@ -92,13 +104,7 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
                   onBlur={() => onBlur?.(field.key)}
                   placeholder={field.placeholder}
                   maxLength={field.maxLength}
-                  className={`w-full px-2.5 py-2 text-[12.5px] border rounded-[6px] bg-white text-[#111827] outline-none transition-all resize-y ${
-                    isInvalid
-                      ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                      : isValid
-                      ? 'border-emerald-400/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
-                      : 'border-[#e4e9e6] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/10'
-                  }`}
+                  className={`${inputBaseClass} resize-y`}
                   style={{ fontFamily: 'inherit' }}
                 />
               ) : (
@@ -110,13 +116,7 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
                     onBlur={() => onBlur?.(field.key)}
                     placeholder={field.placeholder}
                     maxLength={field.maxLength}
-                    className={`w-full px-2.5 py-2 text-[12.5px] border rounded-[6px] bg-white text-[#111827] outline-none transition-all ${
-                      isInvalid
-                        ? 'border-red-400 bg-red-50/20 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                        : isValid
-                        ? 'border-emerald-400/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
-                        : 'border-[#e4e9e6] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/10'
-                    }`}
+                    className={inputBaseClass}
                     style={{ fontFamily: 'inherit' }}
                   />
                 </div>

@@ -254,8 +254,10 @@ export const ORCHESTRATOR_FLOWS: FlowDefinition[] = [
   },
 ];
 
+import { MESSAGE_CONFIGS } from '../workbench/messageConfigs';
+
 /**
- * Client-side fallback context resolution and prefill calculation
+ * Client-side context resolution and prefill calculation
  */
 export function computeClientNextStepPrefill(
   _flowId: string,
@@ -264,7 +266,10 @@ export function computeClientNextStepPrefill(
   context: Record<string, string>,
   basePayload: Record<string, any>
 ): { prefill: Record<string, any>; autoInjectedKeys: Set<string> } {
-  const prefill: Record<string, any> = { ...basePayload };
+  const specPrefill = MESSAGE_CONFIGS[targetMessageType]?.prefill
+    ? { ...MESSAGE_CONFIGS[targetMessageType].prefill }
+    : {};
+  const prefill: Record<string, any> = { ...specPrefill, ...basePayload };
   const autoInjectedKeys = new Set<string>();
 
   const inject = (key: string, value: any) => {
@@ -276,112 +281,137 @@ export function computeClientNextStepPrefill(
 
   switch (targetMessageType) {
     case 'pain.012':
-      inject('originalMandateId', context.mandateId);
-      inject('originalMsgId', context.pain009MsgId || context.originalMsgId);
+      if (context.mandateId) inject('originalMandateId', context.mandateId);
+      if (context.pain009MsgId || context.originalMsgId) inject('originalMsgId', context.pain009MsgId || context.originalMsgId);
       inject('originalMsgNmId', 'pain.009.001.07');
       inject('accepted', 'true');
-      inject('creditorName', context.creditorName);
-      inject('creditorAccountNumber', context.creditorAccountNumber);
-      inject('creditorAgentMemberId', context.creditorAgentMemberId);
-      inject('debtorName', context.debtorName);
-      inject('debtorAccountNumber', context.debtorAccountNumber);
-      inject('debtorAgentMemberId', context.debtorAgentMemberId);
-      inject('sequenceType', context.sequenceType || 'RCUR');
-      inject('frequencyType', context.frequencyType || 'MNTH');
-      inject('firstCollectionDate', context.firstCollectionDate);
-      inject('finalCollectionDate', context.finalCollectionDate);
+      if (context.creditorName) inject('creditorName', context.creditorName);
+      if (context.creditorAccountNumber) inject('creditorAccountNumber', context.creditorAccountNumber);
+      if (context.creditorAgentMemberId) inject('creditorAgentMemberId', context.creditorAgentMemberId);
+      if (context.debtorName) inject('debtorName', context.debtorName);
+      if (context.debtorAccountNumber) inject('debtorAccountNumber', context.debtorAccountNumber);
+      if (context.debtorAgentMemberId) inject('debtorAgentMemberId', context.debtorAgentMemberId);
+      if (context.sequenceType) inject('sequenceType', context.sequenceType);
+      if (context.frequencyType) inject('frequencyType', context.frequencyType);
+      if (context.firstCollectionDate) inject('firstCollectionDate', context.firstCollectionDate);
+      if (context.finalCollectionDate) inject('finalCollectionDate', context.finalCollectionDate);
       break;
 
     case 'pain.008':
-      inject('mandateId', context.mandateId);
-      inject('nameEnquiryMsgId', context.nameEnquiryMsgId || context.sessionId);
-      inject('creditorId', context.creditorAgentMemberId || '999057');
-      inject('creditorName', context.creditorName);
-      inject('creditorIban', context.creditorAccountNumber);
-      inject('debtorId', context.debtorAgentMemberId || '999058');
-      inject('debtorName', context.debtorName);
-      inject('debtorIban', context.debtorAccountNumber);
-      inject('amount', context.amount || 25000);
-      inject('currency', context.currency || 'NGN');
-      inject('sequenceType', context.sequenceType || 'RCUR');
-      inject('freqTp', context.frequencyType || 'MNTH');
-      inject('frstColltnDt', context.firstCollectionDate || '2026-09-10');
-      inject('fnlColltnDt', context.finalCollectionDate || '2027-09-10');
-      inject('dtOfSgntr', context.firstCollectionDate || '2026-09-01');
+      if (context.mandateId) inject('mandateId', context.mandateId);
+      if (context.nameEnquiryMsgId || context.sessionId) inject('nameEnquiryMsgId', context.nameEnquiryMsgId || context.sessionId);
+      if (context.creditorAgentMemberId) {
+        inject('creditorId', context.creditorAgentMemberId);
+        inject('initiatorId', context.creditorAgentMemberId);
+      }
+      if (context.creditorName) {
+        inject('creditorName', context.creditorName);
+        inject('initiatingPartyName', context.creditorName);
+      }
+      if (context.creditorAccountNumber) inject('creditorIban', context.creditorAccountNumber);
+      if (context.debtorAgentMemberId) inject('debtorId', context.debtorAgentMemberId);
+      if (context.debtorName) inject('debtorName', context.debtorName);
+      if (context.debtorAccountNumber) inject('debtorIban', context.debtorAccountNumber);
+      if (context.amount) inject('amount', Number(context.amount));
+      if (context.currency) inject('currency', context.currency);
+      if (context.sequenceType) inject('sequenceType', context.sequenceType);
+      if (context.frequencyType) inject('freqTp', context.frequencyType);
+      if (context.firstCollectionDate) {
+        inject('frstColltnDt', context.firstCollectionDate);
+        inject('dtOfSgntr', context.firstCollectionDate);
+      }
+      if (context.finalCollectionDate) inject('fnlColltnDt', context.finalCollectionDate);
       break;
 
     case 'pacs.003':
-      inject('mandateId', context.mandateId);
-      inject('nameEnquiryMsgId', context.nameEnquiryMsgId || context.sessionId);
-      inject('sourceId', context.creditorAgentMemberId || '999057');
-      inject('destinationId', context.debtorAgentMemberId || '999058');
-      inject('creditorName', context.creditorName);
-      inject('creditorAccountNumber', context.creditorAccountNumber);
-      inject('debtorName', context.debtorName);
-      inject('debtorAccountNumber', context.debtorAccountNumber);
-      inject('amount', context.amount || 25000);
-      inject('currency', context.currency || 'NGN');
-      inject('frequencyType', context.frequencyType || 'MNTH');
-      inject('firstCollectionDate', context.firstCollectionDate || '2026-09-10');
-      inject('finalCollectionDate', context.finalCollectionDate || '2027-09-10');
-      inject('dateOfSignature', context.firstCollectionDate || '2026-09-01');
+      if (context.mandateId) inject('mandateId', context.mandateId);
+      if (context.nameEnquiryMsgId || context.sessionId) inject('nameEnquiryMsgId', context.nameEnquiryMsgId || context.sessionId);
+      if (context.creditorAgentMemberId) inject('sourceId', context.creditorAgentMemberId);
+      if (context.debtorAgentMemberId) inject('destinationId', context.debtorAgentMemberId);
+      if (context.creditorName) inject('creditorName', context.creditorName);
+      if (context.creditorAccountNumber) inject('creditorAccountNumber', context.creditorAccountNumber);
+      if (context.debtorName) inject('debtorName', context.debtorName);
+      if (context.debtorAccountNumber) inject('debtorAccountNumber', context.debtorAccountNumber);
+      if (context.amount) inject('amount', Number(context.amount));
+      if (context.currency) inject('currency', context.currency);
+      if (context.frequencyType) inject('frequencyType', context.frequencyType);
+      if (context.firstCollectionDate) {
+        inject('firstCollectionDate', context.firstCollectionDate);
+        inject('dateOfSignature', context.firstCollectionDate);
+      }
+      if (context.finalCollectionDate) inject('finalCollectionDate', context.finalCollectionDate);
       break;
 
     case 'pacs.008':
-      inject('nameEnquiryMsgId', context.nameEnquiryMsgId || context.sessionId);
-      inject('sourceId', context.sourceId || '999999');
-      inject('destinationId', context.beneficiaryId || context.destinationId || '999015');
-      inject('beneficiaryName', context.partyToBeVerifiedName || context.beneficiaryName || context.creditorName);
-      inject('beneficiaryAccountNumber', context.partyToBeVerifiedAccountNumber || context.beneficiaryAccountNumber || context.creditorAccountNumber);
-      inject('beneficiaryAccountName', context.partyToBeVerifiedName || context.creditorName);
-      inject('senderName', context.sendingPartyName || context.debtorName || 'Zenith Bank');
+      if (context.nameEnquiryMsgId || context.sessionId) inject('nameEnquiryMsgId', context.nameEnquiryMsgId || context.sessionId);
+      if (context.sourceId) inject('sourceId', context.sourceId);
+      if (context.beneficiaryId || context.destinationId) inject('destinationId', context.beneficiaryId || context.destinationId);
+      if (context.partyToBeVerifiedName || context.beneficiaryName || context.creditorName) {
+        const bName = context.partyToBeVerifiedName || context.beneficiaryName || context.creditorName;
+        inject('beneficiaryName', bName);
+        inject('beneficiaryAccountName', bName);
+      }
+      if (context.partyToBeVerifiedAccountNumber || context.beneficiaryAccountNumber || context.creditorAccountNumber) {
+        inject('beneficiaryAccountNumber', context.partyToBeVerifiedAccountNumber || context.beneficiaryAccountNumber || context.creditorAccountNumber);
+      }
+      if (context.sendingPartyName || context.debtorName) inject('senderName', context.sendingPartyName || context.debtorName);
+      if (context.debtorAccountNumber) inject('senderAccountNumber', context.debtorAccountNumber);
       if (context.amount) inject('amount', Number(context.amount));
       if (context.endToEndId) inject('endToEndId', context.endToEndId);
       break;
 
     case 'pacs.004':
-      inject('sourceId', context.destinationId || '999998');
-      inject('destinationId', context.sourceId || '999057');
-      inject('originalMsgId', context.pacs008MsgId || context.originalMsgId);
+      // Reverse routing: beneficiary bank returns to originating bank
+      if (context.destinationId) inject('sourceId', context.destinationId);
+      if (context.sourceId) inject('destinationId', context.sourceId);
+      if (context.pacs008MsgId || context.originalMsgId) inject('originalMsgId', context.pacs008MsgId || context.originalMsgId);
       inject('originalMsgNameId', 'pacs.008.001.10');
-      inject('originalInstrId', context.instructionId);
-      inject('originalEndToEndId', context.endToEndId);
-      inject('originalTxId', context.endToEndId);
-      inject('returnedAmount', context.amount ? Number(context.amount) : 50000);
-      inject('originalIntrBkSttlmAmt', context.amount ? Number(context.amount) : 50000);
-      inject('currency', context.currency || 'NGN');
-      inject('debtorName', context.senderName || context.debtorName || 'Original Debtor');
-      inject('debtorAccountNumber', context.senderAccountNumber || context.debtorAccountNumber || '0000002110');
-      inject('debtorAccountName', context.senderAccountName || context.senderName || 'Original Debtor');
-      inject('debtorAgentMmbId', context.sourceId || '999057');
-      inject('creditorName', context.beneficiaryName || context.creditorName || 'Original Creditor');
-      inject('creditorAccountNumber', context.beneficiaryAccountNumber || context.creditorAccountNumber || '3157417712');
-      inject('creditorAgentMmbId', context.destinationId || '999998');
+      if (context.instructionId) inject('originalInstrId', context.instructionId);
+      if (context.endToEndId) {
+        inject('originalEndToEndId', context.endToEndId);
+        inject('originalTxId', context.endToEndId);
+      }
+      if (context.amount) {
+        inject('returnedAmount', Number(context.amount));
+        inject('originalIntrBkSttlmAmt', Number(context.amount));
+      }
+      if (context.currency) inject('currency', context.currency);
+      if (context.senderName || context.debtorName) inject('debtorName', context.senderName || context.debtorName);
+      if (context.senderAccountNumber || context.debtorAccountNumber) inject('debtorAccountNumber', context.senderAccountNumber || context.debtorAccountNumber);
+      if (context.senderName || context.debtorName) inject('debtorAccountName', context.senderName || context.debtorName);
+      if (context.sourceId) inject('debtorAgentMmbId', context.sourceId);
+      if (context.beneficiaryName || context.creditorName) inject('creditorName', context.beneficiaryName || context.creditorName);
+      if (context.beneficiaryAccountNumber || context.creditorAccountNumber) inject('creditorAccountNumber', context.beneficiaryAccountNumber || context.creditorAccountNumber);
+      if (context.destinationId) inject('creditorAgentMmbId', context.destinationId);
       inject('returnReasonCode', 'AC04');
       inject('returnReasonInfo', 'Account Closed or Restricted');
       break;
 
     case 'pain.013':
-      inject('nameEnquiryMsgId', context.nameEnquiryMsgId || context.sessionId);
-      inject('creditorName', context.partyToBeVerifiedName || context.creditorName);
-      inject('creditorAccountNumber', context.partyToBeVerifiedAccountNumber || context.creditorAccountNumber);
-      inject('creditorAgentMemberId', context.beneficiaryId || '999997');
-      inject('sourceId', context.beneficiaryId || '999997');
-      inject('destinationId', context.sourceId || '991015');
+      if (context.nameEnquiryMsgId || context.sessionId) inject('nameEnquiryMsgId', context.nameEnquiryMsgId || context.sessionId);
+      if (context.partyToBeVerifiedName || context.creditorName) inject('creditorName', context.partyToBeVerifiedName || context.creditorName);
+      if (context.partyToBeVerifiedAccountNumber || context.creditorAccountNumber) inject('creditorAccountNumber', context.partyToBeVerifiedAccountNumber || context.creditorAccountNumber);
+      if (context.beneficiaryId) {
+        inject('creditorAgentMemberId', context.beneficiaryId);
+        inject('sourceId', context.beneficiaryId);
+      }
+      if (context.sourceId) inject('destinationId', context.sourceId);
       if (context.amount) inject('amount', Number(context.amount));
       break;
 
     case 'pacs.002':
       const origMsg = context.directDebitMsgId || context.pacs008MsgId || context.pain008MsgId || context.pacs003MsgId || context.originalMsgId;
-      inject('originalMsgId', origMsg);
+      if (origMsg) inject('originalMsgId', origMsg);
       inject('originalMsgNmId', context.lastTriggerMsgNmId || 'pacs.008.001.10');
-      inject('originalInstrId', context.instructionId);
-      inject('originalEndToEndId', context.endToEndId);
-      inject('originalTxId', context.endToEndId);
+      if (context.instructionId) inject('originalInstrId', context.instructionId);
+      if (context.endToEndId) {
+        inject('originalEndToEndId', context.endToEndId);
+        inject('originalTxId', context.endToEndId);
+        inject('statusId', context.endToEndId);
+      }
       inject('groupStatus', 'ACSC');
-      inject('statusId', context.endToEndId || '99905774143804655117506058383208278');
-      inject('sourceId', context.destinationId || '999998');
-      inject('destinationId', context.sourceId || '999057');
+      if (context.destinationId) inject('sourceId', context.destinationId);
+      if (context.sourceId) inject('destinationId', context.sourceId);
       break;
   }
 
