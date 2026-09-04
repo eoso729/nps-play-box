@@ -1,9 +1,12 @@
 package org.example.signer.model;
 
 import jakarta.xml.bind.annotation.*;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @XmlRootElement(name = "Document", namespace = "urn:iso:std:iso:20022:tech:xsd:pain.009.001.08")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -80,12 +83,25 @@ public class MandateCreation {
         private String tp;
     }
 
+    public static class BigDecimal2DecimalAdapter extends XmlAdapter<String, BigDecimal> {
+        @Override
+        public BigDecimal unmarshal(String v) {
+            return (v != null && !v.trim().isEmpty()) ? new BigDecimal(v.trim()) : null;
+        }
+
+        @Override
+        public String marshal(BigDecimal v) {
+            return v != null ? v.setScale(2, RoundingMode.HALF_UP).toPlainString() : null;
+        }
+    }
+
     @XmlAccessorType(XmlAccessType.FIELD)
     @Data
     public static class ColltnAmt {
         @XmlAttribute(name = "Ccy")
         private String ccy;
         @XmlValue
+        @XmlJavaTypeAdapter(BigDecimal2DecimalAdapter.class)
         private BigDecimal value;
     }
 

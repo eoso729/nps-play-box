@@ -14,7 +14,7 @@ public class NibssValidationRules {
     public static final Pattern BVN_PATTERN = Pattern.compile("^\\d{11}$");
     public static final Pattern NIN_PATTERN = Pattern.compile("^\\d{11}$");
     public static final Pattern NUBAN_PATTERN = Pattern.compile("^\\d{10}$");
-    public static final Pattern AMOUNT_PATTERN = Pattern.compile("^\\d+(\\.\\d{1,2})?$");
+    public static final Pattern AMOUNT_PATTERN = Pattern.compile("^\\d+\\.\\d{2}$");
     public static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?\\d{10,15}$");
     public static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     public static final Pattern LOCATION_PATTERN = Pattern.compile("^[0-9A-Za-z]{12,30}$");

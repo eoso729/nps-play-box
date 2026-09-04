@@ -13,7 +13,7 @@ const CHANNEL_CODE_REGEX = /^(1[0-1]|[1-9])$/;
 const ACCOUNT_DESIGNATION_REGEX = /^[1-6]$/;
 const ACCOUNT_TIER_REGEX = /^[1-3]$/;
 const CURRENCY_REGEX = /^[A-Z]{3}$/;
-const AMOUNT_REGEX = /^\d+(\.\d{1,2})?$/;
+const AMOUNT_REGEX = /^\d+\.\d{2}$/;
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}Z?$/;
 const DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -252,7 +252,7 @@ function validateRuleType(ruleType: ValidationRuleType, value: string, fieldLabe
       if (!AMOUNT_REGEX.test(value) || parseFloat(value) <= 0) {
         return {
           valid: false,
-          error: `${fieldLabel} must be a positive decimal number with up to 2 decimal places`,
+          error: `${fieldLabel} must be a positive decimal amount with exactly 2 decimal places (e.g. 50000.00)`,
         };
       }
       break;

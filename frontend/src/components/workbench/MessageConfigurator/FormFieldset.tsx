@@ -111,6 +111,7 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
                 <div className="relative">
                   <input
                     type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                    step={field.ruleType === 'AMOUNT' ? '0.01' : undefined}
                     value={value}
                     onChange={e => onChange(field.key, e.target.value)}
                     onBlur={() => onBlur?.(field.key)}

@@ -463,8 +463,8 @@ public class XmlValidationEngine {
                             .lineNumber(line)
                             .columnNumber(col)
                             .currentValue(text)
-                            .expected("Decimal amount with up to 2 decimal places (e.g. 1000.00)")
-                            .message("Invalid monetary amount format in '" + field.getFieldName() + "'.")
+                            .expected("Decimal amount with exactly 2 decimal places (e.g. 50000.00)")
+                            .message("Invalid monetary amount format in '" + field.getFieldName() + "'. Amount must have exactly 2 decimal places (e.g. 50000.00). Current: '" + text + "'.")
                             .ruleCode("INVALID_AMOUNT_FORMAT")
                             .autoFixable(true)
                             .build());
@@ -1245,6 +1245,31 @@ public class XmlValidationEngine {
                             .build());
                 }
             }
+
+            // I. Universal Amount Tag 2 Decimal Places Check
+            if (isAmountTag(tagName)) {
+                if (!NibssValidationRules.AMOUNT_PATTERN.matcher(text).matches()) {
+                    String elemXPath = getElementXPath(element);
+                    boolean alreadyAdded = issues.stream().anyMatch(i -> elemXPath.equals(i.getXpath()) && "INVALID_AMOUNT_FORMAT".equals(i.getRuleCode()));
+                    if (!alreadyAdded) {
+                        issues.add(ValidationIssueDto.builder()
+                                .id("ERR-AMT-DECIMAL-" + line + "-" + sanitizeId(tagName))
+                                .severity("ERROR")
+                                .category("DATA_TYPE")
+                                .xpath(elemXPath)
+                                .fieldPath(path)
+                                .fieldName(canonicalTag != null ? canonicalTag : tagName)
+                                .lineNumber(line)
+                                .columnNumber(col)
+                                .currentValue(text)
+                                .expected("Decimal amount with exactly 2 decimal places (e.g. 50000.00)")
+                                .message("Monetary amount in <" + tagName + "> must have exactly 2 decimal places (e.g. 50000.00). Current value: '" + text + "'.")
+                                .ruleCode("INVALID_AMOUNT_FORMAT")
+                                .autoFixable(true)
+                                .build());
+                    }
+                }
+            }
         }
 
         // 3. Check attributes (e.g. Ccy)
@@ -1316,6 +1341,19 @@ public class XmlValidationEngine {
                 scanAllElementsForRules(child, path, issues, passedRules);
             }
         }
+    }
+
+    public static boolean isAmountTag(String tagName) {
+        if (tagName == null) return false;
+        return "ColltnAmt".equalsIgnoreCase(tagName)
+                || "InstdAmt".equalsIgnoreCase(tagName)
+                || "CtrlSum".equalsIgnoreCase(tagName)
+                || "IntrBkSttlmAmt".equalsIgnoreCase(tagName)
+                || "RtrdIntrBkSttlmAmt".equalsIgnoreCase(tagName)
+                || "OrgnlIntrBkSttlmAmt".equalsIgnoreCase(tagName)
+                || "TtlIntrBkSttlmAmt".equalsIgnoreCase(tagName)
+                || "OrgnlCtrlSum".equalsIgnoreCase(tagName)
+                || "Amt".equalsIgnoreCase(tagName);
     }
 
     private boolean isSupplementaryDataRequired(String messageKey) {

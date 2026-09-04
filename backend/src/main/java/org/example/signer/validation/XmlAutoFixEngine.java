@@ -240,6 +240,20 @@ public class XmlAutoFixEngine {
                 }
             }
 
+            // C2. Monetary Amount normalization to 2 decimal places (e.g., 50000 -> 50000.00, 100.5 -> 100.50)
+            if (XmlValidationEngine.isAmountTag(tagName)) {
+                try {
+                    java.math.BigDecimal amt = new java.math.BigDecimal(text.trim());
+                    String fixedAmt = amt.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString();
+                    if (!fixedAmt.equals(text)) {
+                        element.setTextContent(fixedAmt);
+                        fixesApplied.add("Formatted <" + tagName + "> monetary amount to exactly 2 decimal places: '" + text + "' -> '" + fixedAmt + "'");
+                        text = fixedAmt;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+
             // D. Channel Code Fix
             if ("ChannelCode".equalsIgnoreCase(tagName)) {
                 if (!NibssValidationRules.CHANNEL_CODES.containsKey(text)) {

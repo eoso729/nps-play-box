@@ -103,8 +103,10 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
       section.fields.forEach(field => {
         const val = formData[field.key];
         if (val !== undefined && val !== '') {
-          // Coerce number fields
-          if (field.type === 'number') {
+          // For AMOUNT fields, preserve exact 2-decimal string formatting
+          if (field.ruleType === 'AMOUNT') {
+            payload[field.key] = val;
+          } else if (field.type === 'number') {
             const num = parseFloat(val);
             if (!isNaN(num)) payload[field.key] = num;
           } else {

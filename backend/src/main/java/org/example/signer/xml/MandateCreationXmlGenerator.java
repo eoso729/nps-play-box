@@ -4,6 +4,7 @@ import org.example.signer.dto.MandateCreationRequestDto;
 import org.example.signer.model.MandateCreation;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -39,8 +40,11 @@ public class MandateCreationXmlGenerator {
         
         // --- Collection Amount ---
         MandateCreation.ColltnAmt colltnAmt = new MandateCreation.ColltnAmt();
-        colltnAmt.setCcy(requestDto.getCurrency() != null ? requestDto.getCurrency() : "NGN");
-        colltnAmt.setValue(requestDto.getCollectionAmount() != null ? requestDto.getCollectionAmount() : new BigDecimal("50000.00"));
+        colltnAmt.setCcy(requestDto.getCurrency() != null && !requestDto.getCurrency().trim().isEmpty() ? requestDto.getCurrency().trim() : "NGN");
+        BigDecimal colAmt = (requestDto.getCollectionAmount() != null && requestDto.getCollectionAmount().compareTo(BigDecimal.ZERO) > 0)
+                ? requestDto.getCollectionAmount().setScale(2, RoundingMode.HALF_UP)
+                : new BigDecimal("50000.00");
+        colltnAmt.setValue(colAmt);
         mndt.setColltnAmt(colltnAmt);
         
         // --- Creditor ---
