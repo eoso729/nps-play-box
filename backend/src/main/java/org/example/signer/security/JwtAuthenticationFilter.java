@@ -6,51 +6,70 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.signer.repository.UserRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 
+/**
+ * Filter that intercepts incoming HTTP requests, extracts and validates JWT tokens,
+ * sets up Spring Security context, and manages ThreadLocal TenantContext propagation.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtils jwtUtils;
-    private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final CustomUserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
         try {
             String jwt = parseJwt(request);
-            if (jwt != null && jwtUtils.validateToken(jwt)) {
-                String username = jwtUtils.getUsernameFromToken(jwt);
+            if (jwt != null && jwtService.validateToken(jwt)) {
+                String identifier = jwtService.extractUsername(jwt);
+                Long tenantId = jwtService.extractTenantId(jwt);
+                String tenantSlug = jwtService.extractTenantSlug(jwt);
 
-                userRepository.findByEmailOrUsername(username, username).ifPresent(user -> {
-                    String roleName = user.getRole() != null ? user.getRole().name() : "VIEWER";
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + roleName);
+                if (identifier != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(identifier);
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, Collections.singletonList(authority));
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    if (jwtService.isTokenValid(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                });
+                        // Populate TenantContext and request attributes
+                        TenantContext.setTenantId(tenantId);
+                        TenantContext.setTenantSlug(tenantSlug);
+                        request.setAttribute("tenantId", tenantId);
+                        request.setAttribute("tenantSlug", tenantSlug);
+                    }
+                }
             }
+
+            filterChain.doFilter(request, response);
         } catch (Exception e) {
             log.error("Cannot set user authentication: {}", e.getMessage());
+            filterChain.doFilter(request, response);
+        } finally {
+            TenantContext.clear();
         }
-
-        filterChain.doFilter(request, response);
     }
 
     private String parseJwt(HttpServletRequest request) {
