@@ -2,7 +2,9 @@ package org.example.signer.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.signer.audit.Auditable;
 import org.example.signer.dto.user.*;
+import org.example.signer.entity.AuditEvent;
 import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
 import org.example.signer.entity.UserInvitation;
@@ -39,6 +41,7 @@ public class UserService {
 
     private static final int INVITATION_EXPIRY_HOURS = 72;
 
+    @Auditable(eventType = AuditEvent.EventType.USER_MANAGEMENT, action = "INVITE_USER", resourceType = "USER_INVITATION", resourceId = "#result.id")
     @Transactional
     public InvitationResponse inviteUser(Long tenantId, Long invitedBy, InviteUserRequest request) {
         quotaService.enforceQuotaForUserCreation(tenantId);
@@ -108,6 +111,7 @@ public class UserService {
         return mapInvitationToResponse(invitation, inviter, tenant);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.USER_MANAGEMENT, action = "ACCEPT_INVITATION", resourceType = "USER", resourceId = "#result.id")
     @Transactional
     public UserResponse acceptInvitation(AcceptInvitationRequest request) {
         UserInvitation invitation = invitationRepository.findByInvitationToken(request.getToken().trim())
@@ -181,6 +185,7 @@ public class UserService {
         return mapToResponse(user, tenant);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.USER_MANAGEMENT, action = "UPDATE_USER", resourceType = "USER", resourceId = "#userId")
     @Transactional
     public UserResponse updateUser(Long userId, Long tenantId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
@@ -214,6 +219,7 @@ public class UserService {
         return mapToResponse(user, tenant);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.USER_MANAGEMENT, action = "CHANGE_ROLE", resourceType = "USER", resourceId = "#userId")
     @Transactional
     public UserResponse updateUserRole(Long userId, Long tenantId, UpdateRoleRequest request) {
         User user = userRepository.findById(userId)
@@ -252,6 +258,7 @@ public class UserService {
         return mapToResponse(user, tenant);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.USER_MANAGEMENT, action = "DEACTIVATE_USER", resourceType = "USER", resourceId = "#userId")
     @Transactional
     public UserResponse deactivateUser(Long userId, Long tenantId) {
         User user = userRepository.findById(userId)
@@ -280,6 +287,7 @@ public class UserService {
         return mapToResponse(user, tenant);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.USER_MANAGEMENT, action = "REACTIVATE_USER", resourceType = "USER", resourceId = "#userId")
     @Transactional
     public UserResponse reactivateUser(Long userId, Long tenantId) {
         User user = userRepository.findById(userId)
@@ -304,6 +312,7 @@ public class UserService {
         return mapToResponse(user, tenant);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.USER_MANAGEMENT, action = "DELETE_USER", resourceType = "USER", resourceId = "#userId")
     @Transactional
     public void deleteUser(Long userId, Long tenantId) {
         // Soft delete per design interview
@@ -326,6 +335,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    @Auditable(eventType = AuditEvent.EventType.USER_MANAGEMENT, action = "CANCEL_INVITATION", resourceType = "USER_INVITATION", resourceId = "#invitationId")
     @Transactional
     public void cancelInvitation(Long invitationId, Long tenantId) {
         UserInvitation invitation = invitationRepository.findById(invitationId)

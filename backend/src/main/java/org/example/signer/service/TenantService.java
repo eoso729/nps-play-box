@@ -2,7 +2,9 @@ package org.example.signer.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.signer.audit.Auditable;
 import org.example.signer.dto.tenant.*;
+import org.example.signer.entity.AuditEvent;
 import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
 import org.example.signer.exception.DuplicateSlugException;
@@ -29,6 +31,7 @@ public class TenantService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Auditable(eventType = AuditEvent.EventType.TENANT_MANAGEMENT, action = "CREATE_TENANT", resourceType = "TENANT", resourceId = "#result.id")
     @Transactional
     public TenantResponse createTenant(CreateTenantRequest request) {
         String slug = request.getSlug().trim().toLowerCase();
@@ -99,6 +102,7 @@ public class TenantService {
         return getTenantById(tenantId);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.TENANT_MANAGEMENT, action = "UPDATE_TENANT", resourceType = "TENANT", resourceId = "#id")
     @Transactional
     public TenantResponse updateTenant(Long id, UpdateTenantRequest request) {
         Tenant tenant = tenantRepository.findById(id)
@@ -125,6 +129,7 @@ public class TenantService {
         return mapToResponse(tenant, (int) usedSeats);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.TENANT_MANAGEMENT, action = "CHANGE_TENANT_STATUS", resourceType = "TENANT", resourceId = "#id")
     @Transactional
     public TenantResponse updateStatus(Long id, UpdateStatusRequest request) {
         Tenant tenant = tenantRepository.findById(id)
@@ -141,6 +146,7 @@ public class TenantService {
         return mapToResponse(tenant, (int) usedSeats);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.CONFIG_CHANGE, action = "UPDATE_SEATS", resourceType = "TENANT", resourceId = "#id")
     @Transactional
     public TenantResponse updateSeats(Long id, UpdateSeatsRequest request) {
         Tenant tenant = tenantRepository.findById(id)
@@ -158,6 +164,7 @@ public class TenantService {
         return mapToResponse(tenant, (int) usedSeats);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.TENANT_MANAGEMENT, action = "DELETE_TENANT", resourceType = "TENANT", resourceId = "#id")
     @Transactional
     public void deleteTenant(Long id) {
         Tenant tenant = tenantRepository.findById(id)

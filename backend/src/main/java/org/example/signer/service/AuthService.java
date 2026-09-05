@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.signer.dto.AuthRequest;
 import org.example.signer.dto.AuthResponse;
 import org.example.signer.dto.auth.RegisterRequestDto;
+import org.example.signer.entity.AuditEvent;
 import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
 import org.example.signer.repository.TenantRepository;
@@ -34,6 +35,7 @@ public class AuthService {
     private final TenantRepository tenantRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     @Transactional
     public AuthResponse authenticate(AuthRequest request) {
@@ -42,25 +44,40 @@ public class AuthService {
                 : "platform-admin";
 
         Tenant tenant = tenantRepository.findBySlug(slug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found: " + slug));
+                .orElse(null);
+
+        if (tenant == null) {
+            auditService.logAuth(0L, null, "LOGIN", AuditEvent.EventStatus.FAILURE, "Tenant not found: " + slug);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found: " + slug);
+        }
 
         if (tenant.getStatus() != Tenant.TenantStatus.ACTIVE) {
+            auditService.logAuth(tenant.getId(), null, "LOGIN", AuditEvent.EventStatus.FAILURE, "Tenant account is not active");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant account is not active");
         }
 
         User user = userRepository.findByEmailAndTenantId(request.getEmail(), tenant.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
+                .orElse(null);
+
+        if (user == null) {
+            auditService.logAuth(tenant.getId(), null, "LOGIN", AuditEvent.EventStatus.FAILURE, "Invalid email or password");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
 
         if (user.getStatus() != User.UserStatus.ACTIVE) {
+            auditService.logAuth(tenant.getId(), user.getId(), "LOGIN", AuditEvent.EventStatus.FAILURE, "User account is not active");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User account is not active");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            auditService.logAuth(tenant.getId(), user.getId(), "LOGIN", AuditEvent.EventStatus.FAILURE, "Invalid email or password");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
         user.setLastLoginAt(LocalDateTime.now());
         userRepository.save(user);
+
+        auditService.logAuth(tenant.getId(), user.getId(), "LOGIN", AuditEvent.EventStatus.SUCCESS, null);
 
         return buildAuthResponse(user, tenant);
     }
@@ -68,16 +85,19 @@ public class AuthService {
     @Transactional
     public AuthResponse refreshToken(String authHeader) {
         if (!StringUtils.hasText(authHeader) || !authHeader.startsWith("Bearer ")) {
+            auditService.logAuth(0L, null, "TOKEN_REFRESH", AuditEvent.EventStatus.FAILURE, "Missing or malformed Authorization header");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing or malformed Authorization header");
         }
 
         String token = authHeader.substring(7);
         if (!jwtService.validateToken(token)) {
+            auditService.logAuth(0L, null, "TOKEN_REFRESH", AuditEvent.EventStatus.FAILURE, "Invalid or expired token");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
         }
 
         String tokenType = jwtService.extractTokenType(token);
         if (!"REFRESH".equalsIgnoreCase(tokenType)) {
+            auditService.logAuth(0L, null, "TOKEN_REFRESH", AuditEvent.EventStatus.FAILURE, "Token is not a valid refresh token");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token is not a valid refresh token");
         }
 
@@ -85,6 +105,7 @@ public class AuthService {
         Long tenantId = jwtService.extractTenantId(token);
 
         if (userUuidStr == null || tenantId == null) {
+            auditService.logAuth(0L, null, "TOKEN_REFRESH", AuditEvent.EventStatus.FAILURE, "Token missing required tenant or user context");
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token missing required tenant or user context");
         }
 
@@ -92,22 +113,36 @@ public class AuthService {
         try {
             UUID userUuid = UUID.fromString(userUuidStr);
             user = userRepository.findByUserUuid(userUuid)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+                    .orElse(null);
         } catch (IllegalArgumentException e) {
             user = userRepository.findByEmailOrUsername(userUuidStr, userUuidStr)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+                    .orElse(null);
+        }
+
+        if (user == null) {
+            auditService.logAuth(tenantId, null, "TOKEN_REFRESH", AuditEvent.EventStatus.FAILURE, "User not found");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found");
         }
 
         if (user.getStatus() != User.UserStatus.ACTIVE) {
+            auditService.logAuth(tenantId, user.getId(), "TOKEN_REFRESH", AuditEvent.EventStatus.FAILURE, "User account is inactive");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User account is inactive");
         }
 
         Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tenant not found"));
+                .orElse(null);
+
+        if (tenant == null) {
+            auditService.logAuth(tenantId, user.getId(), "TOKEN_REFRESH", AuditEvent.EventStatus.FAILURE, "Tenant not found");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Tenant not found");
+        }
 
         if (tenant.getStatus() != Tenant.TenantStatus.ACTIVE) {
+            auditService.logAuth(tenantId, user.getId(), "TOKEN_REFRESH", AuditEvent.EventStatus.FAILURE, "Tenant account is inactive");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant account is inactive");
         }
+
+        auditService.logAuth(tenantId, user.getId(), "TOKEN_REFRESH", AuditEvent.EventStatus.SUCCESS, null);
 
         return buildAuthResponse(user, tenant);
     }
@@ -142,6 +177,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        auditService.logUserManagement(defaultTenant.getId(), savedUser.getId(), "REGISTER", String.valueOf(savedUser.getId()), AuditEvent.EventStatus.SUCCESS, null);
         return buildAuthResponse(savedUser, defaultTenant);
     }
 

@@ -2,7 +2,9 @@ package org.example.signer.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.signer.audit.Auditable;
 import org.example.signer.dto.quota.*;
+import org.example.signer.entity.AuditEvent;
 import org.example.signer.entity.SeatRequest;
 import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
@@ -136,6 +138,7 @@ public class QuotaService {
     /**
      * Create a seat increase request
      */
+    @Auditable(eventType = AuditEvent.EventType.CONFIG_CHANGE, action = "REQUEST_SEATS", resourceType = "SEAT_REQUEST", resourceId = "#result.id")
     @Transactional
     public SeatRequestResponse requestAdditionalSeats(
             Long tenantId, Long requestedBy, SeatRequestRequest request) {
@@ -219,6 +222,7 @@ public class QuotaService {
     /**
      * Approve a seat request (Platform Admin)
      */
+    @Auditable(eventType = AuditEvent.EventType.CONFIG_CHANGE, action = "APPROVE_SEAT_REQUEST", resourceType = "SEAT_REQUEST", resourceId = "#requestId")
     @Transactional
     public SeatRequestResponse approveRequest(
             Long requestId, Long reviewedBy, ApproveRequestRequest request) {
@@ -276,6 +280,7 @@ public class QuotaService {
     /**
      * Deny a seat request (Platform Admin)
      */
+    @Auditable(eventType = AuditEvent.EventType.CONFIG_CHANGE, action = "DENY_SEAT_REQUEST", resourceType = "SEAT_REQUEST", resourceId = "#requestId")
     @Transactional
     public SeatRequestResponse denyRequest(
             Long requestId, Long reviewedBy, DenyRequestRequest request) {
