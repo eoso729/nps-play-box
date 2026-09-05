@@ -59,6 +59,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         TenantContext.setTenantSlug(tenantSlug);
                         request.setAttribute("tenantId", tenantId);
                         request.setAttribute("tenantSlug", tenantSlug);
+                        if (userDetails instanceof TenantUserDetails tud && tud.getUser() != null) {
+                            request.setAttribute("userId", tud.getUser().getId());
+                        }
                     }
                 }
             }

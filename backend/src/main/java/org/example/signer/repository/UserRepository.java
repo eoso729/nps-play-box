@@ -15,7 +15,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmailAndTenantId(String email, Long tenantId);
     Optional<User> findByUserUuid(UUID userUuid);
     List<User> findByTenantId(Long tenantId);
+    org.springframework.data.domain.Page<User> findByTenantId(Long tenantId, org.springframework.data.domain.Pageable pageable);
     long countByTenantIdAndStatus(Long tenantId, User.UserStatus status);
+    long countByTenantIdAndRoleAndStatus(Long tenantId, User.UserRole role, User.UserStatus status);
     boolean existsByTenantIdAndEmail(Long tenantId, String email);
 
     // Legacy and authentication methods
