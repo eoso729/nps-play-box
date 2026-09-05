@@ -45,6 +45,17 @@ public class AuditService {
                 if (!StringUtils.hasText(builder.requestId)) {
                     builder.requestId(getRequestId(request));
                 }
+                if (Boolean.TRUE.equals(request.getAttribute("isImpersonation"))) {
+                    builder.addMetadata("impersonated", true);
+                    Object supportUserId = request.getAttribute("supportUserId");
+                    if (supportUserId != null) {
+                        builder.addMetadata("supportUserId", supportUserId);
+                    }
+                    Object sessionUuid = request.getAttribute("sessionUuid");
+                    if (sessionUuid != null) {
+                        builder.addMetadata("sessionUuid", sessionUuid);
+                    }
+                }
             }
 
             if (!StringUtils.hasText(builder.requestId)) {

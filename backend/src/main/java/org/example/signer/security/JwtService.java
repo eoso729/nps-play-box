@@ -66,6 +66,24 @@ public class JwtService {
         return buildToken(extraClaims, subject, refreshExpiration);
     }
 
+    public String generateImpersonationToken(User targetUser, String tenantSlug,
+                                              Long supportUserId, String sessionUuid,
+                                              int durationMinutes) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("email", targetUser.getEmail());
+        extraClaims.put("tenantId", targetUser.getTenantId());
+        extraClaims.put("tenantSlug", tenantSlug);
+        extraClaims.put("role", targetUser.getRole() != null ? targetUser.getRole().name() : "VIEWER");
+        extraClaims.put("token_type", "IMPERSONATION");
+        extraClaims.put("impersonated", true);
+        extraClaims.put("supportUserId", supportUserId);
+        extraClaims.put("sessionUuid", sessionUuid);
+
+        long expirationMs = durationMinutes * 60 * 1000L;
+        String subject = targetUser.getUserUuid() != null ? targetUser.getUserUuid().toString() : targetUser.getEmail();
+        return buildToken(extraClaims, subject, expirationMs);
+    }
+
     private String buildToken(Map<String, Object> extraClaims, String subject, long expiration) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
@@ -105,6 +123,25 @@ public class JwtService {
 
     public String extractTokenType(String token) {
         return extractClaim(token, claims -> claims.get("token_type", String.class));
+    }
+
+    public boolean isImpersonationToken(String token) {
+        Boolean impersonated = extractClaim(token, claims -> claims.get("impersonated", Boolean.class));
+        return Boolean.TRUE.equals(impersonated);
+    }
+
+    public Long extractSupportUserId(String token) {
+        return extractClaim(token, claims -> {
+            Object supportUserId = claims.get("supportUserId");
+            if (supportUserId instanceof Number) {
+                return ((Number) supportUserId).longValue();
+            }
+            return null;
+        });
+    }
+
+    public String extractSessionUuid(String token) {
+        return extractClaim(token, claims -> claims.get("sessionUuid", String.class));
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
