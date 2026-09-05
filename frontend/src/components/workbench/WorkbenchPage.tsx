@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWorkbench } from '../../context/WorkbenchContext';
 import { MessageWorkbench } from './MessageWorkbench';
 import { MESSAGE_CONFIGS } from './messageConfigs';
 
 export const WorkbenchPage: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const { messageId } = useParams<{ messageId?: string }>();
   const { setActiveMessage } = useWorkbench();
 
@@ -37,9 +37,6 @@ export const WorkbenchPage: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
   return <MessageWorkbench />;
 };
+

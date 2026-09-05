@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import {
+  LayoutDashboard,
+  Building2,
+  Layers,
+  KeyRound,
+  ShieldAlert,
+  Users,
+  Settings,
+  LogOut,
+  ChevronDown,
+  ExternalLink,
+} from 'lucide-react';
 
 interface AppHeaderProps {
   onCredentialsClick?: () => void;
@@ -15,6 +27,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const initials = user
@@ -23,17 +36,33 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   const displayName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username
-    : 'Developer';
+    : 'User';
 
   const userId = user?.username || 'NPSDEV001';
 
+  // Detect current context
+  const isPlatformAdmin = location.pathname.startsWith('/platform-admin') || location.pathname.startsWith('/admin/platform');
+  const isTenantAdmin = location.pathname.startsWith('/tenant-admin') || location.pathname.startsWith('/admin/tenant');
+  const isAdminPage = isPlatformAdmin || isTenantAdmin;
+
+  const roleBadge = user?.role === 'PLATFORM_ADMIN'
+    ? { label: 'Platform Admin', color: 'bg-emerald-700 text-white' }
+    : user?.role === 'TENANT_ADMIN'
+    ? { label: 'Tenant Admin', color: 'bg-blue-700 text-white' }
+    : null;
+
   return (
-    <header className="h-16 flex-shrink-0 bg-white border-b border-[#e4e9e6] flex items-center justify-between px-6 z-10">
+    <header className="h-16 flex-shrink-0 bg-white border-b border-[#e4e9e6] flex items-center justify-between px-6 z-10 sticky top-0">
+      {/* Left: Logo + Brand */}
       <div className="flex items-center gap-3.5">
         <div
           className="w-[38px] h-[38px] rounded-[9px] flex items-center justify-center text-white font-bold text-[12px] flex-shrink-0 cursor-pointer"
           style={{ background: 'linear-gradient(135deg, #22a05a, #15803d)', boxShadow: '0 4px 12px rgba(21,128,61,0.3)' }}
-          onClick={() => navigate('/workbench')}
+          onClick={() => {
+            if (user?.role === 'PLATFORM_ADMIN') navigate('/platform-admin');
+            else if (user?.role === 'TENANT_ADMIN') navigate('/tenant-admin');
+            else navigate('/workbench');
+          }}
         >
           NPS
         </div>
@@ -43,88 +72,119 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
       </div>
 
-      {/* Top Nav Mode Switcher Tabs */}
-      <div className="flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
-        <button
-          type="button"
-          onClick={() => {
-            if (onModeChange) {
-              onModeChange('generation');
-            } else {
-              navigate('/workbench');
-            }
-          }}
-          className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-            activeMode === 'generation'
-              ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <span className={`w-2 h-2 rounded-full ${activeMode === 'generation' ? 'bg-[#16a34a]' : 'bg-gray-400'}`}></span>
-          XML Generation
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (onModeChange) {
-              onModeChange('dispatch');
-            } else {
-              navigate('/workbench');
-            }
-          }}
-          className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-            activeMode === 'dispatch'
-              ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          <span className={`w-2 h-2 rounded-full ${activeMode === 'dispatch' ? 'bg-[#16a34a]' : 'bg-gray-400'}`}></span>
-          Pipeline Execution
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/orchestrator')}
-          className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-        >
-          <span className="text-[12px]">⚡</span>
-          Flow Orchestrator
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/inspector')}
-          className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-        >
-          <span className="text-[12px]">🔍</span>
-          Fix My XML & Health Check
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/diff')}
-          className="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-        >
-          <span className="text-[12px]">⚖️</span>
-          Diff Checker
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/admin/tenant')}
-          className="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-        >
-          <span className="text-[12px]">👥</span>
-          Tenant Admin
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/admin/platform')}
-          className="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-        >
-          <span className="text-[12px]">🏛️</span>
-          Platform Admin
-        </button>
-      </div>
+      {/* Center: Context-aware navigation */}
+      {isPlatformAdmin ? (
+        /* Platform Admin Nav */
+        <nav className="hidden md:flex items-center gap-1 bg-[#f6f9f7] border border-[#e1e9e3] rounded-xl p-1">
+          {[
+            { icon: LayoutDashboard, label: 'Overview', hash: 'overview' },
+            { icon: Building2, label: 'Tenants', hash: 'tenants' },
+            { icon: Layers, label: 'Seat Requests', hash: 'seat-requests' },
+            { icon: KeyRound, label: 'Impersonation', hash: 'impersonation' },
+            { icon: ShieldAlert, label: 'Audit Logs', hash: 'audit' },
+          ].map(({ icon: Icon, label, hash }) => (
+            <button
+              key={hash}
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-[#0f3a22] hover:bg-white transition-all cursor-pointer"
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+            </button>
+          ))}
+          <div className="w-px h-4 bg-gray-200 mx-1" />
+          <button
+            type="button"
+            onClick={() => navigate('/workbench')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-500 hover:text-[#0f3a22] hover:bg-white transition-all cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Workbench
+          </button>
+        </nav>
+      ) : isTenantAdmin ? (
+        /* Tenant Admin Nav */
+        <nav className="hidden md:flex items-center gap-1 bg-[#f6f9f7] border border-[#e1e9e3] rounded-xl p-1">
+          {[
+            { icon: Users, label: 'Team Members' },
+            { icon: Settings, label: 'Settings' },
+            { icon: ShieldAlert, label: 'Compliance Audit' },
+          ].map(({ icon: Icon, label }) => (
+            <button
+              key={label}
+              type="button"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-[#0f3a22] hover:bg-white transition-all cursor-pointer"
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {label}
+            </button>
+          ))}
+          <div className="w-px h-4 bg-gray-200 mx-1" />
+          <button
+            type="button"
+            onClick={() => navigate('/workbench')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-500 hover:text-[#0f3a22] hover:bg-white transition-all cursor-pointer"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Workbench
+          </button>
+        </nav>
+      ) : (
+        /* Workbench / Default Nav */
+        <div className="flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
+          <button
+            type="button"
+            onClick={() => { if (onModeChange) onModeChange('generation'); else navigate('/workbench'); }}
+            className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeMode === 'generation'
+                ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${activeMode === 'generation' ? 'bg-[#16a34a]' : 'bg-gray-400'}`} />
+            XML Generation
+          </button>
+          <button
+            type="button"
+            onClick={() => { if (onModeChange) onModeChange('dispatch'); else navigate('/workbench'); }}
+            className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeMode === 'dispatch'
+                ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${activeMode === 'dispatch' ? 'bg-[#16a34a]' : 'bg-gray-400'}`} />
+            Pipeline Execution
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/orchestrator')}
+            className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+          >
+            <span className="text-[12px]">⚡</span>
+            Flow Orchestrator
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/inspector')}
+            className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+          >
+            <span className="text-[12px]">🔍</span>
+            Fix My XML
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/diff')}
+            className="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+          >
+            <span className="text-[12px]">⚖️</span>
+            Diff Checker
+          </button>
+        </div>
+      )}
 
+      {/* Right: User chip + dropdown */}
       <div className="flex items-center gap-2.5 relative">
-        {/* User Chip Trigger */}
         <div
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className="flex items-center gap-2.5 border border-[#e4e9e6] rounded-lg px-2.5 py-1.5 cursor-pointer hover:border-[#22a05a] hover:bg-gray-50 transition-all select-none"
@@ -135,66 +195,92 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <div>
             <div className="text-[12.5px] font-semibold text-[#111827] leading-tight flex items-center gap-1">
               {displayName}
-              <svg className={`w-3.5 h-3.5 text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-              </svg>
+              {roleBadge && (
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1 ${roleBadge.color}`}>
+                  {roleBadge.label}
+                </span>
+              )}
+              <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
             </div>
             <div className="text-[10.5px] text-[#6b7280] leading-tight font-mono">{userId}</div>
           </div>
         </div>
 
-        {/* Dropdown Menu */}
         {dropdownOpen && (
           <>
-            {/* Overlay to close on click outside */}
-            <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)}></div>
-            
-            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white border border-[#e4e9e6] rounded-xl shadow-lg py-1.5 z-20 animate-in fade-in slide-in-from-top-2 duration-100">
+            <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
+            <div className="absolute right-0 top-full mt-1.5 w-56 bg-white border border-[#e4e9e6] rounded-xl shadow-lg py-1.5 z-20">
+              {/* Role badge */}
+              {roleBadge && (
+                <div className="px-4 py-2 border-b border-[#e4e9e6]">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleBadge.color}`}>
+                    {roleBadge.label}
+                  </span>
+                  <p className="text-[11px] text-gray-500 mt-1">{user?.email}</p>
+                </div>
+              )}
+
               {onCredentialsClick && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    onCredentialsClick();
-                  }}
+                  onClick={() => { setDropdownOpen(false); onCredentialsClick(); }}
                   className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
                 >
-                  Credentials and Tokens
+                  Credentials & Tokens
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  setDropdownOpen(false);
-                  navigate('/admin/tenant');
-                }}
-                className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
-              >
-                Tenant Administration
-              </button>
+              {/* Admin shortcuts */}
+              {user?.role === 'PLATFORM_ADMIN' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { setDropdownOpen(false); navigate('/platform-admin'); }}
+                    className={`w-full text-left px-4 py-2 text-[13px] font-semibold transition-colors cursor-pointer ${
+                      isPlatformAdmin ? 'text-[#15803d] bg-[#e6f6ec]/40' : 'text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d]'
+                    }`}
+                  >
+                    Platform Dashboard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setDropdownOpen(false); navigate('/tenant-admin'); }}
+                    className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
+                  >
+                    Tenant Administration
+                  </button>
+                </>
+              )}
+              {user?.role === 'TENANT_ADMIN' && (
+                <button
+                  type="button"
+                  onClick={() => { setDropdownOpen(false); navigate('/tenant-admin'); }}
+                  className={`w-full text-left px-4 py-2 text-[13px] font-semibold transition-colors cursor-pointer ${
+                    isTenantAdmin ? 'text-[#15803d] bg-[#e6f6ec]/40' : 'text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d]'
+                  }`}
+                >
+                  Tenant Dashboard
+                </button>
+              )}
+
+              {isAdminPage && (
+                <button
+                  type="button"
+                  onClick={() => { setDropdownOpen(false); navigate('/workbench'); }}
+                  className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
+                >
+                  Go to Workbench
+                </button>
+              )}
+
+              <div className="border-t border-[#e4e9e6] my-1" />
 
               <button
                 type="button"
-                onClick={() => {
-                  setDropdownOpen(false);
-                  navigate('/admin/platform');
-                }}
-                className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
+                onClick={() => { setDropdownOpen(false); logout(); navigate('/login'); }}
+                className="w-full text-left px-4 py-2 text-[13px] font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer flex items-center gap-2"
               >
-                Platform Administration
-              </button>
-
-              <div className="border-t border-[#e4e9e6] my-1"></div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setDropdownOpen(false);
-                  logout();
-                }}
-                className="w-full text-left px-4 py-2 text-[13px] font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
-              >
+                <LogOut className="w-3.5 h-3.5" />
                 Sign Out
               </button>
             </div>

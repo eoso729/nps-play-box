@@ -1,4 +1,5 @@
 -- V1: Create multi-tenant foundation schema
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 1. Create tenants table
 CREATE TABLE tenants (
