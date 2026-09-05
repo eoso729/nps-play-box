@@ -62,27 +62,24 @@ public class AuditAspect {
 
             String resourceId = resolveResourceId(auditable.resourceId(), context);
 
+            if (tenantId == null) {
+                if ("TENANT".equalsIgnoreCase(auditable.resourceType()) && resourceId != null) {
+                    try {
+                        tenantId = Long.parseLong(resourceId);
+                    } catch (NumberFormatException ignored) {}
+                }
+                if (tenantId == null && "TENANT".equalsIgnoreCase(auditable.resourceType())) {
+                    Object idVar = context.lookupVariable("id");
+                    if (idVar instanceof Long idVal) {
+                        tenantId = idVal;
+                    }
+                }
+            }
+
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("method", method.getName());
 
-            auditService.logEvent(auditService.builder()
-                    .tenantId(tenantId)
-                    .userId(userId)
-                    .eventType(auditable.eventType())
-                    .action(auditable.action())
-                    .resourceType(auditable.resourceType())
-                    .resourceId(resourceId)
-                    .status(AuditEvent.EventStatus.SUCCESS)
-                    .metadata(metadata));
-
-            return result;
-        } catch (Throwable ex) {
-            if (auditable.logOnFailure()) {
-                String resourceId = resolveResourceId(auditable.resourceId(), context);
-                Map<String, Object> metadata = new HashMap<>();
-                metadata.put("method", method.getName());
-                metadata.put("exception", ex.getClass().getSimpleName());
-
+            try {
                 auditService.logEvent(auditService.builder()
                         .tenantId(tenantId)
                         .userId(userId)
@@ -90,9 +87,41 @@ public class AuditAspect {
                         .action(auditable.action())
                         .resourceType(auditable.resourceType())
                         .resourceId(resourceId)
-                        .status(AuditEvent.EventStatus.FAILURE)
-                        .errorMessage(ex.getMessage())
+                        .status(AuditEvent.EventStatus.SUCCESS)
                         .metadata(metadata));
+            } catch (Exception e) {
+                log.error("Failed to log audit event in aspect: {}", e.getMessage(), e);
+            }
+
+            return result;
+        } catch (Throwable ex) {
+            if (auditable.logOnFailure()) {
+                String resourceId = resolveResourceId(auditable.resourceId(), context);
+                if (tenantId == null && "TENANT".equalsIgnoreCase(auditable.resourceType())) {
+                    Object idVar = context.lookupVariable("id");
+                    if (idVar instanceof Long idVal) {
+                        tenantId = idVal;
+                    }
+                }
+
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("method", method.getName());
+                metadata.put("exception", ex.getClass().getSimpleName());
+
+                try {
+                    auditService.logEvent(auditService.builder()
+                            .tenantId(tenantId)
+                            .userId(userId)
+                            .eventType(auditable.eventType())
+                            .action(auditable.action())
+                            .resourceType(auditable.resourceType())
+                            .resourceId(resourceId)
+                            .status(AuditEvent.EventStatus.FAILURE)
+                            .errorMessage(ex.getMessage())
+                            .metadata(metadata));
+                } catch (Exception e) {
+                    log.error("Failed to log audit failure event in aspect: {}", e.getMessage(), e);
+                }
             }
             throw ex;
         }
@@ -133,7 +162,7 @@ public class AuditAspect {
             return tid;
         }
 
-        return 0L;
+        return null;
     }
 
     private Long resolveUserId(StandardEvaluationContext context) {

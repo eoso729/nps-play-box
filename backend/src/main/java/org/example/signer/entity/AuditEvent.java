@@ -27,7 +27,7 @@ public class AuditEvent {
     @Column(name = "event_uuid", nullable = false, unique = true, updatable = false)
     private UUID eventUuid;
 
-    @Column(name = "tenant_id", nullable = false, updatable = false)
+    @Column(name = "tenant_id", updatable = false)
     private Long tenantId;
 
     @Column(name = "user_id", updatable = false)

@@ -6,8 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.signer.entity.AuditEvent;
 import org.example.signer.repository.AuditEventRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -22,12 +23,12 @@ import java.util.UUID;
 public class AuditService {
 
     private final AuditEventRepository auditEventRepository;
+    private final PlatformTransactionManager transactionManager;
 
     /**
      * Log an audit event.
-     * Uses REQUIRES_NEW to ensure audit record is saved independently of parent transaction.
+     * Uses REQUIRES_NEW via TransactionTemplate to ensure audit record is saved independently of parent transaction.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logEvent(AuditEventBuilder builder) {
         try {
             ServletRequestAttributes attributes =
@@ -51,7 +52,13 @@ public class AuditService {
             }
 
             AuditEvent event = builder.build();
-            auditEventRepository.save(event);
+
+            TransactionTemplate template = new TransactionTemplate(transactionManager);
+            template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            template.execute(status -> {
+                auditEventRepository.save(event);
+                return null;
+            });
 
             log.debug("Audit event saved: type={}, action={}, tenantId={}, resource={}/{}",
                     event.getEventType(), event.getAction(), event.getTenantId(),
@@ -73,7 +80,7 @@ public class AuditService {
     public void logAuth(Long tenantId, Long userId, String action,
                         AuditEvent.EventStatus status, String errorMessage) {
         logEvent(builder()
-                .tenantId(tenantId != null ? tenantId : 0L)
+                .tenantId(tenantId)
                 .userId(userId)
                 .eventType(AuditEvent.EventType.AUTH)
                 .action(action)
@@ -271,7 +278,7 @@ public class AuditService {
 
         public AuditEvent build() {
             return AuditEvent.builder()
-                    .tenantId(tenantId != null ? tenantId : 0L)
+                    .tenantId(tenantId)
                     .userId(userId)
                     .eventType(eventType)
                     .action(action)

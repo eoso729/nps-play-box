@@ -3,7 +3,7 @@
 CREATE TABLE audit_events (
     id BIGSERIAL PRIMARY KEY,
     event_uuid UUID DEFAULT gen_random_uuid() NOT NULL UNIQUE,
-    tenant_id BIGINT NOT NULL,
+    tenant_id BIGINT,
     user_id BIGINT,
     event_type VARCHAR(50) NOT NULL,
     action VARCHAR(100) NOT NULL,
@@ -17,8 +17,6 @@ CREATE TABLE audit_events (
     error_message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
-    CONSTRAINT fk_audit_events_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
-    CONSTRAINT fk_audit_events_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT chk_audit_event_type CHECK (
         event_type IN (
             'AUTH',
