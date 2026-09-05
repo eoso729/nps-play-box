@@ -53,6 +53,10 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
 
   const bodyLines = body ? body.split('\n') : [];
 
+  const requestId = useMemo(() => {
+    return serviceResponse ? `req-${(timestamp ? new Date(timestamp).getTime() : Date.now()).toString(36)}` : '--';
+  }, [serviceResponse, timestamp]);
+
   return (
     <div className="flex flex-col min-w-0 overflow-hidden" style={{ flex: 1 }}>
       {/* Pane Header */}
@@ -83,7 +87,7 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
         <StatCard label="TIMESTAMP" value={isLoading ? '...' : formatTimestamp(timestamp)} plain />
         <StatCard
           label="REQUEST ID"
-          value={isLoading ? '...' : serviceResponse ? `req-${Math.random().toString(36).slice(2, 10)}` : '--'}
+          value={isLoading ? '...' : requestId}
           plain
           mono
         />
@@ -128,11 +132,11 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
       >
         {isLoading && (
           <div className="px-4 py-6 space-y-2">
-            {Array.from({ length: 10 }).map((_, i) => (
+            {[45, 78, 62, 85, 53, 70, 90, 48, 65, 80].map((width, i) => (
               <div
                 key={i}
                 className="h-3 rounded animate-pulse"
-                style={{ background: 'rgba(255,255,255,0.06)', width: `${40 + Math.random() * 50}%` }}
+                style={{ background: 'rgba(255,255,255,0.06)', width: `${width}%` }}
               />
             ))}
           </div>
@@ -164,7 +168,7 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
         {!isLoading && serviceResponse && activeTab === 'headers' && (
           <div className="px-4 py-4 space-y-1.5">
             <HeaderRow label="Content-Type" value="application/xml; charset=UTF-8" />
-            <HeaderRow label="X-Request-ID" value={`req-${Math.random().toString(36).slice(2, 10)}`} />
+            <HeaderRow label="X-Request-ID" value={requestId} />
             <HeaderRow label="X-Response-Time" value={latency != null ? `${latency}ms` : '--'} />
             <HeaderRow label="Server" value="NIBSS-Gateway/2.4" />
           </div>
