@@ -938,6 +938,46 @@ public class XmlValidationEngineTest {
         assertTrue(fixResp.isSuccess());
         assertTrue(fixResp.getFixedXml().contains("<BICFI>999058</BICFI>"));
         assertTrue(fixResp.getValidationReport().isValid());
+
+        // 4. Collection Amount without 2 decimal places (50000) is flagged and auto-fixed
+        String nonDecimalAmountXml = sampleXml.replace(
+                "<ColltnAmt Ccy=\"NGN\">50000.00</ColltnAmt>",
+                "<ColltnAmt Ccy=\"NGN\">50000</ColltnAmt>"
+        );
+        ValidationReportDto amountReport = validationEngine.validate(nonDecimalAmountXml, "pain.009");
+        assertFalse(amountReport.isValid(), "Must flag amount without 2 decimal places");
+        assertTrue(amountReport.getIssues().stream().anyMatch(i -> "INVALID_AMOUNT_FORMAT".equals(i.getRuleCode())),
+                "Must raise INVALID_AMOUNT_FORMAT for 50000 without 2 decimal places");
+
+        XmlAutoFixRequestDto fixAmtReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(nonDecimalAmountXml)
+                .messageType("pain.009")
+                .build();
+        XmlAutoFixResponseDto fixAmtResp = autoFixEngine.autoFix(fixAmtReq);
+        assertTrue(fixAmtResp.isSuccess());
+        assertTrue(fixAmtResp.getFixedXml().contains("<ColltnAmt Ccy=\"NGN\">50000.00</ColltnAmt>"),
+                "Auto-fix must format 50000 to 50000.00, got: " + fixAmtResp.getFixedXml());
+        assertTrue(fixAmtResp.getValidationReport().isValid());
+
+        // 5. Collection Amount with single decimal place (50000.5) is flagged and auto-fixed
+        String singleDecimalAmountXml = sampleXml.replace(
+                "<ColltnAmt Ccy=\"NGN\">50000.00</ColltnAmt>",
+                "<ColltnAmt Ccy=\"NGN\">50000.5</ColltnAmt>"
+        );
+        ValidationReportDto singleDecimalReport = validationEngine.validate(singleDecimalAmountXml, "pain.009");
+        assertFalse(singleDecimalReport.isValid(), "Must flag amount with single decimal place");
+        assertTrue(singleDecimalReport.getIssues().stream().anyMatch(i -> "INVALID_AMOUNT_FORMAT".equals(i.getRuleCode())),
+                "Must raise INVALID_AMOUNT_FORMAT for 50000.5");
+
+        XmlAutoFixRequestDto fixSingleReq = XmlAutoFixRequestDto.builder()
+                .xmlContent(singleDecimalAmountXml)
+                .messageType("pain.009")
+                .build();
+        XmlAutoFixResponseDto fixSingleResp = autoFixEngine.autoFix(fixSingleReq);
+        assertTrue(fixSingleResp.isSuccess());
+        assertTrue(fixSingleResp.getFixedXml().contains("<ColltnAmt Ccy=\"NGN\">50000.50</ColltnAmt>"),
+                "Auto-fix must format 50000.5 to 50000.50, got: " + fixSingleResp.getFixedXml());
+        assertTrue(fixSingleResp.getValidationReport().isValid());
     }
 
     @Test

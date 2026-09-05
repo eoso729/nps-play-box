@@ -21,6 +21,7 @@ export const XmlInspectorPage: React.FC = () => {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
@@ -50,7 +51,7 @@ export const XmlInspectorPage: React.FC = () => {
     }
   };
 
-  // Load passed XML or default sample on mount
+  // Load passed XML on mount if navigated from workbench or diff
   useEffect(() => {
     // 1. Check if XML was passed via navigation state or localStorage
     const navState = location.state as { xml?: string; title?: string } | undefined;
@@ -69,14 +70,6 @@ export const XmlInspectorPage: React.FC = () => {
     getAllSamples()
       .then(data => {
         setSamples(data);
-        // Only preload sample XML if no XML was passed into the inspector
-        if (!passedXml || !passedXml.trim()) {
-          const defaultSample = data.find(s => s.key === 'pacs.008') || data[0];
-          if (defaultSample) {
-            setXmlContent(defaultSample.sampleXml);
-            handleInspect(defaultSample.sampleXml, defaultSample.key);
-          }
-        }
       })
       .catch(err => console.error('Failed to load message samples', err));
   }, []);
@@ -185,6 +178,18 @@ export const XmlInspectorPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleEditorScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
+  };
+
+  const handleGutterWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (textareaRef.current) {
+      textareaRef.current.scrollTop += e.deltaY;
+    }
+  };
+
   const jumpToLine = (lineNumber: number) => {
     setHighlightedLine(lineNumber);
     if (!textareaRef.current) return;
@@ -195,6 +200,14 @@ export const XmlInspectorPage: React.FC = () => {
     }
     textareaRef.current.focus();
     textareaRef.current.setSelectionRange(charIndex, charIndex + (lines[lineNumber - 1]?.length || 0));
+
+    // Synchronize vertical scroll to the target line
+    const lineHeight = 20; // 20px per line (leading-5)
+    const targetScrollTop = Math.max(0, (lineNumber - 1) * lineHeight - 60);
+    textareaRef.current.scrollTop = targetScrollTop;
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = targetScrollTop;
+    }
   };
 
   const copyXPath = (xpath: string) => {
@@ -265,6 +278,13 @@ export const XmlInspectorPage: React.FC = () => {
             className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all cursor-pointer"
           >
             Message Workbench
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/orchestrator')}
+            className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all cursor-pointer"
+          >
+            Flow Orchestrator
           </button>
           <button
             type="button"
@@ -528,7 +548,11 @@ export const XmlInspectorPage: React.FC = () => {
           {/* Editor Body with Gutter */}
           <div className="flex-1 flex min-h-0 overflow-hidden relative font-mono text-[12px]">
             {/* Line Numbers Gutter */}
-            <div className="w-12 bg-[#f8faf9] border-r border-[#e4e9e6] py-3 select-none flex flex-col items-end pr-2 text-gray-400 text-[11px] overflow-hidden flex-shrink-0">
+            <div
+              ref={lineNumbersRef}
+              onWheel={handleGutterWheel}
+              className="w-12 bg-[#f8faf9] border-r border-[#e4e9e6] py-3 select-none flex flex-col items-end pr-2 text-gray-400 text-[11px] overflow-hidden flex-shrink-0"
+            >
               {lines.map((_, idx) => {
                 const lineNum = idx + 1;
                 const hasError = errorLines.has(lineNum);
@@ -537,7 +561,7 @@ export const XmlInspectorPage: React.FC = () => {
                 return (
                   <div
                     key={`line-${lineNum}`}
-                    className={`leading-5 flex items-center justify-end w-full gap-1 ${
+                    className={`h-5 leading-5 flex items-center justify-end w-full gap-1 flex-shrink-0 ${
                       isCurrent ? 'font-bold text-emerald-600 bg-emerald-50' : ''
                     }`}
                   >
@@ -554,6 +578,7 @@ export const XmlInspectorPage: React.FC = () => {
               ref={textareaRef}
               value={xmlContent}
               onChange={(e) => setXmlContent(e.target.value)}
+              onScroll={handleEditorScroll}
               placeholder="Paste or edit ISO 20022 XML payload here..."
               spellCheck={false}
               className="flex-1 p-3 resize-none outline-none leading-5 border-none text-gray-800 bg-white overflow-auto font-mono text-[12px] whitespace-pre"

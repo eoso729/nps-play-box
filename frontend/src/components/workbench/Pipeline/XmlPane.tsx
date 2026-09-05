@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Editor, { Monaco } from '@monaco-editor/react';
 
 interface XmlPaneProps {
   title: string;
@@ -12,67 +13,7 @@ interface XmlPaneProps {
   footer?: React.ReactNode;
 }
 
-
-
-function renderXmlLine(line: string, lineNum: number) {
-  // Simple colorization by pattern matching
-  const renderContent = () => {
-    if (line.includes('<?xml')) {
-      return <span style={{ color: '#9aa5a0' }}>{line}</span>;
-    }
-    // Replace tags with colored spans
-    const parts: React.ReactNode[] = [];
-    const tagRegex = /(<\/?)([\w:.-]+)((?:\s+[\w:.-]+(?:=(?:"[^"]*"|'[^']*'|[^\s>]*))?)*)(\/?>)/g;
-    let last = 0;
-    let m: RegExpExecArray | null;
-
-    while ((m = tagRegex.exec(line)) !== null) {
-      if (m.index > last) {
-        const txt = line.slice(last, m.index);
-        parts.push(<span key={`txt-${last}`} style={{ color: '#cfe8db' }}>{txt}</span>);
-      }
-      parts.push(<span key={`lt-${m.index}`} style={{ color: '#5fe0a0' }}>{m[1]}</span>);
-      parts.push(<span key={`tn-${m.index}`} style={{ color: '#5fe0a0' }}>{m[2]}</span>);
-      if (m[3]) {
-        // Attributes
-        const attrStr = m[3];
-        const attrParts = attrStr.split(/(\s+[\w:.-]+=(?:"[^"]*"|'[^']*'|[^\s>]*))/g);
-        attrParts.forEach((ap, i) => {
-          if (ap.includes('=')) {
-            const [attrName, ...attrValParts] = ap.split('=');
-            const attrVal = attrValParts.join('=');
-            parts.push(<span key={`an-${m!.index}-${i}`} style={{ color: '#8fd4b8' }}>{attrName}</span>);
-            parts.push(<span key={`eq-${m!.index}-${i}`} style={{ color: '#9aa5a0' }}>=</span>);
-            parts.push(<span key={`av-${m!.index}-${i}`} style={{ color: '#e7c26a' }}>{attrVal}</span>);
-          } else {
-            parts.push(<span key={`ap-${m!.index}-${i}`} style={{ color: '#8fd4b8' }}>{ap}</span>);
-          }
-        });
-      }
-      parts.push(<span key={`gt-${m.index}`} style={{ color: '#5fe0a0' }}>{m[4]}</span>);
-      last = m.index + m[0].length;
-    }
-    if (last < line.length) {
-      parts.push(<span key={`tail-${last}`} style={{ color: '#cfe8db' }}>{line.slice(last)}</span>);
-    }
-    return parts.length > 0 ? parts : <span style={{ color: '#cfe8db' }}>{line}</span>;
-  };
-
-  return (
-    <div
-      key={lineNum}
-      className="flex"
-      style={{ padding: '0 12px' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-    >
-      <span className="select-none mr-3 text-right" style={{ width: 22, flexShrink: 0, color: '#3f6a52', userSelect: 'none' }}>
-        {lineNum}
-      </span>
-      <span style={{ whiteSpace: 'pre' }}>{renderContent()}</span>
-    </div>
-  );
-}
+const SKELETON_WIDTHS = [45, 78, 62, 85, 53, 70, 90, 48, 65, 80, 58, 72];
 
 const STATUS_CHIP_STYLES: Record<string, { bg: string; color: string; text: string }> = {
   gen: { bg: '#e6f6ec', color: '#15803d', text: 'Generated' },
@@ -80,6 +21,30 @@ const STATUS_CHIP_STYLES: Record<string, { bg: string; color: string; text: stri
   ok: { bg: '#e6f6ec', color: '#15803d', text: '200 OK' },
   error: { bg: '#fee2e2', color: '#dc2626', text: 'Error' },
   idle: { bg: '#f3f4f6', color: '#6b7280', text: 'Awaiting input' },
+};
+
+const handleBeforeMount = (monaco: Monaco) => {
+  monaco.editor.defineTheme('nps-emerald-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [
+      { token: 'tag', foreground: '5fe0a0' },
+      { token: 'tag.xml', foreground: '5fe0a0' },
+      { token: 'attribute.name', foreground: '8fd4b8' },
+      { token: 'attribute.value', foreground: 'e7c26a' },
+      { token: 'string', foreground: 'e7c26a' },
+      { token: 'comment', foreground: '4f7a60', fontStyle: 'italic' },
+      { token: 'delimiter', foreground: '5fe0a0' },
+    ],
+    colors: {
+      'editor.background': '#0b1a12',
+      'editor.foreground': '#cfe8db',
+      'editorLineNumber.foreground': '#3f6a52',
+      'editorLineNumber.activeForeground': '#8fd4b8',
+      'editor.lineHighlightBackground': '#0f2419',
+      'editorCursor.foreground': '#22c55e',
+    },
+  });
 };
 
 export const XmlPane: React.FC<XmlPaneProps> = ({
@@ -133,8 +98,6 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
     }
   }, [xml, title, navigate]);
 
-  const lines = xml ? xml.split('\n') : [];
-
   return (
     <div className="flex flex-col border-r border-[#e4e9e6] min-w-0 overflow-hidden" style={{ flex: 1 }}>
       {/* Pane Header */}
@@ -159,25 +122,16 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
       </div>
 
       {/* Code Body */}
-      <div
-        className="flex-1 overflow-auto"
-        style={{
-          background: '#0b1a12',
-          fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-          fontSize: 11,
-          lineHeight: 1.65,
-          padding: '10px 0',
-        }}
-      >
+      <div className="flex-1 min-h-0 relative bg-[#0b1a12] overflow-hidden">
         {isLoading && (
           <div className="px-4 py-6 space-y-2">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {SKELETON_WIDTHS.map((width, i) => (
               <div
                 key={i}
                 className="h-3 rounded animate-pulse"
                 style={{
                   background: 'rgba(255,255,255,0.06)',
-                  width: `${40 + Math.random() * 50}%`,
+                  width: `${width}%`,
                 }}
               />
             ))}
@@ -193,7 +147,49 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
           </div>
         )}
 
-        {!isLoading && xml && lines.map((line, i) => renderXmlLine(line, i + 1))}
+        {!isLoading && xml && (
+          <Editor
+            height="100%"
+            language="xml"
+            theme="nps-emerald-dark"
+            value={xml}
+            beforeMount={handleBeforeMount}
+            options={{
+              readOnly: true,
+              domReadOnly: true,
+              fontSize: 11,
+              lineHeight: 20,
+              fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+              lineNumbers: 'on',
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              wordWrap: 'on',
+              automaticLayout: true,
+              folding: true,
+              renderLineHighlight: 'all',
+              scrollbar: {
+                vertical: 'visible',
+                horizontal: 'auto',
+                verticalScrollbarSize: 8,
+                horizontalScrollbarSize: 8,
+              },
+            }}
+            loading={
+              <div className="px-4 py-6 space-y-2">
+                {SKELETON_WIDTHS.map((width, i) => (
+                  <div
+                    key={i}
+                    className="h-3 rounded animate-pulse"
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      width: `${width}%`,
+                    }}
+                  />
+                ))}
+              </div>
+            }
+          />
+        )}
       </div>
 
       {/* Footer Slot (for signature box etc.) */}

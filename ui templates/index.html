@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Templates Hub - Enterprise Multi-Tenancy - NPS Play Box</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nps: {
+              950: '#06170d',
+              900: '#0b2818',
+              850: '#0a321c',
+              800: '#0f3a22',
+              700: '#15803d',
+              600: '#16a34a',
+              500: '#22a05a',
+              400: '#4ade80',
+              200: '#bbf7d0',
+              100: '#e6f6ec',
+              50: '#f3faf5',
+            },
+            border: '#e4e9e6',
+            slateText: '#111827',
+            muted: '#6b7280',
+            appBg: '#f6f9f7',
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f6f9f7;
+      color: #111827;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Header -->
+  <header class="h-16 flex-shrink-0 bg-white border-b border-[#e4e9e6] flex items-center justify-between px-6 z-20">
+    <div class="flex items-center gap-4">
+      <div class="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center text-white font-black text-[13px] flex-shrink-0 shadow-md"
+           style="background: linear-gradient(135deg, #22a05a, #15803d); box-shadow: 0 4px 12px rgba(21,128,61,0.25);">
+        NPS
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-[16px] font-bold text-[#0f3a22] m-0 leading-tight">NPS Play Box Engine</h1>
+          <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-md uppercase tracking-wide border border-emerald-200">Prototype Showcase</span>
+        </div>
+        <p class="text-[11.5px] text-[#6b7280] m-0 mt-[1px]">Enterprise Multi-Tenancy UI Templates (Phases 8 & 9)</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 text-xs">
+      <a href="../phases/README.md" class="text-gray-500 hover:text-emerald-700 font-medium">Phase Documentation</a>
+      <span class="text-gray-300">•</span>
+      <a href="../ENTERPRISE_MULTITENANCY_PRD.md" class="text-gray-500 hover:text-emerald-700 font-medium">PRD Specification</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-b from-white to-[#f6f9f7] border-b border-[#e4e9e6] py-12 px-6">
+    <div class="max-w-5xl mx-auto text-center space-y-4">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        High-Fidelity Interactive HTML Implementations
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-[#0b2818] tracking-tight">
+        Multi-Tenant Administration Interfaces
+      </h2>
+      <p class="text-sm text-gray-600 max-w-2xl mx-auto leading-relaxed">
+        Explore the interactive HTML implementations designed to mirror the NPS Play Box Engine aesthetic. These prototypes demonstrate the platform governance experience for <strong>Super Admins</strong> and the self-service management experience for <strong>Tenant Admins</strong>.
+      </p>
+    </div>
+  </section>
+
+  <!-- Cards Grid -->
+  <main class="max-w-6xl mx-auto px-6 py-10 flex-1 space-y-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <!-- Prototype 1: Super Admin -->
+      <div class="bg-white border border-[#e4e9e6] rounded-2xl p-7 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 bg-purple-100 text-purple-800 text-[11px] font-bold rounded-full font-mono border border-purple-200">
+              PHASE 9 SPECIFICATION
+            </span>
+            <span class="text-xs text-gray-400 font-mono">Platform Governance</span>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-bold text-[#0f3a22]">Super Admin Dashboard</h3>
+            <p class="text-xs text-gray-500 mt-1">Platform-wide governance across all 18 onboarded financial institutions.</p>
+          </div>
+
+          <!-- Feature Highlights -->
+          <div class="space-y-2 pt-2 text-xs text-gray-600">
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</div>
+              <span><strong>Cross-Tenant Metrics & KPI Cards</strong>: Total tenants, active users, seat utilization %, and compliance rate.</span>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</div>
+              <span><strong>Tenant Management Directory</strong>: Search, filter by status, and adjust commercial seat quotas via modal.</span>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</div>
+              <span><strong>Immutable Audit Ledger</strong>: Cryptographic hash verification, filter by event type, and CSV export.</span>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</div>
+              <span><strong>Support Impersonation Workflow</strong>: Regulated time-limited access with active security banner demo.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-6 mt-6 border-t border-gray-100">
+          <a href="super-admin.html" class="w-full py-3 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-2 no-underline">
+            Launch Super Admin Interface →
+          </a>
+        </div>
+      </div>
+
+      <!-- Prototype 2: Tenant Admin -->
+      <div class="bg-white border border-[#e4e9e6] rounded-2xl p-7 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-full font-mono border border-emerald-200">
+              PHASE 8 SPECIFICATION
+            </span>
+            <span class="text-xs text-gray-400 font-mono">Institution Scope (Zenith Bank)</span>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-bold text-[#0f3a22]">Tenant Administration UI</h3>
+            <p class="text-xs text-gray-500 mt-1">Self-service control panel for a financial institution's administrator.</p>
+          </div>
+
+          <!-- Feature Highlights -->
+          <div class="space-y-2 pt-2 text-xs text-gray-600">
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</div>
+              <span><strong>Real-Time Seat Capacity Meter</strong>: Visual gauge showing 80% usage with interactive warning alert.</span>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</div>
+              <span><strong>Team Member Management</strong>: Filter by role and status, with interactive Role Assignment Modal.</span>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</div>
+              <span><strong>Invitation Flow</strong>: Invite team colleagues with email validation, pending table, and revocation.</span>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <div class="w-5 h-5 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 text-xs font-bold">✓</div>
+              <span><strong>Organization Settings</strong>: Custom brand accent colors, timeout sliders, and isolated audit logs.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-6 mt-6 border-t border-gray-100">
+          <a href="tenant-admin.html" class="w-full py-3 bg-[#0f3a22] hover:bg-[#0b2818] text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-2 no-underline">
+            Launch Tenant Admin Page →
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Architectural Interaction Flow -->
+    <div class="bg-white border border-[#e4e9e6] rounded-2xl p-6 shadow-sm">
+      <h3 class="text-base font-bold text-[#0f3a22] mb-3">How the Two Interfaces Govern Multi-Tenancy</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-gray-600">
+        <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <div class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center mb-2">1</div>
+          <h4 class="font-bold text-gray-900 mb-1">Commercial Quota Allocation</h4>
+          <p>Super Admins allocate seat quotas per institution. When Zenith Bank consumes 8 of its 10 seats, the system triggers the 80% threshold warning in the Tenant Admin UI.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <div class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center mb-2">2</div>
+          <h4 class="font-bold text-gray-900 mb-1">Self-Service Governance</h4>
+          <p>Tenant Admins manage their own engineers and viewers, assign RBAC permissions, and submit capacity expansion requests directly to Platform Operations.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-gray-50 border border-gray-100">
+          <div class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center mb-2">3</div>
+          <h4 class="font-bold text-gray-900 mb-1">Supervised Support Access</h4>
+          <p>When an engineer needs help with an ISO 20022 message, Support requests time-limited impersonation with an immutable audit log trail visible to both parties.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="h-[34px] flex-shrink-0 bg-white border-t border-[#e4e9e6] flex items-center justify-between px-6 text-[11px] text-[#6b7280]">
+    <span>NPS Play Box Engine &copy; 2026 &middot; Multi-Tenancy Architecture</span>
+    <span class="font-mono">Templates located at /ui templates/</span>
+  </footer>
+
+</body>
+</html>

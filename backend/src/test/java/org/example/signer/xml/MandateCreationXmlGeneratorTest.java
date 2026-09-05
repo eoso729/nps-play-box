@@ -57,4 +57,21 @@ class MandateCreationXmlGeneratorTest {
         assertEquals(new BigDecimal("50000.00"), result.getMndtInitnReq().getMndt().getColltnAmt().getValue());
         assertEquals("RCUR", result.getMndtInitnReq().getMndt().getOcrncs().getSeqTp());
     }
+
+    @Test
+    void testCollectionAmountFormattedToTwoDecimalPlacesInXml() throws Exception {
+        MandateCreationRequestDto dto = new MandateCreationRequestDto();
+        dto.setSourceId("999058");
+        dto.setDestinationId("999057");
+        dto.setCollectionAmount(new BigDecimal("50000")); // scale 0, e.g. from JSON integer
+
+        MandateCreation result = MandateCreationXmlGenerator.generate(dto, "MSG-INIT-001", "MNDT-123456");
+        assertEquals(new BigDecimal("50000.00"), result.getMndtInitnReq().getMndt().getColltnAmt().getValue());
+
+        org.w3c.dom.Document doc = org.example.signer.Utils.XmlUtils.marshalToDocument(result);
+        String xml = org.example.signer.Utils.XmlUtils.documentToString(doc);
+        assertTrue(xml.contains("<ColltnAmt Ccy=\"NGN\">50000.00</ColltnAmt>"), 
+                "Generated XML must contain 2-decimal-place ColltnAmt, got: " + xml);
+        assertFalse(xml.contains("<ColltnAmt Ccy=\"NGN\">50000</ColltnAmt>"));
+    }
 }

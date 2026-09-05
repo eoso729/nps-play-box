@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Governance & Super Admin Dashboard - NPS Play Box</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nps: {
+              950: '#06170d',
+              900: '#0b2818',
+              850: '#0a321c',
+              800: '#0f3a22',
+              700: '#15803d',
+              600: '#16a34a',
+              500: '#22a05a',
+              400: '#4ade80',
+              200: '#bbf7d0',
+              100: '#e6f6ec',
+              50: '#f3faf5',
+            },
+            border: '#e4e9e6',
+            slateText: '#111827',
+            muted: '#6b7280',
+            appBg: '#f6f9f7',
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f6f9f7;
+      color: #111827;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f3;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- ========================================================================= -->
+  <!-- TOP PLATFORM BANNER: ROOT GOVERNANCE NOTIFICATION & ACTIVE IMPERSONATION -->
+  <!-- ========================================================================= -->
+  <div id="impersonationBanner" class="bg-gradient-to-r from-purple-800 via-purple-700 to-indigo-800 text-white px-6 py-2.5 shadow-md flex items-center justify-between text-xs font-medium border-b border-purple-900 transition-all duration-300">
+    <div class="flex items-center gap-3">
+      <span class="flex h-2.5 w-2.5 relative">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-300 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-200"></span>
+      </span>
+      <div class="flex items-center gap-2">
+        <span class="px-2 py-0.5 rounded bg-purple-900/60 font-bold tracking-wider uppercase text-[10px] border border-purple-400/30">Support Impersonation</span>
+        <span>Active Session: You are observing <strong class="underline decoration-purple-300 font-semibold">Access Bank PLC</strong> as <code class="bg-purple-900/50 px-1.5 py-0.5 rounded font-mono text-[11px]">ade.osho@accessbankplc.com</code></span>
+        <span class="text-purple-200 text-[11px] font-mono hidden md:inline ml-2">• Session expires in <span id="countdownTimer" class="font-bold text-white">03:41:20</span></span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2.5">
+      <button onclick="toggleImpersonationBanner(false)" class="px-2.5 py-1 bg-white/15 hover:bg-white/25 rounded text-white text-[11px] font-semibold transition border border-white/20">
+        Dismiss Notice
+      </button>
+      <button onclick="endImpersonation()" class="px-3 py-1 bg-white text-purple-800 hover:bg-purple-50 rounded text-[11px] font-bold shadow-sm transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        End Impersonation
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN APP HEADER (MATCHING CURRENT NPS PLAY BOX ENGINE DESIGN) -->
+  <!-- ========================================================================= -->
+  <header class="h-16 flex-shrink-0 bg-white border-b border-[#e4e9e6] flex items-center justify-between px-6 z-20 sticky top-0">
+    <div class="flex items-center gap-4">
+      <!-- Logo Mark -->
+      <a href="index.html" class="flex items-center gap-3 no-underline group">
+        <div class="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center text-white font-black text-[13px] flex-shrink-0 shadow-md group-hover:scale-105 transition-transform"
+             style="background: linear-gradient(135deg, #22a05a, #15803d); box-shadow: 0 4px 12px rgba(21,128,61,0.25);">
+          NPS
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-[16px] font-bold text-[#0f3a22] m-0 leading-tight tracking-tight">NPS Play Box Engine</h1>
+            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-md uppercase tracking-wide border border-emerald-200">Super Admin</span>
+          </div>
+          <p class="text-[11.5px] text-[#6b7280] m-0 mt-[1px]">Enterprise Multi-Tenant Governance & Administration</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- Mode Switcher Tabs (Consistent with AppHeader.tsx) -->
+    <div class="hidden lg:flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
+      <a href="../frontend/index.html#/workbench" class="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 no-underline">
+        <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+        XML Generation
+      </a>
+      <a href="../frontend/index.html#/orchestrator" class="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 no-underline">
+        <span>⚡</span>
+        Flow Orchestrator
+      </a>
+      <a href="../frontend/index.html#/inspector" class="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 no-underline">
+        <span>🔍</span>
+        Fix XML & Health
+      </a>
+      <a href="tenant-admin.html" class="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 no-underline">
+        <span>🏢</span>
+        Tenant View
+      </a>
+      <button class="px-3.5 py-1.5 text-[12px] font-bold rounded-lg bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)] flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-[#16a34a] animate-pulse"></span>
+        Platform Governance
+      </button>
+    </div>
+
+    <!-- User Profile & Quick Actions -->
+    <div class="flex items-center gap-3">
+      <!-- Quick Impersonation Button -->
+      <button onclick="openModal('impersonationModal')" class="px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 rounded-lg text-[12px] font-semibold transition flex items-center gap-1.5 shadow-sm">
+        <svg class="w-3.5 h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        <span class="hidden sm:inline">Request</span> Impersonation
+      </button>
+
+      <!-- Notifications dropdown placeholder -->
+      <div class="relative">
+        <button class="w-9 h-9 rounded-lg border border-[#e4e9e6] hover:bg-gray-50 flex items-center justify-center text-gray-600 relative transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+      </div>
+
+      <!-- Root User Card -->
+      <div class="flex items-center gap-2.5 pl-3 border-l border-[#e4e9e6]">
+        <div class="w-8 h-8 rounded-full bg-[#0f3a22] text-[#e6f6ec] font-bold text-xs flex items-center justify-center ring-2 ring-emerald-500/30">
+          SA
+        </div>
+        <div class="hidden sm:block text-left">
+          <div class="text-[12px] font-bold text-gray-900 leading-tight">Root Platform Admin</div>
+          <div class="text-[10.5px] text-emerald-700 font-mono">root@npsplaybox.com</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- SUB-HEADER CONTEXT BAR -->
+  <!-- ========================================================================= -->
+  <div class="bg-white border-b border-[#e4e9e6] px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 text-sm text-gray-500">
+        <span class="font-medium text-gray-800">Platform Scope</span>
+        <span>/</span>
+        <span class="text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Global Cluster (18 Financial Institutions)</span>
+      </div>
+      <span class="text-xs text-gray-400">•</span>
+      <span class="text-xs text-gray-500 font-mono">Tenant Isolation: <strong class="text-emerald-700">Strict RLS Active</strong></span>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <div class="flex items-center gap-2">
+      <button onclick="switchTab('dashboardTab', this)" class="nav-tab active-tab px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#16a34a] text-white shadow-sm transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        Overview & Analytics
+      </button>
+      <button onclick="switchTab('tenantsTab', this)" class="nav-tab px-3.5 py-1.5 text-xs font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        Tenants Management <span class="bg-gray-200 text-gray-700 text-[10px] px-1.5 py-0.2 rounded-full ml-1">18</span>
+      </button>
+      <button onclick="switchTab('auditLogsTab', this)" class="nav-tab px-3.5 py-1.5 text-xs font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Audit Trail <span class="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.2 rounded-full ml-1">Immutable</span>
+      </button>
+      <button onclick="switchTab('impersonationTab', this)" class="nav-tab px-3.5 py-1.5 text-xs font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Support Impersonation <span class="bg-purple-100 text-purple-800 text-[10px] px-1.5 py-0.2 rounded-full ml-1 font-bold">1 Active</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN CONTENT CONTAINER -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- TAB 1: OVERVIEW & ANALYTICS DASHBOARD -->
+    <div id="dashboardTab" class="tab-pane space-y-6">
+      <!-- 4 Platform Metric KPI Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Metric 1: Total Tenants -->
+        <div class="bg-white border border-[#e4e9e6] rounded-xl p-5 shadow-sm hover:shadow transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Tenants</span>
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-[#0f3a22]">18</span>
+            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+              ↑ +2 this month
+            </span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-2.5">
+            <span><strong class="text-gray-800">14</strong> Active</span>
+            <span><strong class="text-blue-700">3</strong> Trial</span>
+            <span><strong class="text-red-600">1</strong> Suspended</span>
+          </div>
+        </div>
+
+        <!-- Metric 2: Total Platform Users -->
+        <div class="bg-white border border-[#e4e9e6] rounded-xl p-5 shadow-sm hover:shadow transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Platform Users</span>
+            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-[#0f3a22]">142</span>
+            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Across 18 Orgs</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-2.5">
+            <span>Avg 7.9 users / tenant</span>
+            <span class="text-emerald-700 font-medium">96% Active this week</span>
+          </div>
+        </div>
+
+        <!-- Metric 3: Seat Utilization -->
+        <div class="bg-white border border-[#e4e9e6] rounded-xl p-5 shadow-sm hover:shadow transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Seat Utilization</span>
+            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-[#0f3a22]">78.5%</span>
+            <span class="text-xs font-medium text-gray-500">157 / 200 Seats</span>
+          </div>
+          <div class="mt-3 w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200">
+            <div class="bg-[#16a34a] h-2 rounded-full" style="width: 78.5%"></div>
+          </div>
+          <div class="mt-2 flex justify-between text-[11px] text-gray-400">
+            <span>Capacity remaining</span>
+            <span class="font-bold text-gray-700">43 seats available</span>
+          </div>
+        </div>
+
+        <!-- Metric 4: Compliance & Audits -->
+        <div class="bg-white border border-[#e4e9e6] rounded-xl p-5 shadow-sm hover:shadow transition-shadow">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Audit Trail Integrity</span>
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-extrabold text-[#0f3a22]">100%</span>
+            <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono">SHA-256</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-xs text-gray-500 border-t border-gray-100 pt-2.5">
+            <span>24,819 Events Logged</span>
+            <span class="text-emerald-700 font-bold">0 Tamper Alerts</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Chart 1: Tenant Growth & Adoption -->
+        <div class="bg-white border border-[#e4e9e6] rounded-xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-base font-bold text-[#0f3a22]">Institutional Growth & Onboarding</h2>
+              <p class="text-xs text-gray-500">Cumulative commercial financial institutions on platform</p>
+            </div>
+            <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-lg text-xs font-medium text-gray-600">
+              <button class="px-2.5 py-1 bg-white rounded shadow-sm text-gray-900 font-bold">30D</button>
+              <button class="px-2.5 py-1 hover:text-gray-900">90D</button>
+              <button class="px-2.5 py-1 hover:text-gray-900">1Y</button>
+            </div>
+          </div>
+          
+          <!-- SVG Trend Visualization -->
+          <div class="h-60 w-full flex flex-col justify-end relative pt-4">
+            <svg class="w-full h-48 overflow-visible" viewBox="0 0 500 180">
+              <!-- Grid lines -->
+              <line x1="0" y1="0" x2="500" y2="0" stroke="#f1f5f3" stroke-width="1"/>
+              <line x1="0" y1="45" x2="500" y2="45" stroke="#f1f5f3" stroke-width="1"/>
+              <line x1="0" y1="90" x2="500" y2="90" stroke="#f1f5f3" stroke-width="1"/>
+              <line x1="0" y1="135" x2="500" y2="135" stroke="#f1f5f3" stroke-width="1"/>
+              <line x1="0" y1="180" x2="500" y2="180" stroke="#e2e8e6" stroke-width="1"/>
+
+              <!-- Gradient Fill Under Area -->
+              <defs>
+                <linearGradient id="growthGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#22a05a" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#22a05a" stop-opacity="0.0"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Filled Area Path -->
+              <path d="M 0 160 L 50 150 L 110 135 L 170 120 L 230 100 L 290 85 L 350 70 L 410 45 L 470 25 L 500 20 L 500 180 L 0 180 Z" fill="url(#growthGrad)"/>
+
+              <!-- Primary Growth Line -->
+              <path d="M 0 160 L 50 150 L 110 135 L 170 120 L 230 100 L 290 85 L 350 70 L 410 45 L 470 25 L 500 20" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/>
+
+              <!-- Data Points with Tooltips -->
+              <circle cx="110" cy="135" r="4" fill="#15803d" stroke="#fff" stroke-width="2"/>
+              <circle cx="230" cy="100" r="4" fill="#15803d" stroke="#fff" stroke-width="2"/>
+              <circle cx="350" cy="70" r="4" fill="#15803d" stroke="#fff" stroke-width="2"/>
+              <circle cx="470" cy="25" r="5" fill="#15803d" stroke="#fff" stroke-width="2.5"/>
+              <circle cx="500" cy="20" r="6" fill="#22a05a" stroke="#fff" stroke-width="3"/>
+            </svg>
+
+            <!-- X-Axis Labels -->
+            <div class="flex justify-between text-[10.5px] text-gray-400 font-mono mt-3">
+              <span>Aug 06</span>
+              <span>Aug 13</span>
+              <span>Aug 20</span>
+              <span>Aug 27</span>
+              <span>Sep 05 (Today)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart 2: Seat Utilization by Institution -->
+        <div class="bg-white border border-[#e4e9e6] rounded-xl p-6 shadow-sm">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-base font-bold text-[#0f3a22]">Top Tenants by Seat Quota Usage</h2>
+              <p class="text-xs text-gray-500">Commercial seat consumption & quota limits</p>
+            </div>
+            <button onclick="switchTab('tenantsTab')" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800">View All →</button>
+          </div>
+
+          <div class="space-y-4 pt-1">
+            <!-- Item 1: Access Bank (Critical Alert) -->
+            <div>
+              <div class="flex justify-between items-center text-xs mb-1.5">
+                <div class="flex items-center gap-2 font-semibold text-gray-800">
+                  <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                  <span>Access Bank PLC</span>
+                  <span class="text-[10px] font-mono text-gray-400">subdomain: access</span>
+                </div>
+                <div class="font-mono text-xs">
+                  <strong class="text-red-600">23 / 25 seats</strong> <span class="text-gray-400">(92.0%)</span>
+                </div>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-red-500 h-2.5 rounded-full" style="width: 92%"></div>
+              </div>
+            </div>
+
+            <!-- Item 2: Zenith Bank (Warning Zone) -->
+            <div>
+              <div class="flex justify-between items-center text-xs mb-1.5">
+                <div class="flex items-center gap-2 font-semibold text-gray-800">
+                  <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span>Zenith Bank PLC</span>
+                  <span class="text-[10px] font-mono text-gray-400">subdomain: zenith</span>
+                </div>
+                <div class="font-mono text-xs">
+                  <strong class="text-amber-600">16 / 20 seats</strong> <span class="text-gray-400">(80.0%)</span>
+                </div>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-amber-500 h-2.5 rounded-full" style="width: 80%"></div>
+              </div>
+            </div>
+
+            <!-- Item 3: GTBank (Healthy) -->
+            <div>
+              <div class="flex justify-between items-center text-xs mb-1.5">
+                <div class="flex items-center gap-2 font-semibold text-gray-800">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>Guaranty Trust Bank</span>
+                  <span class="text-[10px] font-mono text-gray-400">subdomain: gtbank</span>
+                </div>
+                <div class="font-mono text-xs">
+                  <strong class="text-emerald-700">18 / 25 seats</strong> <span class="text-gray-400">(72.0%)</span>
+                </div>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-[#16a34a] h-2.5 rounded-full" style="width: 72%"></div>
+              </div>
+            </div>
+
+            <!-- Item 4: First Bank (Healthy) -->
+            <div>
+              <div class="flex justify-between items-center text-xs mb-1.5">
+                <div class="flex items-center gap-2 font-semibold text-gray-800">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span>First Bank of Nigeria</span>
+                  <span class="text-[10px] font-mono text-gray-400">subdomain: firstbank</span>
+                </div>
+                <div class="font-mono text-xs">
+                  <strong class="text-emerald-700">11 / 20 seats</strong> <span class="text-gray-400">(55.0%)</span>
+                </div>
+              </div>
+              <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-[#16a34a] h-2.5 rounded-full" style="width: 55%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></span> Normal (&lt;80%)</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-amber-500 rounded-sm"></span> Warning (80-90%)</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-red-500 rounded-sm"></span> Critical Alert (&gt;90%)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Activity Feed -->
+      <div class="bg-white border border-[#e4e9e6] rounded-xl p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-base font-bold text-[#0f3a22]">Platform Real-Time Governance Stream</h2>
+            <p class="text-xs text-gray-500">Live security, quota, authentication, and provisioning activity</p>
+          </div>
+          <span class="flex items-center gap-1.5 text-xs text-emerald-700 font-mono">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+            Streaming live
+          </span>
+        </div>
+
+        <div class="divide-y divide-gray-100">
+          <div class="py-3 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-900 font-medium">
+                <span class="font-bold text-gray-900">Support Impersonation Started</span>: <span class="text-purple-700 font-semibold">sysadmin@npsplaybox.com</span> authorized investigation for <strong class="text-gray-900">Access Bank PLC</strong> (<code class="text-xs bg-gray-100 px-1 py-0.5 rounded font-mono">ticket #NPS-4912</code>).
+              </p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] text-gray-400 font-mono">
+                <span>Justification: "Diagnose pacs.008 schema validation rejection"</span>
+                <span>•</span>
+                <span>12 minutes ago</span>
+                <span>•</span>
+                <span>IP 197.210.64.12</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold rounded">SUPPORT</span>
+          </div>
+
+          <div class="py-3 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-900 font-medium">
+                <span class="font-bold text-gray-900">Seat Quota Expanded</span>: Quota updated from <strong class="text-gray-700">15 to 20 seats</strong> for <strong class="text-gray-900">Zenith Bank PLC</strong>.
+              </p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] text-gray-400 font-mono">
+                <span>Modified by Commercial Ops (c.ops@npsplaybox.com)</span>
+                <span>•</span>
+                <span>44 minutes ago</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold rounded">COMMERCIAL</span>
+          </div>
+
+          <div class="py-3 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-gray-900 font-medium">
+                <span class="font-bold text-gray-900">User Registered</span>: <span class="font-semibold text-gray-800">olumide.ade@gtbank.com</span> accepted invitation and onboarded with role <span class="px-1.5 py-0.2 bg-gray-100 font-mono text-[10px] rounded">TENANT_USER</span>.
+              </p>
+              <div class="flex items-center gap-3 mt-1 text-[11px] text-gray-400 font-mono">
+                <span>Tenant: GTBank (ten_gtb_prod_01)</span>
+                <span>•</span>
+                <span>1 hour ago</span>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold rounded">USER_MGT</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: TENANTS MANAGEMENT TAB -->
+    <div id="tenantsTab" class="tab-pane hidden space-y-6">
+      <div class="bg-white border border-[#e4e9e6] rounded-xl shadow-sm overflow-hidden">
+        <!-- Header & Action Controls -->
+        <div class="p-6 border-b border-[#e4e9e6]">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-[#0f3a22]">Financial Institutions Directory</h2>
+              <p class="text-xs text-gray-500">Configure seat quotas, monitor capacity, and govern tenant lifecycle</p>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <button onclick="showToast('Tenant provisioning wizard will open in Phase 3', 'info')" class="px-4 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                Provision New Tenant
+              </button>
+            </div>
+          </div>
+
+          <!-- Filters Row -->
+          <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <!-- Search -->
+            <div class="relative md:col-span-2">
+              <input id="tenantSearchInput" oninput="filterTenants()" type="text" placeholder="Search by institution name, subdomain, or admin email..."
+                     class="w-full pl-9 pr-4 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600">
+              <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+
+            <!-- Status filter -->
+            <select id="tenantStatusFilter" onchange="filterTenants()" class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white text-gray-700">
+              <option value="ALL">All Statuses (Active, Trial, Suspended)</option>
+              <option value="ACTIVE">Active Only</option>
+              <option value="TRIAL">Trial Mode</option>
+              <option value="SUSPENDED">Suspended Only</option>
+            </select>
+
+            <!-- Sorting -->
+            <select class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white text-gray-700">
+              <option>Sort: Seat Utilization (High to Low)</option>
+              <option>Sort: Name (A-Z)</option>
+              <option>Sort: Most Recently Active</option>
+              <option>Sort: Newest Onboarded</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tenant Directory Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-600 border-collapse">
+            <thead class="bg-gray-50 border-b border-[#e4e9e6] text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              <tr>
+                <th class="py-3 px-4">Financial Institution</th>
+                <th class="py-3 px-4">Subdomain & ID</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Seat Quota & Utilization</th>
+                <th class="py-3 px-4">Users</th>
+                <th class="py-3 px-4">Last Activity</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tenantsTableBody" class="divide-y divide-gray-100">
+              <!-- Tenant 1: Zenith Bank -->
+              <tr class="hover:bg-gray-50/80 transition-colors tenant-row" data-name="zenith bank plc" data-subdomain="zenith" data-status="ACTIVE">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-red-50 text-red-700 border border-red-200 font-black flex items-center justify-center text-xs">
+                      ZB
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Zenith Bank PLC</div>
+                      <div class="text-[11px] text-gray-400 font-mono">admin: olisa@zenithbank.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-[11px]">
+                  <span class="text-emerald-700 font-bold">zenith</span>.npsplaybox.com
+                  <div class="text-gray-400 text-[10px]">ten_zenith_prod_04</div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    ACTIVE
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="w-48">
+                    <div class="flex justify-between text-[11px] font-mono mb-1">
+                      <span class="font-bold text-amber-700">16 / 20 Seats</span>
+                      <span class="text-gray-500">80.0%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200">
+                      <div class="bg-amber-500 h-2 rounded-full" style="width: 80%"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono font-medium">16 Active</td>
+                <td class="py-3.5 px-4 font-mono text-gray-500">Today, 11:24 AM</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openQuotaModal('ten_zenith_prod_04', 'Zenith Bank PLC', 20, 16)" class="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition">
+                      Manage Quota
+                    </button>
+                    <button onclick="openTenantDetailModal('Zenith Bank PLC', 'zenith', 'ten_zenith_prod_04', 'olisa@zenithbank.com', 20, 16)" class="px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 border border-gray-200 rounded transition">
+                      Details
+                    </button>
+                    <button onclick="prepareImpersonation('ten_zenith_prod_04', 'Zenith Bank PLC')" class="px-2.5 py-1 text-[11px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded transition">
+                      Impersonate
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Tenant 2: Access Bank (Near Limit) -->
+              <tr class="hover:bg-gray-50/80 transition-colors tenant-row" data-name="access bank plc" data-subdomain="access" data-status="ACTIVE">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 font-black flex items-center justify-center text-xs">
+                      AB
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Access Bank PLC</div>
+                      <div class="text-[11px] text-gray-400 font-mono">admin: ade.osho@accessbankplc.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-[11px]">
+                  <span class="text-emerald-700 font-bold">access</span>.npsplaybox.com
+                  <div class="text-gray-400 text-[10px]">ten_access_prod_01</div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    ACTIVE
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="w-48">
+                    <div class="flex justify-between text-[11px] font-mono mb-1">
+                      <span class="font-bold text-red-600">23 / 25 Seats (Critical)</span>
+                      <span class="text-gray-500">92.0%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200">
+                      <div class="bg-red-500 h-2 rounded-full" style="width: 92%"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono font-medium">23 Active</td>
+                <td class="py-3.5 px-4 font-mono text-gray-500">12 min ago</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openQuotaModal('ten_access_prod_01', 'Access Bank PLC', 25, 23)" class="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition">
+                      Manage Quota
+                    </button>
+                    <button onclick="openTenantDetailModal('Access Bank PLC', 'access', 'ten_access_prod_01', 'ade.osho@accessbankplc.com', 25, 23)" class="px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 border border-gray-200 rounded transition">
+                      Details
+                    </button>
+                    <span class="px-2.5 py-1 text-[10px] font-bold text-purple-800 bg-purple-100 border border-purple-300 rounded">
+                      In Session
+                    </span>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Tenant 3: GTBank -->
+              <tr class="hover:bg-gray-50/80 transition-colors tenant-row" data-name="guaranty trust bank" data-subdomain="gtbank" data-status="ACTIVE">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-black flex items-center justify-center text-xs">
+                      GT
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Guaranty Trust Bank (GTB)</div>
+                      <div class="text-[11px] text-gray-400 font-mono">admin: it.iso@gtbank.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-[11px]">
+                  <span class="text-emerald-700 font-bold">gtbank</span>.npsplaybox.com
+                  <div class="text-gray-400 text-[10px]">ten_gtb_prod_01</div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    ACTIVE
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="w-48">
+                    <div class="flex justify-between text-[11px] font-mono mb-1">
+                      <span class="font-bold text-emerald-700">18 / 25 Seats</span>
+                      <span class="text-gray-500">72.0%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200">
+                      <div class="bg-[#16a34a] h-2 rounded-full" style="width: 72%"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono font-medium">18 Active</td>
+                <td class="py-3.5 px-4 font-mono text-gray-500">1 hour ago</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openQuotaModal('ten_gtb_prod_01', 'Guaranty Trust Bank', 25, 18)" class="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition">
+                      Manage Quota
+                    </button>
+                    <button onclick="openTenantDetailModal('Guaranty Trust Bank', 'gtbank', 'ten_gtb_prod_01', 'it.iso@gtbank.com', 25, 18)" class="px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 border border-gray-200 rounded transition">
+                      Details
+                    </button>
+                    <button onclick="prepareImpersonation('ten_gtb_prod_01', 'Guaranty Trust Bank')" class="px-2.5 py-1 text-[11px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded transition">
+                      Impersonate
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Tenant 4: Sterling Bank (Trial) -->
+              <tr class="hover:bg-gray-50/80 transition-colors tenant-row" data-name="sterling bank plc" data-subdomain="sterling" data-status="TRIAL">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-black flex items-center justify-center text-xs">
+                      SB
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Sterling Bank PLC</div>
+                      <div class="text-[11px] text-gray-400 font-mono">admin: integration@sterling.ng</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-[11px]">
+                  <span class="text-blue-700 font-bold">sterling</span>.npsplaybox.com
+                  <div class="text-gray-400 text-[10px]">ten_sterling_trial_09</div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                    TRIAL (14D LEFT)
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="w-48">
+                    <div class="flex justify-between text-[11px] font-mono mb-1">
+                      <span class="font-bold text-blue-700">3 / 5 Seats</span>
+                      <span class="text-gray-500">60.0%</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden border border-gray-200">
+                      <div class="bg-blue-600 h-2 rounded-full" style="width: 60%"></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono font-medium">3 Active</td>
+                <td class="py-3.5 px-4 font-mono text-gray-500">Yesterday</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openQuotaModal('ten_sterling_trial_09', 'Sterling Bank PLC', 5, 3)" class="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition">
+                      Manage Quota
+                    </button>
+                    <button onclick="openTenantDetailModal('Sterling Bank PLC', 'sterling', 'ten_sterling_trial_09', 'integration@sterling.ng', 5, 3)" class="px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 border border-gray-200 rounded transition">
+                      Details
+                    </button>
+                    <button onclick="prepareImpersonation('ten_sterling_trial_09', 'Sterling Bank PLC')" class="px-2.5 py-1 text-[11px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded transition">
+                      Impersonate
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Tenant 5: Heritage Bank (Suspended for audit) -->
+              <tr class="hover:bg-gray-50/80 transition-colors tenant-row bg-red-50/30" data-name="heritage bank limited" data-subdomain="heritage" data-status="SUSPENDED">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 border border-gray-200 font-black flex items-center justify-center text-xs">
+                      HB
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Heritage Bank Limited</div>
+                      <div class="text-[11px] text-gray-400 font-mono">admin: audit@hbng.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-[11px]">
+                  <span class="text-gray-500 font-bold">heritage</span>.npsplaybox.com
+                  <div class="text-gray-400 text-[10px]">ten_hb_prod_02</div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-red-100 text-red-800 border border-red-200">
+                    SUSPENDED
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="w-48">
+                    <div class="flex justify-between text-[11px] font-mono mb-1">
+                      <span class="font-bold text-gray-500">Locked (0 / 10)</span>
+                      <span class="text-gray-400">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2"></div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-gray-400">0 Active</td>
+                <td class="py-3.5 px-4 font-mono text-gray-400">Aug 14, 2026</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="toggleTenantSuspension('Heritage Bank Limited', true)" class="px-2.5 py-1 text-[11px] font-semibold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 rounded transition">
+                      Reactivate
+                    </button>
+                    <button onclick="openTenantDetailModal('Heritage Bank Limited', 'heritage', 'ten_hb_prod_02', 'audit@hbng.com', 10, 0)" class="px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 border border-gray-200 rounded transition">
+                      Details
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="p-4 border-t border-[#e4e9e6] bg-gray-50 flex items-center justify-between text-xs text-gray-500">
+          <span>Showing 1 to 5 of 18 total institutions</span>
+          <div class="flex items-center gap-1">
+            <button class="px-2.5 py-1 border border-gray-300 rounded bg-white text-gray-400 cursor-not-allowed">Previous</button>
+            <button class="px-2.5 py-1 border border-emerald-600 bg-emerald-50 text-emerald-700 font-bold rounded">1</button>
+            <button class="px-2.5 py-1 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-700">2</button>
+            <button class="px-2.5 py-1 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-700">3</button>
+            <button class="px-2.5 py-1 border border-gray-300 rounded bg-white hover:bg-gray-50 text-gray-700">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: IMMUTABLE AUDIT TRAIL TAB -->
+    <div id="auditLogsTab" class="tab-pane hidden space-y-6">
+      <div class="bg-white border border-[#e4e9e6] rounded-xl shadow-sm overflow-hidden">
+        <!-- Audit Header & Filters -->
+        <div class="p-6 border-b border-[#e4e9e6]">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-lg font-bold text-[#0f3a22]">Platform Compliance Audit Ledger</h2>
+                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-mono font-bold rounded border border-emerald-200">WORM Storage Compliant</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">Append-only cryptographic audit logs required by Central Bank of Nigeria & ISO 20022 mandate</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="exportAuditLogs()" class="px-3.5 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Export CSV Ledger
+              </button>
+              <button onclick="showToast('SHA-256 Merkle tree verification completed: 24,819 records intact', 'success')" class="px-3.5 py-2 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Verify Integrity
+              </button>
+            </div>
+          </div>
+
+          <!-- Audit Filters -->
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <input type="text" placeholder="Filter by Actor, Tenant, or Action..." class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600">
+            <select class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white">
+              <option>All Event Types</option>
+              <option>IMPERSONATION_STARTED</option>
+              <option>SEAT_QUOTA_CHANGED</option>
+              <option>USER_CREATED / DELETED</option>
+              <option>TENANT_STATUS_CHANGED</option>
+              <option>ISO_MESSAGE_DISPATCHED</option>
+            </select>
+            <input type="date" value="2026-09-01" class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white text-gray-600">
+            <input type="date" value="2026-09-05" class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white text-gray-600">
+          </div>
+        </div>
+
+        <!-- Audit Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-600 border-collapse">
+            <thead class="bg-gray-50 border-b border-[#e4e9e6] text-[11px] font-bold text-gray-500 uppercase tracking-wider font-mono">
+              <tr>
+                <th class="py-3 px-4">Timestamp (UTC)</th>
+                <th class="py-3 px-4">Event Type</th>
+                <th class="py-3 px-4">Actor</th>
+                <th class="py-3 px-4">Target Tenant</th>
+                <th class="py-3 px-4">IP Address</th>
+                <th class="py-3 px-4">Cryptographic Hash</th>
+                <th class="py-3 px-4 text-right">Details</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-mono text-[11.5px]">
+              <!-- Log 1: Impersonation -->
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-gray-500">2026-09-05 11:22:15</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-sans font-bold text-[10px]">
+                    IMPERSONATION_STARTED
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-gray-900 font-medium">
+                  sysadmin@npsplaybox.com
+                </td>
+                <td class="py-3 px-4 font-sans font-semibold text-gray-800">
+                  Access Bank PLC
+                </td>
+                <td class="py-3 px-4 text-gray-500">197.210.64.12</td>
+                <td class="py-3 px-4 text-gray-400">
+                  <span class="hover:text-emerald-700 cursor-pointer" title="SHA-256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855">
+                    e3b0c44298fc...
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right font-sans">
+                  <button onclick="showToast('Payload: { ticket: &quot;NPS-4912&quot;, targetUser: &quot;ade.osho@accessbankplc.com&quot; }', 'info')" class="text-emerald-700 hover:underline text-xs">Inspect</button>
+                </td>
+              </tr>
+
+              <!-- Log 2: Quota Changed -->
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-gray-500">2026-09-05 10:40:02</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-sans font-bold text-[10px]">
+                    SEAT_QUOTA_CHANGED
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-gray-900 font-medium">
+                  c.ops@npsplaybox.com
+                </td>
+                <td class="py-3 px-4 font-sans font-semibold text-gray-800">
+                  Zenith Bank PLC
+                </td>
+                <td class="py-3 px-4 text-gray-500">102.89.44.110</td>
+                <td class="py-3 px-4 text-gray-400">
+                  <span class="hover:text-emerald-700 cursor-pointer">
+                    7d8a9b2310fe...
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right font-sans">
+                  <button onclick="showToast('Payload: { previousQuota: 15, newQuota: 20, invoiceRef: &quot;INV-2026-882&quot; }', 'info')" class="text-emerald-700 hover:underline text-xs">Inspect</button>
+                </td>
+              </tr>
+
+              <!-- Log 3: User Created -->
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-gray-500">2026-09-05 09:15:30</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-sans font-bold text-[10px]">
+                    USER_REGISTERED
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-gray-900 font-medium">
+                  olumide.ade@gtbank.com
+                </td>
+                <td class="py-3 px-4 font-sans font-semibold text-gray-800">
+                  Guaranty Trust Bank
+                </td>
+                <td class="py-3 px-4 text-gray-500">41.203.77.19</td>
+                <td class="py-3 px-4 text-gray-400">
+                  <span class="hover:text-emerald-700 cursor-pointer">
+                    14a8b79d63c1...
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right font-sans">
+                  <button onclick="showToast('Payload: { inviteId: &quot;inv_8812&quot;, assignedRole: &quot;TENANT_USER&quot; }', 'info')" class="text-emerald-700 hover:underline text-xs">Inspect</button>
+                </td>
+              </tr>
+
+              <!-- Log 4: ISO Message Sent -->
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="py-3 px-4 text-gray-500">2026-09-05 08:33:12</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 bg-gray-100 text-gray-800 rounded font-sans font-bold text-[10px]">
+                    ISO_PACS008_DISPATCH
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-gray-900 font-medium">
+                  f.bank.lead@firstbank.com
+                </td>
+                <td class="py-3 px-4 font-sans font-semibold text-gray-800">
+                  First Bank of Nigeria
+                </td>
+                <td class="py-3 px-4 text-gray-500">196.220.12.8</td>
+                <td class="py-3 px-4 text-gray-400">
+                  <span class="hover:text-emerald-700 cursor-pointer">
+                    99f01bc430e7...
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right font-sans">
+                  <button onclick="showToast('Payload: { messageId: &quot;MSG-20260905-FBN-001&quot;, status: &quot;ACCEPTED_SETTLED&quot; }', 'info')" class="text-emerald-700 hover:underline text-xs">Inspect</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: SUPPORT IMPERSONATION TAB -->
+    <div id="impersonationTab" class="tab-pane hidden space-y-6">
+      <!-- Top Alert Notice -->
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start gap-4">
+        <div class="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div class="flex-1">
+          <h3 class="text-sm font-bold text-amber-900">Regulated Support Access Protocol</h3>
+          <p class="text-xs text-amber-800 mt-1 leading-relaxed">
+            Platform support impersonation gives temporary contextual access to a tenant’s environment to diagnose integration issues.
+            In compliance with strict security policies, every action performed during an impersonation session is tagged with your root identity (<code class="font-mono text-[11px] bg-amber-200/50 px-1 py-0.5 rounded">impersonator_id</code>), recorded in the immutable audit ledger, and automatically terminated after the agreed session window (maximum 4 hours).
+          </p>
+        </div>
+        <button onclick="openModal('impersonationModal')" class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-xs font-bold shadow-sm transition flex-shrink-0">
+          + Request Access
+        </button>
+      </div>
+
+      <!-- Active Sessions & Pending Approvals -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Card 1: Active Impersonation Session -->
+        <div class="bg-white border border-purple-200 rounded-xl p-6 shadow-sm relative overflow-hidden">
+          <div class="absolute top-0 right-0 px-3 py-1 bg-purple-600 text-white text-[10px] font-bold rounded-bl uppercase">
+            Live Session
+          </div>
+          <h3 class="text-base font-bold text-purple-900 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-600 animate-ping"></span>
+            Access Bank PLC Investigation
+          </h3>
+          <p class="text-xs text-gray-500 mt-1">Authorized for Level-3 XML Pipeline Debugging</p>
+
+          <div class="mt-4 bg-purple-50/70 border border-purple-100 rounded-lg p-4 space-y-2 text-xs">
+            <div class="flex justify-between">
+              <span class="text-gray-500">Impersonated Account:</span>
+              <span class="font-mono font-bold text-gray-900">ade.osho@accessbankplc.com</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Root Engineer:</span>
+              <span class="font-mono text-gray-700">sysadmin@npsplaybox.com</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Session Window:</span>
+              <span class="font-mono text-gray-700">4 Hours (Expires in 03:41:20)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">Support Reference:</span>
+              <span class="font-mono text-purple-700 font-bold">TICKET-NPS-4912</span>
+            </div>
+          </div>
+
+          <div class="mt-5 flex items-center justify-end gap-2">
+            <a href="tenant-admin.html" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition">
+              Jump to Tenant View →
+            </a>
+            <button onclick="endImpersonation()" class="px-3.5 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold transition">
+              Terminate Session
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2: Pending Approval Queue -->
+        <div class="bg-white border border-[#e4e9e6] rounded-xl p-6 shadow-sm">
+          <h3 class="text-base font-bold text-[#0f3a22]">Pending Support Requests</h3>
+          <p class="text-xs text-gray-500 mt-1">Awaiting Super Admin authorization</p>
+
+          <div class="mt-4 space-y-3">
+            <div class="p-3.5 border border-gray-200 rounded-lg text-xs bg-gray-50/50">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-gray-900">First Bank of Nigeria (FBN)</span>
+                <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">PENDING APPROVAL</span>
+              </div>
+              <p class="text-gray-600 mt-1.5 leading-normal">
+                "Customer reports pacs.002 settlement status code 99 not updating in workbench after dispatch."
+              </p>
+              <div class="mt-3 flex items-center justify-between pt-2 border-t border-gray-200 text-[11px] text-gray-500">
+                <span>Requested by: <strong class="text-gray-700">support.lead@npsplaybox.com</strong></span>
+                <div class="flex gap-1.5">
+                  <button onclick="showToast('Access request approved for FBN', 'success')" class="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded hover:bg-emerald-700">Approve</button>
+                  <button onclick="showToast('Access request denied', 'info')" class="px-2.5 py-1 border border-gray-300 hover:bg-gray-100 rounded">Deny</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1: MANAGE SEAT QUOTA (PHASE 5 & 9 SPEC) -->
+  <!-- ========================================================================= -->
+  <div id="seatQuotaModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-[#e4e9e6]">
+      <div class="px-6 py-4 border-b border-[#e4e9e6] flex items-center justify-between bg-gray-50">
+        <div>
+          <h3 class="text-base font-bold text-[#0f3a22]">Commercial Seat Quota</h3>
+          <p class="text-xs text-gray-500">Set maximum allowable team seats</p>
+        </div>
+        <button onclick="closeModal('seatQuotaModal')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveQuota(event)" class="p-6 space-y-4">
+        <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 text-xs">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Target Institution:</span>
+            <strong id="modalTenantName" class="text-gray-900">Zenith Bank PLC</strong>
+          </div>
+          <div class="flex justify-between mt-1">
+            <span class="text-gray-500">Current Active Usage:</span>
+            <strong id="modalCurrentUsed" class="text-emerald-800 font-mono">16 Seats In Use</strong>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1.5">New Seat Limit</label>
+          <div class="flex items-center gap-3">
+            <input id="quotaRangeInput" oninput="document.getElementById('quotaNumberInput').value = this.value" type="range" min="16" max="100" value="20" class="flex-1 accent-emerald-600">
+            <input id="quotaNumberInput" oninput="document.getElementById('quotaRangeInput').value = this.value" type="number" min="16" max="100" value="20" class="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono font-bold text-center focus:outline-none focus:border-emerald-600">
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1">
+            * Validation rule: Quota cannot be lower than the currently active <span id="modalMinQuota" class="font-bold text-gray-700">16</span> seats.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Commercial Billing Reference / PO</label>
+          <input type="text" placeholder="e.g. CBN-CONTRACT-2026-ZB-08" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 font-mono">
+        </div>
+
+        <div class="pt-4 border-t border-[#e4e9e6] flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeModal('seatQuotaModal')" class="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg text-xs font-bold transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-xs font-bold shadow-sm transition">
+            Update Quota Limit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2: REQUEST SUPPORT IMPERSONATION (PHASE 7 & 9 SPEC) -->
+  <!-- ========================================================================= -->
+  <div id="impersonationModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden border border-[#e4e9e6]">
+      <div class="px-6 py-4 border-b border-[#e4e9e6] flex items-center justify-between bg-purple-50/70">
+        <div>
+          <h3 class="text-base font-bold text-purple-900">Request Support Impersonation</h3>
+          <p class="text-xs text-purple-700">Regulated supervisor access with immutable audit logging</p>
+        </div>
+        <button onclick="closeModal('impersonationModal')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form onsubmit="handleStartImpersonation(event)" class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Target Financial Institution *</label>
+          <select id="impersonationTenantSelect" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 bg-white">
+            <option value="Zenith Bank PLC">Zenith Bank PLC (zenith.npsplaybox.com)</option>
+            <option value="Access Bank PLC">Access Bank PLC (access.npsplaybox.com)</option>
+            <option value="Guaranty Trust Bank">Guaranty Trust Bank (gtbank.npsplaybox.com)</option>
+            <option value="First Bank of Nigeria">First Bank of Nigeria (firstbank.npsplaybox.com)</option>
+            <option value="Sterling Bank PLC">Sterling Bank PLC (sterling.npsplaybox.com)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Target Account Email (Optional)</label>
+          <input type="email" placeholder="Leave empty to log in as organization Tenant Admin" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 font-mono">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Session Duration</label>
+            <select class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 bg-white">
+              <option>1 Hour</option>
+              <option selected>2 Hours (Standard)</option>
+              <option>4 Hours (Max Limit)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Support Ticket # *</label>
+            <input type="text" value="NPS-5190" required class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 font-mono font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Business Justification * (Min 20 characters)</label>
+          <textarea rows="3" required placeholder="Detail the precise technical bug, ISO 20022 message ID, or customer ticket being diagnosed..." class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-purple-600 leading-relaxed"></textarea>
+        </div>
+
+        <div class="p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-start gap-2.5 text-xs text-purple-900">
+          <input type="checkbox" required id="auditConsent" class="mt-0.5 accent-purple-600">
+          <label for="auditConsent" class="leading-tight text-[11px] text-purple-950">
+            I acknowledge that all actions performed during this impersonation session will be bound to my root key (<code class="font-mono">root@npsplaybox.com</code>) and logged in the immutable audit ledger.
+          </label>
+        </div>
+
+        <div class="pt-3 border-t border-[#e4e9e6] flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeModal('impersonationModal')" class="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg text-xs font-bold transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-xs font-bold shadow-sm transition">
+            Authorize & Start Session
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3: TENANT DETAILS MODAL -->
+  <!-- ========================================================================= -->
+  <div id="tenantDetailModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden border border-[#e4e9e6]">
+      <div class="px-6 py-4 border-b border-[#e4e9e6] flex items-center justify-between bg-gray-50">
+        <div>
+          <h3 id="tdModalTitle" class="text-base font-bold text-[#0f3a22]">Zenith Bank PLC</h3>
+          <p id="tdModalSub" class="text-xs text-gray-500 font-mono">zenith.npsplaybox.com</p>
+        </div>
+        <button onclick="closeModal('tenantDetailModal')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+          <div>
+            <span class="text-gray-400 uppercase text-[10px] font-bold">Tenant ID</span>
+            <div id="tdModalId" class="font-mono font-bold text-gray-800 mt-0.5">ten_zenith_prod_04</div>
+          </div>
+          <div>
+            <span class="text-gray-400 uppercase text-[10px] font-bold">Subscription Tier</span>
+            <div class="font-bold text-emerald-800 mt-0.5">Enterprise Multi-Seat</div>
+          </div>
+          <div>
+            <span class="text-gray-400 uppercase text-[10px] font-bold">Primary Admin</span>
+            <div id="tdModalEmail" class="font-mono text-gray-800 mt-0.5">olisa@zenithbank.com</div>
+          </div>
+          <div>
+            <span class="text-gray-400 uppercase text-[10px] font-bold">Seat Allocation</span>
+            <div id="tdModalSeats" class="font-mono font-bold text-gray-800 mt-0.5">16 / 20 Used (80%)</div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-gray-900 mb-2">Supported ISO 20022 Protocols</h4>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-mono text-[10.5px]">pacs.008 (Credit Transfer)</span>
+            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-mono text-[10.5px]">pacs.002 (Payment Status)</span>
+            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-mono text-[10.5px]">pain.001 (Credit Initiation)</span>
+            <span class="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-mono text-[10.5px]">camt.053 (Bank Statement)</span>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-[#e4e9e6] flex items-center justify-between">
+          <a href="tenant-admin.html" class="text-emerald-700 hover:underline font-semibold">Open Tenant Management UI →</a>
+          <button onclick="closeModal('tenantDetailModal')" class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-bold">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <!-- ========================================================================= -->
+  <div id="toastContainer" class="fixed bottom-12 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ========================================================================= -->
+  <!-- FOOTER STATUS BAR (MATCHING StatusBar.tsx) -->
+  <!-- ========================================================================= -->
+  <footer class="h-[34px] flex-shrink-0 bg-white border-t border-[#e4e9e6] flex items-center justify-between px-6 text-[11px] text-[#6b7280] z-20">
+    <div class="flex items-center gap-6">
+      <span class="flex items-center gap-1.5">
+        <span class="w-[7px] h-[7px] rounded-full bg-[#16a34a] animate-pulse"></span>
+        Environment: NIBSS Sandbox v2.4 (Multi-Tenant Active)
+      </span>
+      <span class="hidden md:flex items-center gap-2 font-mono">
+        Platform Capacity: 157 / 200 seats
+        <span class="w-20 h-1.5 rounded-full bg-gray-200 overflow-hidden inline-block">
+          <span class="h-full bg-emerald-600 block" style="width: 78.5%"></span>
+        </span>
+      </span>
+    </div>
+    <div class="flex items-center gap-5">
+      <span class="font-mono text-gray-400">Cluster: ng-central-1</span>
+      <a href="index.html" class="text-emerald-700 font-semibold hover:underline">Templates Hub</a>
+      <a href="tenant-admin.html" class="text-gray-500 hover:text-emerald-700">Switch to Tenant Admin</a>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC -->
+  <!-- ========================================================================= -->
+  <script>
+    // Tab switching
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.add('hidden'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.remove('hidden');
+
+      if (el) {
+        document.querySelectorAll('.nav-tab').forEach(b => {
+          b.classList.remove('bg-[#16a34a]', 'text-white', 'shadow-sm');
+          b.classList.add('text-gray-600', 'hover:bg-gray-100');
+        });
+        el.classList.add('bg-[#16a34a]', 'text-white', 'shadow-sm');
+        el.classList.remove('text-gray-600', 'hover:bg-gray-100');
+      }
+    }
+
+    // Modals
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.remove('hidden');
+    }
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.add('hidden');
+    }
+
+    // Quota Modal Setup
+    let activeQuotaTenant = '';
+    function openQuotaModal(tenantId, name, quota, used) {
+      activeQuotaTenant = name;
+      document.getElementById('modalTenantName').innerText = name;
+      document.getElementById('modalCurrentUsed').innerText = used + ' Seats Currently In Use';
+      document.getElementById('modalMinQuota').innerText = used;
+      
+      const rangeInput = document.getElementById('quotaRangeInput');
+      const numInput = document.getElementById('quotaNumberInput');
+      rangeInput.min = used;
+      rangeInput.value = quota;
+      numInput.min = used;
+      numInput.value = quota;
+
+      openModal('seatQuotaModal');
+    }
+
+    function handleSaveQuota(e) {
+      e.preventDefault();
+      const newQuota = document.getElementById('quotaNumberInput').value;
+      closeModal('seatQuotaModal');
+      showToast(`Commercial seat quota for ${activeQuotaTenant} updated to ${newQuota} seats`, 'success');
+    }
+
+    // Tenant Details Modal Setup
+    function openTenantDetailModal(name, sub, id, email, quota, used) {
+      document.getElementById('tdModalTitle').innerText = name;
+      document.getElementById('tdModalSub').innerText = `${sub}.npsplaybox.com`;
+      document.getElementById('tdModalId').innerText = id;
+      document.getElementById('tdModalEmail').innerText = email;
+      document.getElementById('tdModalSeats').innerText = `${used} / ${quota} Seats (${Math.round((used/quota)*100)}%)`;
+      openModal('tenantDetailModal');
+    }
+
+    // Impersonation banner & workflow
+    function toggleImpersonationBanner(show) {
+      const b = document.getElementById('impersonationBanner');
+      if (b) {
+        b.style.display = show ? 'flex' : 'none';
+      }
+    }
+
+    function endImpersonation() {
+      toggleImpersonationBanner(false);
+      showToast('Support impersonation session ended. Returned to Super Admin mode.', 'info');
+    }
+
+    function prepareImpersonation(tenantId, name) {
+      const sel = document.getElementById('impersonationTenantSelect');
+      if (sel) sel.value = name;
+      openModal('impersonationModal');
+    }
+
+    function handleStartImpersonation(e) {
+      e.preventDefault();
+      const tenant = document.getElementById('impersonationTenantSelect').value;
+      closeModal('impersonationModal');
+      toggleImpersonationBanner(true);
+      showToast(`Support impersonation started for ${tenant}. Audit logged.`, 'success');
+    }
+
+    // Filtering tenants table
+    function filterTenants() {
+      const q = document.getElementById('tenantSearchInput').value.toLowerCase();
+      const status = document.getElementById('tenantStatusFilter').value;
+      const rows = document.querySelectorAll('.tenant-row');
+
+      rows.forEach(row => {
+        const name = row.dataset.name || '';
+        const sub = row.dataset.subdomain || '';
+        const s = row.dataset.status || '';
+
+        const matchesQuery = name.includes(q) || sub.includes(q);
+        const matchesStatus = (status === 'ALL') || (s === status);
+
+        row.style.display = (matchesQuery && matchesStatus) ? '' : 'none';
+      });
+    }
+
+    function toggleTenantSuspension(name, reactivate) {
+      showToast(`${name} has been ${reactivate ? 'reactivated' : 'suspended'}.`, 'info');
+    }
+
+    function exportAuditLogs() {
+      showToast('Exporting cryptographic audit log (24,819 records)... CSV download started.', 'success');
+    }
+
+    // Toast feedback
+    function showToast(message, type = 'info') {
+      const c = document.getElementById('toastContainer');
+      if (!c) return;
+
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-900 border-emerald-600 text-white',
+        info: 'bg-gray-900 border-gray-700 text-white',
+        error: 'bg-red-900 border-red-600 text-white'
+      };
+
+      toast.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs font-medium flex items-center gap-2.5 transition-all transform duration-200 translate-y-2 opacity-0 ${colors[type] || colors.info}`;
+      toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-emerald-400' : type === 'error' ? 'bg-red-400' : 'bg-blue-400'}"></span>
+        <span>${message}</span>
+      `;
+
+      c.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
