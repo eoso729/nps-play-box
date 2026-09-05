@@ -4,9 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.signer.model.User;
+import org.example.signer.entity.User;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -15,6 +16,8 @@ import java.time.LocalDateTime;
 public class UserDto {
 
     private Long id;
+    private Long tenantId;
+    private UUID userUuid;
     private String username;
     private String email;
     private String authProvider;
@@ -31,13 +34,14 @@ public class UserDto {
         }
         return UserDto.builder()
                 .id(user.getId())
+                .tenantId(user.getTenantId())
+                .userUuid(user.getUserUuid())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .authProvider(user.getAuthProvider())
-                .role(user.getRole())
+                .role(user.getRole() != null ? user.getRole().name() : null)
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .organization(user.getOrganization())
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
                 .build();

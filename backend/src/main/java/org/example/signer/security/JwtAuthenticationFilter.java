@@ -35,10 +35,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwt != null && jwtUtils.validateToken(jwt)) {
                 String username = jwtUtils.getUsernameFromToken(jwt);
 
-                userRepository.findByUsername(username).ifPresent(user -> {
-                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority(
-                            user.getRole() != null ? user.getRole() : "ROLE_USER"
-                    );
+                userRepository.findByEmailOrUsername(username, username).ifPresent(user -> {
+                    String roleName = user.getRole() != null ? user.getRole().name() : "VIEWER";
+                    SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + roleName);
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(user, null, Collections.singletonList(authority));

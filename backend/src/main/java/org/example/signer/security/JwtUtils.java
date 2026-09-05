@@ -4,7 +4,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import org.example.signer.model.User;
+import org.example.signer.entity.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -36,11 +36,15 @@ public class JwtUtils {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
+        String subject = user.getUsername() != null ? user.getUsername() : user.getEmail();
+        String roleStr = user.getRole() != null ? user.getRole().name() : "VIEWER";
+
         return Jwts.builder()
-                .setSubject(user.getUsername())
+                .setSubject(subject)
                 .claim("userId", user.getId())
                 .claim("email", user.getEmail())
-                .claim("role", user.getRole())
+                .claim("tenantId", user.getTenantId())
+                .claim("role", roleStr)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

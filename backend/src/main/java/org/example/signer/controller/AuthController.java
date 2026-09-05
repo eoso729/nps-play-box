@@ -7,7 +7,7 @@ import org.example.signer.dto.auth.AuthResponseDto;
 import org.example.signer.dto.auth.LoginRequestDto;
 import org.example.signer.dto.auth.RegisterRequestDto;
 import org.example.signer.dto.auth.UserDto;
-import org.example.signer.model.User;
+import org.example.signer.entity.User;
 import org.example.signer.repository.UserRepository;
 import org.example.signer.security.JwtUtils;
 import org.springframework.http.HttpStatus;
@@ -47,10 +47,11 @@ public class AuthController {
                 .email(registerDto.getEmail())
                 .passwordHash(passwordEncoder.encode(registerDto.getPassword()))
                 .authProvider("LOCAL")
-                .role("ROLE_USER")
+                .role(User.UserRole.DEVELOPER)
+                .status(User.UserStatus.ACTIVE)
+                .tenantId(1L)
                 .firstName(registerDto.getFirstName())
                 .lastName(registerDto.getLastName())
-                .organization(registerDto.getOrganization())
                 .createdAt(LocalDateTime.now())
                 .lastLoginAt(LocalDateTime.now())
                 .build();

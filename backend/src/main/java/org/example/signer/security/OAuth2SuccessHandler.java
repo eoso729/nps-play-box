@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.signer.model.User;
+import org.example.signer.entity.User;
 import org.example.signer.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -63,7 +63,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                                     .email(finalEmail)
                                     .authProvider("MICROSOFT")
                                     .microsoftOid(finalOid)
-                                    .role("ROLE_USER")
+                                    .role(User.UserRole.DEVELOPER)
+                                    .status(User.UserStatus.ACTIVE)
+                                    .tenantId(1L)
+                                    .passwordHash("")
                                     .firstName(name)
                                     .createdAt(LocalDateTime.now())
                                     .build();
