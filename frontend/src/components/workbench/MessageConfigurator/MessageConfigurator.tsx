@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { MESSAGE_CONFIGS } from '../messageConfigs';
 import { FormFieldset } from './FormFieldset';
-import { validateFormField, validateMessageForm } from '../../../utils/formValidation';
+import { createMessageZodSchema } from '../../../utils/formValidation';
 import { useWorkbench } from '../../../context/WorkbenchContext';
 
 interface MessageConfiguratorProps {
@@ -20,88 +22,70 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
   mode = 'generation',
 }) => {
   const config = MESSAGE_CONFIGS[messageKey];
-  const { getFormData, updateFormField, resetFormToPrefill, clearForm } = useWorkbench();
+  const { getFormData, setFormDataForMessage, resetFormToPrefill, clearForm } = useWorkbench();
 
-  const formData = getFormData(messageKey);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  // Dynamic schema resolution from field definitions
+  const schema = useMemo(() => {
+    return createMessageZodSchema(config?.sections || []);
+  }, [config]);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, touchedFields },
+  } = useForm<Record<string, any>>({
+    resolver: zodResolver(schema),
+    mode: 'onTouched',
+    defaultValues: getFormData(messageKey),
+  });
+
   const [showValidationSummary, setShowValidationSummary] = useState<boolean>(false);
 
-  // Reset errors/touched when message type changes
+  // Sync form default values when message type changes
   useEffect(() => {
-    setErrors({});
-    setTouched({});
+    const data = getFormData(messageKey);
+    const initialValues: Record<string, any> = {};
+    config?.sections.forEach(sec => {
+      sec.fields.forEach(f => {
+        initialValues[f.key] = data[f.key] ?? '';
+      });
+    });
+    reset(initialValues);
     setShowValidationSummary(false);
-  }, [messageKey]);
-
-  const handleChange = (key: string, value: any) => {
-    updateFormField(messageKey, key, value);
-
-    // Real-time field validation if touched
-    if (touched[key] && config) {
-      let fieldDef;
-      for (const sec of config.sections) {
-        fieldDef = sec.fields.find(f => f.key === key);
-        if (fieldDef) break;
-      }
-      if (fieldDef) {
-        const res = validateFormField(fieldDef, value);
-        setErrors(prevErr => {
-          const nextErr = { ...prevErr };
-          if (!res.valid && res.error) {
-            nextErr[key] = res.error;
-          } else {
-            delete nextErr[key];
-          }
-          return nextErr;
-        });
-      }
-    }
-  };
-
-  const handleBlur = (key: string) => {
-    setTouched(prev => ({ ...prev, [key]: true }));
-
-    if (config) {
-      let fieldDef;
-      for (const sec of config.sections) {
-        fieldDef = sec.fields.find(f => f.key === key);
-        if (fieldDef) break;
-      }
-      if (fieldDef) {
-        const res = validateFormField(fieldDef, formData[key]);
-        setErrors(prevErr => {
-          const nextErr = { ...prevErr };
-          if (!res.valid && res.error) {
-            nextErr[key] = res.error;
-          } else {
-            delete nextErr[key];
-          }
-          return nextErr;
-        });
-      }
-    }
-  };
+  }, [messageKey, reset, getFormData, config]);
 
   const handlePrefill = () => {
     resetFormToPrefill(messageKey);
-    setErrors({});
-    setTouched({});
+    const prefill = MESSAGE_CONFIGS[messageKey]?.prefill || {};
+    const prefillValues: Record<string, any> = {};
+    config?.sections.forEach(sec => {
+      sec.fields.forEach(f => {
+        prefillValues[f.key] = prefill[f.key] ?? '';
+      });
+    });
+    reset(prefillValues);
     setShowValidationSummary(false);
   };
 
   const handleClear = () => {
     clearForm(messageKey);
-    setErrors({});
-    setTouched({});
+    const emptyValues: Record<string, any> = {};
+    config?.sections.forEach(sec => {
+      sec.fields.forEach(f => {
+        emptyValues[f.key] = '';
+      });
+    });
+    reset(emptyValues);
     setShowValidationSummary(false);
   };
 
-  const buildPayload = (): Record<string, any> => {
+  const buildPayload = (values: Record<string, any>): Record<string, any> => {
     const payload: Record<string, any> = {};
     config?.sections.forEach(section => {
       section.fields.forEach(field => {
-        const val = formData[field.key];
+        const val = values[field.key];
         if (val !== undefined && val !== '') {
           // For AMOUNT fields, preserve exact 2-decimal string formatting
           if (field.ruleType === 'AMOUNT') {
@@ -118,30 +102,10 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
     return payload;
   };
 
-  const handleSubmit = (action: 'generate' | 'send') => {
-    if (!config) return;
-
-    // Validate all fields across all sections
-    const formErrors = validateMessageForm(config.sections, formData);
-    const errorKeys = Object.keys(formErrors);
-
-    if (errorKeys.length > 0) {
-      // Mark all error fields as touched so inline errors display immediately
-      const allTouched: Record<string, boolean> = { ...touched };
-      config.sections.forEach(sec => {
-        sec.fields.forEach(f => {
-          allTouched[f.key] = true;
-        });
-      });
-
-      setTouched(allTouched);
-      setErrors(formErrors);
-      setShowValidationSummary(true);
-      return;
-    }
-
+  const onValidSubmit = (values: Record<string, any>, action: 'generate' | 'send') => {
     setShowValidationSummary(false);
-    const payload = buildPayload();
+    setFormDataForMessage(messageKey, values);
+    const payload = buildPayload(values);
     if (action === 'generate') {
       onGenerate(payload);
     } else {
@@ -149,7 +113,18 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
     }
   };
 
-  const errorCount = useMemo(() => Object.keys(errors).length, [errors]);
+  const onInvalidSubmit = () => {
+    setShowValidationSummary(true);
+  };
+
+  const executeAction = (action: 'generate' | 'send') => {
+    handleSubmit(
+      values => onValidSubmit(values, action),
+      () => onInvalidSubmit()
+    )();
+  };
+
+  const errorCount = Object.keys(errors).length;
 
   if (!config) return <div className="p-4 text-[#6b7280]">Unknown message type: {messageKey}</div>;
 
@@ -206,11 +181,10 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
           <FormFieldset
             key={section.title}
             section={section}
-            formData={formData}
+            register={register}
+            watch={watch}
             errors={errors}
-            touched={touched}
-            onChange={handleChange}
-            onBlur={handleBlur}
+            touched={touchedFields}
           />
         ))}
 
@@ -228,7 +202,7 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
           {mode === 'generation' ? (
             <button
               type="button"
-              onClick={() => handleSubmit('generate')}
+              onClick={() => executeAction('generate')}
               disabled={isLoading}
               className="flex-[1.4] border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               style={{
@@ -242,7 +216,7 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
           ) : (
             <button
               type="button"
-              onClick={() => handleSubmit('send')}
+              onClick={() => executeAction('send')}
               disabled={isLoading}
               className="flex-[1.4] border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               style={{

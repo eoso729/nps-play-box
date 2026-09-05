@@ -1,24 +1,29 @@
 import React from 'react';
+import { UseFormRegister, UseFormWatch } from 'react-hook-form';
 import { FieldsetDef } from '../../../types/workbench';
 
 interface FormFieldsetProps {
   section: FieldsetDef;
-  formData: Record<string, any>;
-  errors?: Record<string, string>;
-  touched?: Record<string, boolean>;
-  onChange: (key: string, value: any) => void;
+  formData?: Record<string, any>;
+  errors?: Record<string, any>;
+  touched?: Record<string, any>;
+  onChange?: (key: string, value: any) => void;
   onBlur?: (key: string) => void;
   injectedKeys?: Set<string>;
+  register?: UseFormRegister<any>;
+  watch?: UseFormWatch<any>;
 }
 
 export const FormFieldset: React.FC<FormFieldsetProps> = ({
   section,
-  formData,
+  formData = {},
   errors = {},
   touched = {},
   onChange,
   onBlur,
   injectedKeys,
+  register,
+  watch,
 }) => {
   return (
     <div className="border border-[#e4e9e6] rounded-[10px] mb-4 overflow-hidden shadow-sm bg-white">
@@ -30,12 +35,15 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
       </div>
       <div className="p-3.5 grid grid-cols-2 gap-3.5">
         {section.fields.map(field => {
-          const value = formData[field.key] ?? '';
-          const strValue = String(value);
+          const registered = register ? register(field.key) : null;
+          const rawError = errors[field.key];
+          const errorMessage = typeof rawError === 'string' ? rawError : rawError?.message;
           const isTouched = !!touched[field.key];
-          const error = errors[field.key];
-          const isInvalid = isTouched && !!error;
-          const isValid = isTouched && !error && strValue.length > 0;
+          const isInvalid = isTouched && !!errorMessage;
+
+          const currentValue = register && watch ? (watch(field.key) ?? '') : (formData[field.key] ?? '');
+          const strValue = String(currentValue);
+          const isValid = isTouched && !errorMessage && strValue.length > 0;
           const isContextInjected = !!injectedKeys?.has(field.key);
 
           const inputBaseClass = `w-full px-2.5 py-2 text-[12.5px] border rounded-[6px] text-[#111827] outline-none transition-all ${
@@ -82,9 +90,11 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
               {field.type === 'select' ? (
                 <div className="relative">
                   <select
-                    value={value}
-                    onChange={e => onChange(field.key, e.target.value)}
-                    onBlur={() => onBlur?.(field.key)}
+                    {...(registered || {
+                      value: currentValue,
+                      onChange: e => onChange?.(field.key, e.target.value),
+                      onBlur: () => onBlur?.(field.key),
+                    })}
                     className={`${inputBaseClass} font-sans cursor-pointer`}
                     style={{ fontFamily: 'inherit' }}
                   >
@@ -99,26 +109,30 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
               ) : field.type === 'textarea' ? (
                 <textarea
                   rows={2}
-                  value={value}
-                  onChange={e => onChange(field.key, e.target.value)}
-                  onBlur={() => onBlur?.(field.key)}
                   placeholder={field.placeholder}
                   maxLength={field.maxLength}
                   className={`${inputBaseClass} resize-y`}
                   style={{ fontFamily: 'inherit' }}
+                  {...(registered || {
+                    value: currentValue,
+                    onChange: e => onChange?.(field.key, e.target.value),
+                    onBlur: () => onBlur?.(field.key),
+                  })}
                 />
               ) : (
                 <div className="relative">
                   <input
                     type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
                     step={field.ruleType === 'AMOUNT' ? '0.01' : undefined}
-                    value={value}
-                    onChange={e => onChange(field.key, e.target.value)}
-                    onBlur={() => onBlur?.(field.key)}
                     placeholder={field.placeholder}
                     maxLength={field.maxLength}
                     className={inputBaseClass}
                     style={{ fontFamily: 'inherit' }}
+                    {...(registered || {
+                      value: currentValue,
+                      onChange: e => onChange?.(field.key, e.target.value),
+                      onBlur: () => onBlur?.(field.key),
+                    })}
                   />
                 </div>
               )}
@@ -127,7 +141,7 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
               {isInvalid && (
                 <div className="text-[10px] text-red-600 font-medium mt-1 flex items-start gap-1">
                   <span className="leading-none mt-0.5">⚠</span>
-                  <span className="leading-tight">{error}</span>
+                  <span className="leading-tight">{errorMessage}</span>
                 </div>
               )}
 
