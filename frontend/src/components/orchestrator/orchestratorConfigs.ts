@@ -399,7 +399,7 @@ export function computeClientNextStepPrefill(
       if (context.amount) inject('amount', Number(context.amount));
       break;
 
-    case 'pacs.002':
+    case 'pacs.002': {
       const origMsg = context.directDebitMsgId || context.pacs008MsgId || context.pain008MsgId || context.pacs003MsgId || context.originalMsgId;
       if (origMsg) inject('originalMsgId', origMsg);
       inject('originalMsgNmId', context.lastTriggerMsgNmId || 'pacs.008.001.10');
@@ -413,6 +413,7 @@ export function computeClientNextStepPrefill(
       if (context.destinationId) inject('sourceId', context.destinationId);
       if (context.sourceId) inject('destinationId', context.sourceId);
       break;
+    }
   }
 
   return { prefill, autoInjectedKeys };
