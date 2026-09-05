@@ -41,12 +41,18 @@ export const loginApi = async (data: LoginRequest): Promise<AuthResponse> => {
     password: data.password,
   };
   const res = await apiClient.post<AuthResponse>('/api/auth/login', payload);
-  return res.data;
+  const authData = res.data as any;
+  // Map backend "token" field to expected "accessToken"
+  authData.accessToken = authData.token;
+  return authData as AuthResponse;
 };
 
 export const registerApi = async (data: RegisterRequest): Promise<AuthResponse> => {
   const res = await apiClient.post<AuthResponse>('/api/auth/register', data);
-  return res.data;
+  const authData = res.data as any;
+  // Map backend "token" field to expected "accessToken"
+  authData.accessToken = authData.token;
+  return authData as AuthResponse;
 };
 
 export const getMeApi = async (): Promise<User> => {
