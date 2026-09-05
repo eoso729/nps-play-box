@@ -20,6 +20,8 @@ public class AuditEventSpecification {
             // If tenantId is specified, enforce tenant isolation
             if (tenantId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("tenantId"), tenantId));
+            } else if (searchRequest != null && searchRequest.getTenantId() != null) {
+                predicates.add(criteriaBuilder.equal(root.get("tenantId"), searchRequest.getTenantId()));
             }
 
             if (searchRequest != null) {

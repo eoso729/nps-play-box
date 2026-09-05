@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AuditEventSearchRequest {
 
+    private Long tenantId;
     private AuditEvent.EventType eventType;
     private String action;
     private String resourceType;
