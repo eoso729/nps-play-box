@@ -1,57 +1,77 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { diffLines, Change } from 'diff';
 import { useAuth } from '../../context/AuthContext';
+import { canonicalizeXml } from '../../utils/xmlCanonicalizer';
 
-interface DiffLine {
+export interface DiffLine {
   type: 'added' | 'removed' | 'unchanged';
   value: string;
   lineNumber?: number;
 }
 
-// Line-by-line Diff algorithm using Longest Common Subsequence (LCS)
-function computeDiff(original: string, modified: string): { left: DiffLine[]; right: DiffLine[] } {
-  const originalLines = original.split('\n');
-  const modifiedLines = modified.split('\n');
+// Line-by-line Diff algorithm using Myers Diff algorithm (from 'diff')
+export function computeMyersDiff(
+  original: string,
+  modified: string,
+  canonicalize: boolean = false
+): { left: DiffLine[]; right: DiffLine[] } {
+  const text1 = canonicalize ? canonicalizeXml(original) : original;
+  const text2 = canonicalize ? canonicalizeXml(modified) : modified;
 
-  const m = originalLines.length;
-  const n = modifiedLines.length;
-
-  // DP table for LCS length
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (originalLines[i - 1].trim() === modifiedLines[j - 1].trim()) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
-
+  const changes: Change[] = diffLines(text1, text2);
   const left: DiffLine[] = [];
   const right: DiffLine[] = [];
 
-  let i = m;
-  let j = n;
+  let origLineNum = 1;
+  let modLineNum = 1;
 
-  // Backtrack to build diff lists
-  while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && originalLines[i - 1].trim() === modifiedLines[j - 1].trim()) {
-      left.unshift({ type: 'unchanged', value: originalLines[i - 1], lineNumber: i });
-      right.unshift({ type: 'unchanged', value: modifiedLines[j - 1], lineNumber: j });
-      i--;
-      j--;
-    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-      // Added line in modified
-      left.unshift({ type: 'removed', value: '', lineNumber: undefined }); // Spacer line
-      right.unshift({ type: 'added', value: modifiedLines[j - 1], lineNumber: j });
-      j--;
+  for (let i = 0; i < changes.length; i++) {
+    const change = changes[i];
+    const lines = change.value.split('\n');
+    if (lines.length > 0 && lines[lines.length - 1] === '') {
+      lines.pop();
+    }
+
+    if (change.removed) {
+      const nextChange = changes[i + 1];
+      if (nextChange && nextChange.added) {
+        const addedLines = nextChange.value.split('\n');
+        if (addedLines.length > 0 && addedLines[addedLines.length - 1] === '') {
+          addedLines.pop();
+        }
+
+        const maxLen = Math.max(lines.length, addedLines.length);
+        for (let j = 0; j < maxLen; j++) {
+          if (j < lines.length) {
+            left.push({ type: 'removed', value: lines[j], lineNumber: origLineNum++ });
+          } else {
+            left.push({ type: 'removed', value: '', lineNumber: undefined });
+          }
+
+          if (j < addedLines.length) {
+            right.push({ type: 'added', value: addedLines[j], lineNumber: modLineNum++ });
+          } else {
+            right.push({ type: 'added', value: '', lineNumber: undefined });
+          }
+        }
+        i++; // consumed nextChange
+      } else {
+        for (const line of lines) {
+          left.push({ type: 'removed', value: line, lineNumber: origLineNum++ });
+          right.push({ type: 'added', value: '', lineNumber: undefined });
+        }
+      }
+    } else if (change.added) {
+      for (const line of lines) {
+        left.push({ type: 'removed', value: '', lineNumber: undefined });
+        right.push({ type: 'added', value: line, lineNumber: modLineNum++ });
+      }
     } else {
-      // Removed line from original
-      left.unshift({ type: 'removed', value: originalLines[i - 1], lineNumber: i });
-      right.unshift({ type: 'added', value: '', lineNumber: undefined }); // Spacer line
-      i--;
+      for (const line of lines) {
+        left.push({ type: 'unchanged', value: line, lineNumber: origLineNum++ });
+        right.push({ type: 'unchanged', value: line, lineNumber: modLineNum++ });
+      }
     }
   }
 
@@ -61,42 +81,36 @@ function computeDiff(original: string, modified: string): { left: DiffLine[]; ri
 export const XmlDiffChecker: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [originalXml, setOriginalXml] = useState('');
+  const [originalXml, setOriginalXml] = useState(() => {
+    const saved = localStorage.getItem('nps_diff_source_xml');
+    if (saved) localStorage.removeItem('nps_diff_source_xml');
+    return saved || '';
+  });
   const [modifiedXml, setModifiedXml] = useState('');
-  const [originalTitle, setOriginalTitle] = useState('Workbench XML');
+  const [originalTitle, setOriginalTitle] = useState(() => {
+    const saved = localStorage.getItem('nps_diff_source_title');
+    if (saved) localStorage.removeItem('nps_diff_source_title');
+    return saved || 'Workbench XML';
+  });
+  const [canonicalize, setCanonicalize] = useState(true);
   
   const [diffResult, setDiffResult] = useState<{ left: DiffLine[]; right: DiffLine[] } | null>(null);
   const [isComparing, setIsComparing] = useState(false);
 
-  // Load from localStorage if pre-populated from workbench
-  useEffect(() => {
-    const savedXml = localStorage.getItem('nps_diff_source_xml');
-    const savedTitle = localStorage.getItem('nps_diff_source_title');
-    if (savedXml) {
-      setOriginalXml(savedXml);
-      if (savedTitle) {
-        setOriginalTitle(savedTitle);
-      }
-      // Clear storage so it doesn't linger
-      localStorage.removeItem('nps_diff_source_xml');
-      localStorage.removeItem('nps_diff_source_title');
-    }
-  }, []);
-
   const handleCompare = () => {
     if (!originalXml.trim() && !modifiedXml.trim()) return;
     setIsComparing(true);
-    // Use setTimeout to avoid UI thread blocking on large XMLs
+    // Myers diff is fast and non-blocking
     setTimeout(() => {
       try {
-        const diffs = computeDiff(originalXml, modifiedXml);
+        const diffs = computeMyersDiff(originalXml, modifiedXml, canonicalize);
         setDiffResult(diffs);
       } catch (err) {
         console.error(err);
       } finally {
         setIsComparing(false);
       }
-    }, 50);
+    }, 20);
   };
 
   const handleFileUpload = (side: 'original' | 'modified', e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,9 +220,18 @@ export const XmlDiffChecker: React.FC = () => {
                 Clear Payloads
               </button>
             )}
+            <label className="flex items-center gap-2 text-[12.5px] font-medium text-gray-700 cursor-pointer select-none bg-[#f6f9f7] px-3 py-1.5 rounded-lg border border-[#e4e9e6]">
+              <input
+                type="checkbox"
+                checked={canonicalize}
+                onChange={(e) => setCanonicalize(e.target.checked)}
+                className="w-4 h-4 rounded text-[#16a34a] focus:ring-[#16a34a] accent-[#16a34a] cursor-pointer"
+              />
+              <span>Canonicalize XML (normalize whitespace &amp; attribute order)</span>
+            </label>
           </div>
           <div className="text-[12px] text-gray-500 font-medium">
-            Paste or upload files below to see line-by-line highlights.
+            Myers diff algorithm active. Normalized comparison ignores formatting noise.
           </div>
         </div>
 
