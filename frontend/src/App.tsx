@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { WorkbenchProvider } from './context/WorkbenchContext';
+import { ImpersonationBanner } from './components/ImpersonationBanner';
 
 const AuthScreen = React.lazy(() => import('./components/AuthScreen').then(m => ({ default: m.AuthScreen })));
 const WorkbenchPage = React.lazy(() => import('./components/workbench/WorkbenchPage').then(m => ({ default: m.WorkbenchPage })));
@@ -34,6 +35,7 @@ export const App: React.FC = () => {
       <AuthProvider>
         <WorkbenchProvider>
           <BrowserRouter>
+            <ImpersonationBanner />
             <Suspense fallback={<PageLoadingFallback />}>
               <Routes>
                 <Route path="/login" element={<AuthScreen />} />
