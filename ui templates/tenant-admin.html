@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tenant Administration - Zenith Bank PLC - NPS Play Box</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nps: {
+              950: '#06170d',
+              900: '#0b2818',
+              850: '#0a321c',
+              800: '#0f3a22',
+              700: '#15803d',
+              600: '#16a34a',
+              500: '#22a05a',
+              400: '#4ade80',
+              200: '#bbf7d0',
+              100: '#e6f6ec',
+              50: '#f3faf5',
+            },
+            border: '#e4e9e6',
+            slateText: '#111827',
+            muted: '#6b7280',
+            appBg: '#f6f9f7',
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f6f9f7;
+      color: #111827;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f3;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- ========================================================================= -->
+  <!-- MAIN APP HEADER (MATCHING CURRENT NPS PLAY BOX ENGINE DESIGN) -->
+  <!-- ========================================================================= -->
+  <header class="h-16 flex-shrink-0 bg-white border-b border-[#e4e9e6] flex items-center justify-between px-6 z-20 sticky top-0">
+    <div class="flex items-center gap-4">
+      <!-- Logo Mark -->
+      <a href="index.html" class="flex items-center gap-3 no-underline group">
+        <div class="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center text-white font-black text-[13px] flex-shrink-0 shadow-md group-hover:scale-105 transition-transform"
+             style="background: linear-gradient(135deg, #22a05a, #15803d); box-shadow: 0 4px 12px rgba(21,128,61,0.25);">
+          NPS
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-[16px] font-bold text-[#0f3a22] m-0 leading-tight tracking-tight">NPS Play Box Engine</h1>
+            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-md uppercase tracking-wide border border-emerald-200">Tenant Portal</span>
+          </div>
+          <p class="text-[11.5px] text-[#6b7280] m-0 mt-[1px]">ISO 20022 Message Engineering & Governance</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- Mode Switcher Tabs (Consistent with AppHeader.tsx) -->
+    <div class="hidden lg:flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
+      <a href="../frontend/index.html#/workbench" class="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 no-underline">
+        <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+        XML Generation
+      </a>
+      <a href="../frontend/index.html#/orchestrator" class="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 no-underline">
+        <span>⚡</span>
+        Flow Orchestrator
+      </a>
+      <a href="../frontend/index.html#/inspector" class="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 no-underline">
+        <span>🔍</span>
+        Fix XML & Health
+      </a>
+      <button class="px-3.5 py-1.5 text-[12px] font-bold rounded-lg bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)] flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-[#16a34a]"></span>
+        Tenant Administration
+      </button>
+      <a href="super-admin.html" class="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 no-underline">
+        <span>🛡️</span>
+        Super Admin View
+      </a>
+    </div>
+
+    <!-- Tenant Context & User Profile -->
+    <div class="flex items-center gap-3">
+      <!-- Quick Invite CTA -->
+      <button onclick="openModal('inviteModal')" class="px-3.5 py-1.5 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-[12px] font-bold shadow-sm transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        <span>Invite Member</span>
+      </button>
+
+      <!-- User Profile Card -->
+      <div class="flex items-center gap-2.5 pl-3 border-l border-[#e4e9e6]">
+        <div class="w-8 h-8 rounded-full bg-[#15803d] text-white font-bold text-xs flex items-center justify-center ring-2 ring-emerald-500/30">
+          OA
+        </div>
+        <div class="hidden sm:block text-left">
+          <div class="text-[12px] font-bold text-gray-900 leading-tight">Olisa Agbakoba</div>
+          <div class="text-[10.5px] text-gray-500 flex items-center gap-1">
+            <span class="text-purple-700 font-semibold font-mono text-[10px] bg-purple-50 px-1 rounded">ADMIN</span>
+            <span>• Zenith Bank</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- TENANT CONTEXT BANNER -->
+  <!-- ========================================================================= -->
+  <div class="bg-white border-b border-[#e4e9e6] px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <!-- Institution Details -->
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-red-50 text-red-700 border border-red-200 font-black flex items-center justify-center text-sm shadow-xs">
+        ZB
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-sm font-bold text-gray-900 leading-none">Zenith Bank PLC</h2>
+          <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10.5px] font-bold rounded font-mono">ENTERPRISE TIER</span>
+          <span class="text-xs text-gray-400">•</span>
+          <span class="text-xs text-gray-500 font-mono">Subdomain: <strong class="text-emerald-700">zenith.npsplaybox.com</strong></span>
+        </div>
+        <div class="flex items-center gap-2 mt-1 text-[11px] text-gray-400 font-mono">
+          <span>Tenant ID: ten_zenith_prod_04</span>
+          <span>•</span>
+          <span>Strict Tenant Isolation Enforced</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tenant Navigation Tabs -->
+    <div class="flex items-center gap-2">
+      <button onclick="switchTab('teamTab', this)" class="tenant-nav-tab px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#16a34a] text-white shadow-sm transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Team Members <span id="teamCountBadge" class="bg-white/20 text-white text-[10px] px-1.5 py-0.2 rounded-full ml-1">7</span>
+      </button>
+      <button onclick="switchTab('invitationsTab', this)" class="tenant-nav-tab px-3.5 py-1.5 text-xs font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        Pending Invitations <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.2 rounded-full ml-1">1</span>
+      </button>
+      <button onclick="switchTab('settingsTab', this)" class="tenant-nav-tab px-3.5 py-1.5 text-xs font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Organization Settings
+      </button>
+      <button onclick="switchTab('activityTab', this)" class="tenant-nav-tab px-3.5 py-1.5 text-xs font-semibold rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Activity Audit
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN CONTENT CONTAINER -->
+  <!-- ========================================================================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+
+    <!-- ======================================================================= -->
+    <!-- SEAT USAGE HERO CARD WITH WARNING THRESHOLD (PHASE 5 & 8 CORE SPEC) -->
+    <!-- ======================================================================= -->
+    <div class="bg-white border border-[#e4e9e6] rounded-xl shadow-sm overflow-hidden">
+      <!-- 80% Warning Banner (Dynamically shown when >= 80% utilized) -->
+      <div id="seatWarningBanner" class="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2.5 text-amber-900">
+          <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <div>
+            <strong class="font-bold">Seat Limit Warning:</strong>
+            <span>Your organization is utilizing <strong>80.0% (8 / 10 seats)</strong> of its quota limit. You have <strong>2 seats remaining</strong> before new invitations are blocked.</span>
+          </div>
+        </div>
+        <button onclick="openModal('requestSeatsModal')" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-[11px] font-bold shadow-xs transition whitespace-nowrap ml-3">
+          Request More Seats
+        </button>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-[#0f3a22]">Commercial Seat Quota & Team Capacity</h2>
+            <p class="text-xs text-gray-500">Each active user and pending invite claims one seat allocation</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-bold font-mono text-gray-700">8 / 10 Seats Used</span>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 font-mono">
+              80.0% Quota Used
+            </span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-100 rounded-full h-3.5 overflow-hidden border border-gray-200">
+          <div class="h-3.5 rounded-full bg-gradient-to-r from-emerald-600 to-amber-500 transition-all duration-500" style="width: 80%"></div>
+        </div>
+
+        <!-- Metric Counter Grid -->
+        <div class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-100">
+          <div class="bg-gray-50/70 p-3 rounded-lg border border-gray-100">
+            <span class="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Active Users</span>
+            <div class="text-2xl font-extrabold text-gray-900 mt-1">7</div>
+            <span class="text-[10px] text-emerald-700">Fully onboarded</span>
+          </div>
+          <div class="bg-gray-50/70 p-3 rounded-lg border border-gray-100">
+            <span class="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Pending Invites</span>
+            <div class="text-2xl font-extrabold text-amber-700 mt-1">1</div>
+            <span class="text-[10px] text-amber-700">Awaiting acceptance</span>
+          </div>
+          <div class="bg-gray-50/70 p-3 rounded-lg border border-gray-100">
+            <span class="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Available Capacity</span>
+            <div class="text-2xl font-extrabold text-emerald-700 mt-1">2</div>
+            <span class="text-[10px] text-gray-400">Seats unassigned</span>
+          </div>
+          <div class="bg-gray-50/70 p-3 rounded-lg border border-gray-100 flex flex-col justify-between">
+            <span class="text-[11px] text-gray-500 font-medium uppercase tracking-wider">Purchased Quota</span>
+            <div class="text-2xl font-extrabold text-gray-900 mt-1">10</div>
+            <button onclick="openModal('requestSeatsModal')" class="text-[11px] text-emerald-700 font-bold hover:underline text-left">
+              + Request Upgrade
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 1: TEAM MEMBERS LIST & ROLE MANAGEMENT -->
+    <!-- ======================================================================= -->
+    <div id="teamTab" class="tenant-tab-pane space-y-6">
+      <div class="bg-white border border-[#e4e9e6] rounded-xl shadow-sm overflow-hidden">
+        <!-- Filter and Search Header -->
+        <div class="p-6 border-b border-[#e4e9e6]">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-[#0f3a22]">Organization Team Directory</h2>
+              <p class="text-xs text-gray-500">Manage user access, role assignments, and authentication status</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openModal('inviteModal')" class="px-4 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-xs font-bold shadow-sm transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                Invite New Member
+              </button>
+            </div>
+          </div>
+
+          <!-- Controls Grid -->
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="relative sm:col-span-1">
+              <input id="userSearchInput" oninput="filterUsers()" type="text" placeholder="Search team members by name or email..."
+                     class="w-full pl-9 pr-4 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600">
+              <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+
+            <select id="roleFilterSelect" onchange="filterUsers()" class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white">
+              <option value="ALL">All Roles (Admin, Engineer, Viewer)</option>
+              <option value="TENANT_ADMIN">Tenant Admin</option>
+              <option value="TENANT_USER">ISO Engineer (User)</option>
+              <option value="TENANT_VIEWER">Compliance Viewer</option>
+            </select>
+
+            <select id="statusFilterSelect" onchange="filterUsers()" class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white">
+              <option value="ALL">All Statuses</option>
+              <option value="ACTIVE">Active Users</option>
+              <option value="INACTIVE">Inactive / Suspended</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-gray-600 border-collapse">
+            <thead class="bg-gray-50 border-b border-[#e4e9e6] text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              <tr>
+                <th class="py-3 px-4">Team Member</th>
+                <th class="py-3 px-4">Assigned Role</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4">Last Authentication</th>
+                <th class="py-3 px-4">Onboarded</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody" class="divide-y divide-gray-100">
+              <!-- User 1: Olisa Agbakoba (Admin) -->
+              <tr class="hover:bg-gray-50 transition-colors user-row" data-name="olisa agbakoba" data-email="olisa@zenithbank.com" data-role="TENANT_ADMIN" data-status="ACTIVE">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs">
+                      OA
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Olisa Agbakoba <span class="text-xs text-gray-400 font-normal">(You)</span></div>
+                      <div class="text-[11px] text-gray-400 font-mono">olisa@zenithbank.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                    <svg class="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    TENANT_ADMIN
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    ACTIVE
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-gray-600">Today, 11:24 AM</td>
+                <td class="py-3.5 px-4 font-mono text-gray-400">Jul 12, 2026</td>
+                <td class="py-3.5 px-4 text-right">
+                  <span class="text-xs text-gray-400 italic">Primary Contact</span>
+                </td>
+              </tr>
+
+              <!-- User 2: Chinedu Eze (Engineer) -->
+              <tr class="hover:bg-gray-50 transition-colors user-row" data-name="chinedu eze" data-email="chinedu.eze@zenithbank.com" data-role="TENANT_USER" data-status="ACTIVE">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">
+                      CE
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Chinedu Eze</div>
+                      <div class="text-[11px] text-gray-400 font-mono">chinedu.eze@zenithbank.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    ISO ENGINEER (USER)
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    ACTIVE
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-gray-600">Today, 09:12 AM</td>
+                <td class="py-3.5 px-4 font-mono text-gray-400">Jul 15, 2026</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openRoleModal('Chinedu Eze', 'chinedu.eze@zenithbank.com', 'TENANT_USER')" class="px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 border border-gray-200 rounded transition">
+                      Edit Role
+                    </button>
+                    <button onclick="openDeleteUserModal('Chinedu Eze', 'chinedu.eze@zenithbank.com')" class="px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded transition">
+                      Remove
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- User 3: Fatima Bello (Engineer) -->
+              <tr class="hover:bg-gray-50 transition-colors user-row" data-name="fatima bello" data-email="fatima.bello@zenithbank.com" data-role="TENANT_USER" data-status="ACTIVE">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-xs">
+                      FB
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Fatima Bello</div>
+                      <div class="text-[11px] text-gray-400 font-mono">fatima.bello@zenithbank.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                    <svg class="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    ISO ENGINEER (USER)
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    ACTIVE
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-gray-600">Yesterday, 4:40 PM</td>
+                <td class="py-3.5 px-4 font-mono text-gray-400">Jul 20, 2026</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openRoleModal('Fatima Bello', 'fatima.bello@zenithbank.com', 'TENANT_USER')" class="px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 border border-gray-200 rounded transition">
+                      Edit Role
+                    </button>
+                    <button onclick="openDeleteUserModal('Fatima Bello', 'fatima.bello@zenithbank.com')" class="px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded transition">
+                      Remove
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- User 4: Babatunde Adeleke (Compliance Viewer) -->
+              <tr class="hover:bg-gray-50 transition-colors user-row" data-name="babatunde adeleke" data-email="b.adeleke@zenithbank.com" data-role="TENANT_VIEWER" data-status="ACTIVE">
+                <td class="py-3.5 px-4 font-semibold text-gray-900">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 font-bold flex items-center justify-center text-xs">
+                      BA
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">Babatunde Adeleke</div>
+                      <div class="text-[11px] text-gray-400 font-mono">b.adeleke@zenithbank.com</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10.5px] font-bold bg-gray-100 text-gray-800 border border-gray-200">
+                    <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    COMPLIANCE VIEWER
+                  </span>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    ACTIVE
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 font-mono text-gray-600">3 days ago</td>
+                <td class="py-3.5 px-4 font-mono text-gray-400">Aug 02, 2026</td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button onclick="openRoleModal('Babatunde Adeleke', 'b.adeleke@zenithbank.com', 'TENANT_VIEWER')" class="px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 border border-gray-200 rounded transition">
+                      Edit Role
+                    </button>
+                    <button onclick="openDeleteUserModal('Babatunde Adeleke', 'b.adeleke@zenithbank.com')" class="px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded transition">
+                      Remove
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 2: INVITATIONS MANAGEMENT -->
+    <!-- ======================================================================= -->
+    <div id="invitationsTab" class="tenant-tab-pane hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Send Invite Card -->
+        <div class="lg:col-span-1 bg-white border border-[#e4e9e6] rounded-xl p-6 shadow-sm">
+          <h3 class="text-base font-bold text-[#0f3a22]">Send Team Invitation</h3>
+          <p class="text-xs text-gray-500 mt-1">A secure time-limited registration link will be delivered via email</p>
+
+          <form onsubmit="handleSendInvitation(event)" class="mt-4 space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Corporate Work Email *</label>
+              <input id="inviteEmailInput" type="email" required placeholder="colleague@zenithbank.com"
+                     class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 font-mono">
+              <p class="text-[10.5px] text-gray-400 mt-1">Must match domain @zenithbank.com</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Role Assignment *</label>
+              <select id="inviteRoleSelect" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white">
+                <option value="TENANT_USER">ISO Engineer (Tenant User)</option>
+                <option value="TENANT_VIEWER">Compliance Viewer (Read Only)</option>
+                <option value="TENANT_ADMIN">Tenant Administrator</option>
+              </select>
+            </div>
+
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+              <div class="font-bold flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Seat Quota Notice
+              </div>
+              <p class="mt-1 text-[11px] leading-normal text-amber-900">
+                Sending this invitation will hold 1 of your 2 remaining seat allocations until accepted or revoked.
+              </p>
+            </div>
+
+            <button type="submit" class="w-full py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-xs font-bold shadow-sm transition">
+              Dispatch Invitation Email
+            </button>
+          </form>
+        </div>
+
+        <!-- Pending Invitations List -->
+        <div class="lg:col-span-2 bg-white border border-[#e4e9e6] rounded-xl shadow-sm overflow-hidden">
+          <div class="p-6 border-b border-[#e4e9e6]">
+            <h3 class="text-base font-bold text-[#0f3a22]">Pending Invitations</h3>
+            <p class="text-xs text-gray-500">Invitations expire automatically after 7 calendar days</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-gray-600 border-collapse">
+              <thead class="bg-gray-50 border-b border-[#e4e9e6] text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                <tr>
+                  <th class="py-3 px-4">Invited Email</th>
+                  <th class="py-3 px-4">Role</th>
+                  <th class="py-3 px-4">Sent Date</th>
+                  <th class="py-3 px-4">Expires</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="invitationsTableBody" class="divide-y divide-gray-100 font-mono text-[11.5px]">
+                <tr id="inviteRow_kemi" class="hover:bg-gray-50 transition-colors">
+                  <td class="py-3.5 px-4 font-bold text-gray-900 font-sans">
+                    kemi.alabi@zenithbank.com
+                  </td>
+                  <td class="py-3.5 px-4 font-sans">
+                    <span class="px-2 py-0.5 rounded font-bold text-[10px] bg-blue-100 text-blue-800">
+                      ISO ENGINEER
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-gray-500">Sep 03, 2026</td>
+                  <td class="py-3.5 px-4 text-amber-700 font-semibold font-sans">
+                    In 5 days
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-sans">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button onclick="showToast('Invitation resent to kemi.alabi@zenithbank.com', 'success')" class="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition">
+                        Resend
+                      </button>
+                      <button onclick="revokeInvitation('inviteRow_kemi', 'kemi.alabi@zenithbank.com')" class="px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded transition">
+                        Revoke
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 3: ORGANIZATION SETTINGS -->
+    <!-- ======================================================================= -->
+    <div id="settingsTab" class="tenant-tab-pane hidden space-y-6">
+      <div class="bg-white border border-[#e4e9e6] rounded-xl p-6 shadow-sm">
+        <h2 class="text-base font-bold text-[#0f3a22]">Tenant Organization Settings</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Configure institutional preferences, security timeouts, and branding</p>
+
+        <form onsubmit="handleSaveSettings(event)" class="mt-6 space-y-6 text-xs">
+          <!-- General Org Settings -->
+          <div class="space-y-4">
+            <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider border-b border-gray-200 pb-2">Institutional Profile</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-gray-700 mb-1">Organization Display Name</label>
+                <input type="text" value="Zenith Bank PLC" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 font-semibold">
+              </div>
+              <div>
+                <label class="block font-bold text-gray-700 mb-1">Subdomain (Fixed)</label>
+                <div class="flex items-center">
+                  <input type="text" value="zenith" disabled class="flex-1 px-3 py-2 border border-gray-300 rounded-l-lg bg-gray-100 text-gray-500 font-mono">
+                  <span class="px-3 py-2 border border-l-0 border-gray-300 bg-gray-50 text-gray-500 rounded-r-lg font-mono">.npsplaybox.com</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security & Access Settings -->
+          <div class="space-y-4 pt-4 border-t border-gray-100">
+            <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider border-b border-gray-200 pb-2">Access & Security Policies</h3>
+            
+            <div class="space-y-3">
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" checked class="mt-0.5 accent-emerald-600">
+                <div>
+                  <span class="font-bold text-gray-800">Require Work Email Domain Matching</span>
+                  <p class="text-gray-500 text-[11px]">Restrict team invites strictly to verified @zenithbank.com email addresses</p>
+                </div>
+              </label>
+
+              <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" checked class="mt-0.5 accent-emerald-600">
+                <div>
+                  <span class="font-bold text-gray-800">Enforce XML Digital Signatures</span>
+                  <p class="text-gray-500 text-[11px]">Ensure all ISO 20022 messages generated in workbench are digitally signed with tenant private key</p>
+                </div>
+              </label>
+            </div>
+
+            <div class="pt-2">
+              <label class="block font-bold text-gray-700 mb-1">Inactivity Session Timeout</label>
+              <select class="w-64 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white">
+                <option>15 Minutes</option>
+                <option selected>30 Minutes (Recommended by CBN)</option>
+                <option>60 Minutes</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Institutional Branding -->
+          <div class="space-y-4 pt-4 border-t border-gray-100">
+            <h3 class="text-xs font-bold text-gray-900 uppercase tracking-wider border-b border-gray-200 pb-2">Portal Branding Customization</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-gray-700 mb-1">Primary Theme Accent Color</label>
+                <div class="flex items-center gap-2">
+                  <input type="color" value="#16a34a" class="w-9 h-9 border border-gray-300 rounded-lg cursor-pointer p-0.5">
+                  <input type="text" value="#16a34a" class="px-3 py-2 border border-gray-300 rounded-lg font-mono text-xs w-32">
+                </div>
+              </div>
+              <div>
+                <label class="block font-bold text-gray-700 mb-1">Institution Logo URL</label>
+                <input type="url" placeholder="https://zenithbank.com/assets/logo.png" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600">
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-gray-200 flex justify-end">
+            <button type="submit" class="px-5 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-xs font-bold shadow-sm transition">
+              Save Organization Settings
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 4: TENANT ACTIVITY AUDIT -->
+    <!-- ======================================================================= -->
+    <div id="activityTab" class="tenant-tab-pane hidden space-y-6">
+      <div class="bg-white border border-[#e4e9e6] rounded-xl shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-[#e4e9e6] flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-[#0f3a22]">Zenith Bank Activity Log</h2>
+            <p class="text-xs text-gray-500">Scoped audit trail of team operations and ISO 20022 message testing</p>
+          </div>
+          <button onclick="showToast('Exporting Zenith Bank audit records...', 'success')" class="px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-semibold shadow-xs">
+            Export CSV
+          </button>
+        </div>
+
+        <div class="divide-y divide-gray-100 p-6 space-y-4">
+          <div class="flex items-start gap-3 text-xs">
+            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-gray-900 font-medium">
+                <span class="font-bold">Team Invitation Sent</span>: <span class="font-mono text-emerald-800">kemi.alabi@zenithbank.com</span> was invited with role <span class="font-mono bg-gray-100 px-1 py-0.5 rounded">TENANT_USER</span> by Olisa Agbakoba.
+              </p>
+              <div class="text-[11px] text-gray-400 font-mono mt-0.5">Sep 03, 2026 14:15:08 UTC • IP 102.89.44.110</div>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 text-xs pt-4">
+            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div class="flex-1">
+              <p class="text-gray-900 font-medium">
+                <span class="font-bold">ISO 20022 Pipeline Dispatched</span>: Chinedu Eze executed automated flow test <span class="font-mono bg-gray-100 px-1 py-0.5 rounded">pacs.008 -> pacs.002 settlement check</span>.
+              </p>
+              <div class="text-[11px] text-gray-400 font-mono mt-0.5">Sep 04, 2026 16:42:19 UTC • Result: SUCCESS</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ROLE ASSIGNMENT MODAL -->
+  <!-- ========================================================================= -->
+  <div id="roleModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-[#e4e9e6]">
+      <div class="px-6 py-4 border-b border-[#e4e9e6] flex items-center justify-between bg-gray-50">
+        <div>
+          <h3 class="text-base font-bold text-[#0f3a22]">Assign User Role</h3>
+          <p class="text-xs text-gray-500">Configure authorization boundaries</p>
+        </div>
+        <button onclick="closeModal('roleModal')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveRole(event)" class="p-6 space-y-4">
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs">
+          <span class="text-gray-400 uppercase text-[10px] font-bold">Team Member</span>
+          <div id="roleModalUserName" class="font-bold text-gray-900 text-sm mt-0.5">Chinedu Eze</div>
+          <div id="roleModalUserEmail" class="text-gray-500 font-mono text-xs">chinedu.eze@zenithbank.com</div>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Role 1: ISO Engineer -->
+          <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-xl hover:border-emerald-500 cursor-pointer transition">
+            <input type="radio" name="selectedRole" value="TENANT_USER" checked class="mt-1 accent-emerald-600">
+            <div>
+              <strong class="text-xs text-gray-900 block font-bold">ISO Engineer (Tenant User)</strong>
+              <p class="text-[11px] text-gray-500 leading-normal">Full access to XML generation, pipeline dispatch, flow orchestrator, and test data.</p>
+            </div>
+          </label>
+
+          <!-- Role 2: Tenant Admin -->
+          <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-xl hover:border-purple-500 cursor-pointer transition">
+            <input type="radio" name="selectedRole" value="TENANT_ADMIN" class="mt-1 accent-purple-600">
+            <div>
+              <strong class="text-xs text-purple-900 block font-bold">Tenant Administrator</strong>
+              <p class="text-[11px] text-gray-500 leading-normal">Complete administrative access: invite team members, assign roles, and manage settings.</p>
+            </div>
+          </label>
+
+          <!-- Role 3: Compliance Viewer -->
+          <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-xl hover:border-gray-500 cursor-pointer transition">
+            <input type="radio" name="selectedRole" value="TENANT_VIEWER" class="mt-1 accent-gray-600">
+            <div>
+              <strong class="text-xs text-gray-900 block font-bold">Compliance Viewer</strong>
+              <p class="text-[11px] text-gray-500 leading-normal">Read-only auditing access to generated messages, schemas, and historical logs.</p>
+            </div>
+          </label>
+        </div>
+
+        <div class="pt-4 border-t border-[#e4e9e6] flex items-center justify-end gap-2.5">
+          <button type="button" onclick="closeModal('roleModal')" class="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg text-xs font-bold transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg text-xs font-bold shadow-sm transition">
+            Update Role
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: REQUEST MORE SEATS MODAL -->
+  <!-- ========================================================================= -->
+  <div id="requestSeatsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-[#e4e9e6]">
+      <div class="px-6 py-4 border-b border-[#e4e9e6] flex items-center justify-between bg-amber-50">
+        <div>
+          <h3 class="text-base font-bold text-amber-900">Request Additional Seats</h3>
+          <p class="text-xs text-amber-700">Commercial capacity expansion request</p>
+        </div>
+        <button onclick="closeModal('requestSeatsModal')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form onsubmit="handleRequestSeats(event)" class="p-6 space-y-4 text-xs">
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between">
+          <span class="text-gray-500">Current Seat Quota:</span>
+          <strong class="text-gray-900 font-mono">10 Seats (8 Used)</strong>
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Additional Seats Needed</label>
+          <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-amber-600 bg-white font-bold">
+            <option value="5">+5 Seats (Total 15 seats)</option>
+            <option value="10" selected>+10 Seats (Total 20 seats)</option>
+            <option value="25">+25 Seats (Total 35 seats)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Business Requirement & Justification</label>
+          <textarea rows="3" required placeholder="Describe upcoming integration project, new engineering team onboarding, etc." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-amber-600"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-gray-200 flex justify-end gap-2.5">
+          <button type="button" onclick="closeModal('requestSeatsModal')" class="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg font-bold">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold shadow-xs">Submit Request to Platform</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: INVITE MODAL -->
+  <!-- ========================================================================= -->
+  <div id="inviteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-[#e4e9e6]">
+      <div class="px-6 py-4 border-b border-[#e4e9e6] flex items-center justify-between bg-gray-50">
+        <div>
+          <h3 class="text-base font-bold text-[#0f3a22]">Invite Team Colleague</h3>
+          <p class="text-xs text-gray-500">2 of 10 seats remaining</p>
+        </div>
+        <button onclick="closeModal('inviteModal')" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form onsubmit="handleQuickInvite(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Colleague Email *</label>
+          <input id="quickInviteEmail" type="email" required placeholder="engineer@zenithbank.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 font-mono">
+        </div>
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Assigned Role</label>
+          <select id="quickInviteRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-emerald-600 bg-white">
+            <option value="TENANT_USER">ISO Engineer (Tenant User)</option>
+            <option value="TENANT_VIEWER">Compliance Viewer</option>
+            <option value="TENANT_ADMIN">Tenant Administrator</option>
+          </select>
+        </div>
+        <div class="pt-3 border-t border-gray-200 flex justify-end gap-2.5">
+          <button type="button" onclick="closeModal('inviteModal')" class="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg font-bold">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-[#16a34a] hover:bg-[#15803d] text-white rounded-lg font-bold shadow-xs">Send Invite</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: DELETE USER MODAL -->
+  <!-- ========================================================================= -->
+  <div id="deleteUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden border border-[#e4e9e6]">
+      <div class="p-6 text-xs space-y-4">
+        <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-gray-900">Remove Team Member?</h3>
+          <p class="text-gray-500 mt-1">Are you sure you want to remove <strong id="deleteTargetName">User</strong> from Zenith Bank PLC? Their session will be revoked immediately and <strong>1 seat will be released back to your quota</strong>.</p>
+        </div>
+        <div class="pt-2 flex justify-end gap-2.5">
+          <button onclick="closeModal('deleteUserModal')" class="px-4 py-2 border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg font-bold">Cancel</button>
+          <button onclick="confirmDeleteUser()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-xs">Yes, Remove & Release Seat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-12 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ========================================================================= -->
+  <!-- FOOTER STATUS BAR (MATCHING StatusBar.tsx) -->
+  <!-- ========================================================================= -->
+  <footer class="h-[34px] flex-shrink-0 bg-white border-t border-[#e4e9e6] flex items-center justify-between px-6 text-[11px] text-[#6b7280] z-20">
+    <div class="flex items-center gap-6">
+      <span class="flex items-center gap-1.5">
+        <span class="w-[7px] h-[7px] rounded-full bg-[#16a34a] animate-pulse"></span>
+        Environment: NIBSS Sandbox v2.4 (Zenith Bank Isolation)
+      </span>
+      <span class="hidden md:flex items-center gap-2 font-mono">
+        Seat Allocation: 8 / 10 seats (80%)
+        <span class="w-16 h-1.5 rounded-full bg-gray-200 overflow-hidden inline-block">
+          <span class="h-full bg-amber-500 block" style="width: 80%"></span>
+        </span>
+      </span>
+    </div>
+    <div class="flex items-center gap-5">
+      <a href="index.html" class="text-emerald-700 font-semibold hover:underline">Templates Hub</a>
+      <a href="super-admin.html" class="text-gray-500 hover:text-emerald-700">Switch to Super Admin</a>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC -->
+  <!-- ========================================================================= -->
+  <script>
+    // Tab switching
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tenant-tab-pane').forEach(tab => tab.classList.add('hidden'));
+      const target = document.getElementById(tabId);
+      if (target) target.classList.remove('hidden');
+
+      if (el) {
+        document.querySelectorAll('.tenant-nav-tab').forEach(b => {
+          b.classList.remove('bg-[#16a34a]', 'text-white', 'shadow-sm');
+          b.classList.add('text-gray-600', 'hover:bg-gray-100');
+        });
+        el.classList.add('bg-[#16a34a]', 'text-white', 'shadow-sm');
+        el.classList.remove('text-gray-600', 'hover:bg-gray-100');
+      }
+    }
+
+    // Modal helpers
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.remove('hidden');
+    }
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.add('hidden');
+    }
+
+    // Role assignment modal setup
+    let activeRoleUser = '';
+    function openRoleModal(name, email, role) {
+      activeRoleUser = name;
+      document.getElementById('roleModalUserName').innerText = name;
+      document.getElementById('roleModalUserEmail').innerText = email;
+      const r = document.querySelector(`input[name="selectedRole"][value="${role}"]`);
+      if (r) r.checked = true;
+      openModal('roleModal');
+    }
+
+    function handleSaveRole(e) {
+      e.preventDefault();
+      const selected = document.querySelector('input[name="selectedRole"]:checked').value;
+      closeModal('roleModal');
+      showToast(`Role for ${activeRoleUser} updated to ${selected}`, 'success');
+    }
+
+    // Delete user modal setup
+    let userToDelete = '';
+    function openDeleteUserModal(name, email) {
+      userToDelete = name;
+      document.getElementById('deleteTargetName').innerText = name;
+      openModal('deleteUserModal');
+    }
+
+    function confirmDeleteUser() {
+      closeModal('deleteUserModal');
+      showToast(`${userToDelete} removed from organization. 1 seat released.`, 'info');
+    }
+
+    // Quick Invite Handlers
+    function handleSendInvitation(e) {
+      e.preventDefault();
+      const email = document.getElementById('inviteEmailInput').value;
+      const role = document.getElementById('inviteRoleSelect').value;
+      document.getElementById('inviteEmailInput').value = '';
+      addInvitationToTable(email, role);
+      showToast(`Invitation sent to ${email}`, 'success');
+    }
+
+    function handleQuickInvite(e) {
+      e.preventDefault();
+      const email = document.getElementById('quickInviteEmail').value;
+      const role = document.getElementById('quickInviteRole').value;
+      closeModal('inviteModal');
+      document.getElementById('quickInviteEmail').value = '';
+      addInvitationToTable(email, role);
+      showToast(`Invitation sent to ${email}`, 'success');
+    }
+
+    function addInvitationToTable(email, role) {
+      const tbody = document.getElementById('invitationsTableBody');
+      const tr = document.createElement('tr');
+      const id = 'invite_' + Date.now();
+      tr.id = id;
+      tr.className = 'hover:bg-gray-50 transition-colors';
+      tr.innerHTML = `
+        <td class="py-3.5 px-4 font-bold text-gray-900 font-sans">${email}</td>
+        <td class="py-3.5 px-4 font-sans"><span class="px-2 py-0.5 rounded font-bold text-[10px] bg-blue-100 text-blue-800">${role}</span></td>
+        <td class="py-3.5 px-4 text-gray-500">Today</td>
+        <td class="py-3.5 px-4 text-amber-700 font-semibold font-sans">In 7 days</td>
+        <td class="py-3.5 px-4 text-right font-sans">
+          <div class="flex items-center justify-end gap-1.5">
+            <button onclick="showToast('Invitation resent to ${email}', 'success')" class="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded transition">Resend</button>
+            <button onclick="revokeInvitation('${id}', '${email}')" class="px-2.5 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded transition">Revoke</button>
+          </div>
+        </td>
+      `;
+      tbody.prepend(tr);
+    }
+
+    function revokeInvitation(rowId, email) {
+      const row = document.getElementById(rowId);
+      if (row) row.remove();
+      showToast(`Invitation for ${email} revoked. 1 seat released back to quota.`, 'info');
+    }
+
+    function handleRequestSeats(e) {
+      e.preventDefault();
+      closeModal('requestSeatsModal');
+      showToast('Capacity expansion request submitted to Platform Operations.', 'success');
+    }
+
+    function handleSaveSettings(e) {
+      e.preventDefault();
+      showToast('Organization settings updated successfully.', 'success');
+    }
+
+    // Filter Users Table
+    function filterUsers() {
+      const q = document.getElementById('userSearchInput').value.toLowerCase();
+      const role = document.getElementById('roleFilterSelect').value;
+      const status = document.getElementById('statusFilterSelect').value;
+      const rows = document.querySelectorAll('.user-row');
+
+      rows.forEach(row => {
+        const name = row.dataset.name || '';
+        const email = row.dataset.email || '';
+        const r = row.dataset.role || '';
+        const s = row.dataset.status || '';
+
+        const matchesQuery = name.includes(q) || email.includes(q);
+        const matchesRole = (role === 'ALL') || (r === role);
+        const matchesStatus = (status === 'ALL') || (s === status);
+
+        row.style.display = (matchesQuery && matchesRole && matchesStatus) ? '' : 'none';
+      });
+    }
+
+    // Toast feedback
+    function showToast(message, type = 'info') {
+      const c = document.getElementById('toastContainer');
+      if (!c) return;
+
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-emerald-900 border-emerald-600 text-white',
+        info: 'bg-gray-900 border-gray-700 text-white',
+        error: 'bg-red-900 border-red-600 text-white'
+      };
+
+      toast.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs font-medium flex items-center gap-2.5 transition-all transform duration-200 translate-y-2 opacity-0 ${colors[type] || colors.info}`;
+      toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${type === 'success' ? 'bg-emerald-400' : type === 'error' ? 'bg-red-400' : 'bg-blue-400'}"></span>
+        <span>${message}</span>
+      `;
+
+      c.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
