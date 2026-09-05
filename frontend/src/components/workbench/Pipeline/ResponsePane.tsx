@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { ServicePushResult } from '../../../types/workbench';
 
 interface ResponsePaneProps {
