@@ -7,6 +7,7 @@ import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
 import org.example.signer.entity.UserInvitation;
 import org.example.signer.exception.InvalidQuotaException;
+import org.example.signer.exception.QuotaExceededException;
 import org.example.signer.exception.TenantNotFoundException;
 import org.example.signer.repository.TenantRepository;
 import org.example.signer.repository.UserInvitationRepository;
@@ -34,11 +35,14 @@ public class UserService {
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final QuotaService quotaService;
 
     private static final int INVITATION_EXPIRY_HOURS = 72;
 
     @Transactional
     public InvitationResponse inviteUser(Long tenantId, Long invitedBy, InviteUserRequest request) {
+        quotaService.enforceQuotaForUserCreation(tenantId);
+
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new TenantNotFoundException(tenantId));
 
@@ -73,7 +77,7 @@ public class UserService {
         long activePendingCount = pendingInvitations.stream().filter(inv -> !inv.isExpired()).count();
 
         if (activeUsers + activePendingCount >= tenant.getMaxSeats()) {
-            throw new InvalidQuotaException("Cannot invite user: seat quota full. Max seats: "
+            throw new QuotaExceededException("Cannot invite user: seat quota full. Max seats: "
                     + tenant.getMaxSeats() + ", active users: " + activeUsers + ", pending invitations: " + activePendingCount);
         }
 
@@ -128,10 +132,8 @@ public class UserService {
             throw new IllegalStateException("Tenant is not active");
         }
 
-        long activeUsers = userRepository.countByTenantIdAndStatus(tenant.getId(), User.UserStatus.ACTIVE);
-        if (activeUsers >= tenant.getMaxSeats()) {
-            throw new InvalidQuotaException("Cannot accept invitation: seat limit reached. Max seats: " + tenant.getMaxSeats());
-        }
+        // Enforce quota BEFORE creating user
+        quotaService.enforceQuotaForUserCreation(invitation.getTenantId());
 
         User user = User.builder()
                 .tenantId(invitation.getTenantId())

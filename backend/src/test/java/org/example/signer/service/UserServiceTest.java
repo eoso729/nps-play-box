@@ -5,6 +5,7 @@ import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
 import org.example.signer.entity.UserInvitation;
 import org.example.signer.exception.InvalidQuotaException;
+import org.example.signer.exception.QuotaExceededException;
 import org.example.signer.repository.TenantRepository;
 import org.example.signer.repository.UserInvitationRepository;
 import org.example.signer.repository.UserRepository;
@@ -149,7 +150,7 @@ class UserServiceTest {
                 .role("DEVELOPER")
                 .build();
 
-        assertThrows(InvalidQuotaException.class, () ->
+        assertThrows(QuotaExceededException.class, () ->
                 userService.inviteUser(tinyTenant.getId(), tinyAdmin.getId(), request));
     }
 

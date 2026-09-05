@@ -64,4 +64,50 @@ public class EmailService {
 
         log.info("Invitation token generated for {} in tenant '{}': [Link: {}]", toEmail, tenantName, invitationUrl);
     }
+
+    public void sendSeatRequestStatusEmail(
+            String toEmail,
+            String tenantName,
+            boolean approved,
+            int seatCount,
+            String reasonOrNotes) {
+
+        StringBuilder body = new StringBuilder();
+        body.append("Hello,\n\n");
+        if (approved) {
+            body.append("Your request for additional seats for ").append(tenantName)
+                    .append(" has been APPROVED.\n\n")
+                    .append("Approved Seats: ").append(seatCount).append("\n");
+            if (StringUtils.hasText(reasonOrNotes)) {
+                body.append("Notes: ").append(reasonOrNotes).append("\n");
+            }
+        } else {
+            body.append("Your request for additional seats for ").append(tenantName)
+                    .append(" has been DENIED.\n\n");
+            if (StringUtils.hasText(reasonOrNotes)) {
+                body.append("Reason: ").append(reasonOrNotes).append("\n");
+            }
+        }
+        body.append("\nBest regards,\nThe NPS Play Box Team");
+
+        String subject = "Seat Request Update for " + tenantName + ": " + (approved ? "APPROVED" : "DENIED");
+
+        if (mailSender != null) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(toEmail);
+                message.setSubject(subject);
+                message.setText(body.toString());
+                mailSender.send(message);
+                log.info("Seat request status email successfully dispatched to: {}", toEmail);
+                return;
+            } catch (Exception e) {
+                log.warn("Failed to dispatch email to {}: {}. Falling back to log-based notification.", toEmail, e.getMessage());
+            }
+        }
+
+        log.info("Seat request status for {} ({}) - Approved: {}, Seats: {}, Notes/Reason: {}",
+                toEmail, tenantName, approved, seatCount, reasonOrNotes);
+    }
 }
