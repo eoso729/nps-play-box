@@ -7,7 +7,7 @@ export interface User {
   firstName?: string;
   lastName?: string;
   organization?: string;
-  role?: 'ADMIN' | 'USER';
+  role?: 'PLATFORM_ADMIN' | 'TENANT_ADMIN' | 'DEVELOPER' | 'VIEWER' | 'ADMIN' | 'USER';
   authProvider?: 'LOCAL' | 'MICROSOFT';
   createdAt?: string;
   lastLoginAt?: string;
@@ -41,18 +41,12 @@ export const loginApi = async (data: LoginRequest): Promise<AuthResponse> => {
     password: data.password,
   };
   const res = await apiClient.post<AuthResponse>('/api/auth/login', payload);
-  const authData = res.data as any;
-  // Map backend "token" field to expected "accessToken"
-  authData.accessToken = authData.token;
-  return authData as AuthResponse;
+  return res.data;
 };
 
 export const registerApi = async (data: RegisterRequest): Promise<AuthResponse> => {
   const res = await apiClient.post<AuthResponse>('/api/auth/register', data);
-  const authData = res.data as any;
-  // Map backend "token" field to expected "accessToken"
-  authData.accessToken = authData.token;
-  return authData as AuthResponse;
+  return res.data;
 };
 
 export const getMeApi = async (): Promise<User> => {
