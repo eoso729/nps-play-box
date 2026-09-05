@@ -17,6 +17,7 @@ public class SeatRequestResponse {
     private String tenantName;
     private Integer currentSeats;
     private Integer requestedAdditionalSeats;
+    private Integer approvedSeats;
     private Integer newTotalSeats;
     private String justification;
     private String expectedGrowth;

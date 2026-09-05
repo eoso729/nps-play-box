@@ -19,8 +19,8 @@ CREATE TABLE seat_requests (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     
     CONSTRAINT fk_seat_requests_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
-    CONSTRAINT fk_seat_requests_requester FOREIGN KEY (requested_by) REFERENCES users(id),
-    CONSTRAINT fk_seat_requests_reviewer FOREIGN KEY (reviewed_by) REFERENCES users(id),
+    CONSTRAINT fk_seat_requests_requester FOREIGN KEY (requested_by) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_seat_requests_reviewer FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT chk_request_status CHECK (status IN ('PENDING', 'APPROVED', 'DENIED'))
 );
 

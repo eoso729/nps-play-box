@@ -345,6 +345,7 @@ public class QuotaService {
                 .tenantName(tenant != null ? tenant.getName() : "Unknown")
                 .currentSeats(request.getCurrentSeats())
                 .requestedAdditionalSeats(request.getRequestedAdditionalSeats())
+                .approvedSeats(request.getApprovedSeats())
                 .newTotalSeats(newTotal)
                 .justification(request.getJustification())
                 .expectedGrowth(request.getExpectedGrowth())
