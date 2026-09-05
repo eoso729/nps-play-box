@@ -105,6 +105,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           <span className="text-[12px]">⚖️</span>
           Diff Checker
         </button>
+        <button
+          type="button"
+          onClick={() => navigate('/admin/tenant')}
+          className="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+        >
+          <span className="text-[12px]">👥</span>
+          Tenant Admin
+        </button>
       </div>
 
       <div className="flex items-center gap-2.5 relative">
@@ -146,8 +154,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   Credentials and Tokens
                 </button>
               )}
-              
-              {onCredentialsClick && <div className="border-t border-[#e4e9e6] my-1"></div>}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDropdownOpen(false);
+                  navigate('/admin/tenant');
+                }}
+                className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
+              >
+                Tenant Administration
+              </button>
+
+              <div className="border-t border-[#e4e9e6] my-1"></div>
 
               <button
                 type="button"

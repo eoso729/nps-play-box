@@ -10,6 +10,7 @@ const WorkbenchPage = React.lazy(() => import('./components/workbench/WorkbenchP
 const XmlDiffChecker = React.lazy(() => import('./components/workbench/XmlDiffChecker').then(m => ({ default: m.XmlDiffChecker })));
 const XmlInspectorPage = React.lazy(() => import('./components/inspector/XmlInspectorPage').then(m => ({ default: m.XmlInspectorPage })));
 const FlowOrchestratorPage = React.lazy(() => import('./components/orchestrator/FlowOrchestratorPage').then(m => ({ default: m.FlowOrchestratorPage })));
+const TenantAdminDashboard = React.lazy(() => import('./features/tenant-admin/pages/TenantAdminDashboard').then(m => ({ default: m.TenantAdminDashboard })));
 
 const PageLoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center min-h-screen bg-[#f6f9f7]">
@@ -50,6 +51,8 @@ export const App: React.FC = () => {
                 <Route path="/health-check" element={<XmlInspectorPage />} />
                 <Route path="/fix-xml" element={<XmlInspectorPage />} />
                 <Route path="/diff" element={<XmlDiffChecker />} />
+                <Route path="/admin/tenant" element={<TenantAdminDashboard />} />
+                <Route path="/tenant-admin" element={<TenantAdminDashboard />} />
                 <Route path="/" element={<Navigate to="/workbench" replace />} />
                 <Route path="*" element={<Navigate to="/workbench" replace />} />
               </Routes>
