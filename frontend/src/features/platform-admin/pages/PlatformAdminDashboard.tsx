@@ -37,11 +37,11 @@ export const PlatformAdminDashboard: React.FC = () => {
   };
 
   const tabs: { id: PlatformAdminTab; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'overview', label: 'Dashboard Overview', icon: LayoutDashboard },
-    { id: 'tenants', label: 'Tenant Directory', icon: Building2 },
-    { id: 'seat-requests', label: 'Seat Expansion Requests', icon: Layers },
-    { id: 'impersonation', label: 'Support Impersonation', icon: KeyRound },
-    { id: 'audit', label: 'System Audit Logs', icon: ShieldAlert },
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'tenants', label: 'Tenants', icon: Building2 },
+    { id: 'seat-requests', label: 'Seat Requests', icon: Layers },
+    { id: 'impersonation', label: 'Impersonation', icon: KeyRound },
+    { id: 'audit', label: 'Audit Logs', icon: ShieldAlert },
   ];
 
   return (
