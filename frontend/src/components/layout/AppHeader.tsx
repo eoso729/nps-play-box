@@ -2,13 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
-  LayoutDashboard,
-  Building2,
-  Layers,
-  KeyRound,
-  ShieldAlert,
-  Users,
-  Settings,
   LogOut,
   ChevronDown,
   ExternalLink,
@@ -74,61 +67,37 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
       {/* Center: Context-aware navigation */}
       {isPlatformAdmin ? (
-        /* Platform Admin Nav */
-        <nav className="hidden md:flex items-center gap-1 bg-[#f6f9f7] border border-[#e1e9e3] rounded-xl p-1">
-          {[
-            { icon: LayoutDashboard, label: 'Overview', hash: 'overview' },
-            { icon: Building2, label: 'Tenants', hash: 'tenants' },
-            { icon: Layers, label: 'Seat Requests', hash: 'seat-requests' },
-            { icon: KeyRound, label: 'Impersonation', hash: 'impersonation' },
-            { icon: ShieldAlert, label: 'Audit Logs', hash: 'audit' },
-          ].map(({ icon: Icon, label, hash }) => (
-            <button
-              key={hash}
-              type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-[#0f3a22] hover:bg-white transition-all cursor-pointer"
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-            </button>
-          ))}
-          <div className="w-px h-4 bg-gray-200 mx-1" />
+        /* Platform Admin: context label + workbench shortcut */
+        <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-2 text-[12px] text-gray-500">
+            <span className="text-gray-300">/</span>
+            <span className="font-semibold text-[#0f3a22]">Platform Administration</span>
+          </div>
           <button
             type="button"
             onClick={() => navigate('/workbench')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-500 hover:text-[#0f3a22] hover:bg-white transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-500 hover:text-[#0f3a22] hover:bg-gray-100 transition-all cursor-pointer border border-[#e4e9e6]"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Workbench
           </button>
-        </nav>
+        </div>
       ) : isTenantAdmin ? (
-        /* Tenant Admin Nav */
-        <nav className="hidden md:flex items-center gap-1 bg-[#f6f9f7] border border-[#e1e9e3] rounded-xl p-1">
-          {[
-            { icon: Users, label: 'Team Members' },
-            { icon: Settings, label: 'Settings' },
-            { icon: ShieldAlert, label: 'Compliance Audit' },
-          ].map(({ icon: Icon, label }) => (
-            <button
-              key={label}
-              type="button"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-[#0f3a22] hover:bg-white transition-all cursor-pointer"
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-            </button>
-          ))}
-          <div className="w-px h-4 bg-gray-200 mx-1" />
+        /* Tenant Admin: context label + workbench shortcut */
+        <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-2 text-[12px] text-gray-500">
+            <span className="text-gray-300">/</span>
+            <span className="font-semibold text-[#0f3a22]">Tenant Administration</span>
+          </div>
           <button
             type="button"
             onClick={() => navigate('/workbench')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-500 hover:text-[#0f3a22] hover:bg-white transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-500 hover:text-[#0f3a22] hover:bg-gray-100 transition-all cursor-pointer border border-[#e4e9e6]"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             Workbench
           </button>
-        </nav>
+        </div>
       ) : (
         /* Workbench / Default Nav */
         <div className="flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
@@ -230,34 +199,34 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 </button>
               )}
 
-              {/* Admin shortcuts */}
+              {/* Admin navigation shortcuts — only show links to other pages, not the current one */}
               {user?.role === 'PLATFORM_ADMIN' && (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => { setDropdownOpen(false); navigate('/platform-admin'); }}
-                    className={`w-full text-left px-4 py-2 text-[13px] font-semibold transition-colors cursor-pointer ${
-                      isPlatformAdmin ? 'text-[#15803d] bg-[#e6f6ec]/40' : 'text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d]'
-                    }`}
-                  >
-                    Platform Dashboard
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setDropdownOpen(false); navigate('/tenant-admin'); }}
-                    className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
-                  >
-                    Tenant Administration
-                  </button>
+                  {!isPlatformAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => { setDropdownOpen(false); navigate('/platform-admin'); }}
+                      className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
+                    >
+                      Platform Dashboard
+                    </button>
+                  )}
+                  {!isTenantAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => { setDropdownOpen(false); navigate('/tenant-admin'); }}
+                      className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
+                    >
+                      Tenant Administration
+                    </button>
+                  )}
                 </>
               )}
-              {user?.role === 'TENANT_ADMIN' && (
+              {user?.role === 'TENANT_ADMIN' && !isTenantAdmin && (
                 <button
                   type="button"
                   onClick={() => { setDropdownOpen(false); navigate('/tenant-admin'); }}
-                  className={`w-full text-left px-4 py-2 text-[13px] font-semibold transition-colors cursor-pointer ${
-                    isTenantAdmin ? 'text-[#15803d] bg-[#e6f6ec]/40' : 'text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d]'
-                  }`}
+                  className="w-full text-left px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-[#e6f6ec]/50 hover:text-[#15803d] transition-colors cursor-pointer"
                 >
                   Tenant Dashboard
                 </button>
