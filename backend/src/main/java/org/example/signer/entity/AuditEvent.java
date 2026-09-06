@@ -84,7 +84,7 @@ public class AuditEvent {
     }
 
     @PreUpdate
-    protected void onPreUpdate() {
+    public void onPreUpdate() {
         throw new UnsupportedOperationException("Audit events are immutable and cannot be updated");
     }
 
