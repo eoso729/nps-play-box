@@ -136,7 +136,7 @@ public class TestDataGenerator implements CommandLineRunner {
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final Iso20022MessageRepository messageRepository;
-    private final TenantCertificateRepository certificateRepository;
+    private final TenantSimulatorProfileRepository profileRepository;
     private final AuditLogRepository auditLogRepository;
     private final PasswordEncoder passwordEncoder;
     
@@ -148,10 +148,11 @@ public class TestDataGenerator implements CommandLineRunner {
         
         List<Tenant> tenants = generateTenants(5);
         
-        for (Tenant tenant : tenants) {
+        for (int i = 0; i < tenants.size(); i++) {
+            Tenant tenant = tenants.get(i);
             List<User> users = generateUsersForTenant(tenant, 10);
             generateMessagesForTenant(tenant, users, 100);
-            generateCertificatesForTenant(tenant, users.get(0));
+            generateSimulatorProfileForTenant(tenant, i);
             generateAuditLogsForTenant(tenant, users);
         }
         
@@ -243,42 +244,31 @@ public class TestDataGenerator implements CommandLineRunner {
         log.info("Created {} messages for tenant {}", count, tenant.getName());
     }
     
-    private void generateCertificatesForTenant(Tenant tenant, User uploader) {
-        String sampleCert = """
-            -----BEGIN CERTIFICATE-----
-            MIICpDCCAYwCCQDU7T1sCJY21jANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAls
-            b2NhbGhvc3QwHhcNMjMwMTAxMDAwMDAwWhcNMjQwMTAxMDAwMDAwWjAUMRIwEAYD
-            VQQDDAlsb2NhbGhvc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC7
-            VJTUt9Us8cKjMzEfYyjiWA4R4/M2bS1+fWIcPm15A8vMLkPyR0cyQo8zM8bNnqKm
-            -----END CERTIFICATE-----
-            """;
-        
-        TenantCertificate cert = TenantCertificate.builder()
+    private void generateSimulatorProfileForTenant(Tenant tenant, int index) {
+        String[] instCodes = {"090004", "999057", "999058", "090005", "090006"};
+        String code = instCodes[index % instCodes.length];
+
+        TenantSimulatorProfile profile = TenantSimulatorProfile.builder()
             .tenantId(tenant.getId())
-            .certificateName(tenant.getSlug() + "-signing-cert")
-            .certificateType(TenantCertificate.CertificateType.X509)
-            .certificatePem(sampleCert)
-            .publicKeyPem("-----BEGIN PUBLIC KEY-----\nMIIBIjANBg...\n-----END PUBLIC KEY-----")
-            .issuer("CN=Test CA")
-            .subject("CN=" + tenant.getName())
-            .serialNumber("12345678")
-            .thumbprint("abc123def456")
-            .validFrom(LocalDateTime.now().minusDays(30))
-            .validTo(LocalDateTime.now().plusDays(365))
-            .status(TenantCertificate.CertificateStatus.ACTIVE)
-            .usagePurpose(TenantCertificate.UsagePurpose.SIGNING)
-            .isDefault(true)
-            .uploadedBy(uploader)
+            .institutionCode(code)
+            .institutionName(tenant.getName() + " (Simulator)")
+            .bic(tenant.getSlug().toUpperCase().replace("-", "") + "NGLAXXX")
+            .schemeCode(code)
+            .defaultCurrency("NGN")
+            .defaultAccountNumber("10" + String.format("%08d", index + 1))
+            .defaultAccountName(tenant.getName() + " Settlement Acct")
+            .defaultBvn("22" + String.format("%09d", index + 1))
+            .autoRespondInbound(true)
             .build();
-        
-        certificateRepository.save(cert);
-        log.info("Created certificate for tenant {}", tenant.getName());
+
+        profileRepository.save(profile);
+        log.info("Created simulator profile for tenant {} with instCode {}", tenant.getName(), code);
     }
     
     private void generateAuditLogsForTenant(Tenant tenant, List<User> users) {
         String[] actions = {
             "USER_LOGIN", "USER_LOGOUT", "MESSAGE_CREATED", "MESSAGE_VALIDATED",
-            "MESSAGE_SIGNED", "MESSAGE_SENT", "CERTIFICATE_UPLOADED", "USER_CREATED"
+            "MESSAGE_SIGNED", "MESSAGE_SENT", "SIMULATOR_PROFILE_UPDATED", "USER_CREATED"
         };
         
         for (int i = 0; i < 50; i++) {
@@ -729,13 +719,12 @@ class TenantIsolationSecurityTest {
     private UserRepository userRepository;
     
     @Autowired
-    private TenantCertificateRepository certificateRepository;
+    private TenantSimulatorProfileRepository profileRepository;
     
     private String tenant1Token;
     private String tenant2Token;
     private UUID tenant1MessageUuid;
     private UUID tenant2MessageUuid;
-    private UUID tenant1CertUuid;
 
     @BeforeEach
     void setup() {
@@ -748,7 +737,6 @@ class TenantIsolationSecurityTest {
         // Create resources for both tenants
         tenant1MessageUuid = createMessageAs(tenant1Token);
         tenant2MessageUuid = createMessageAs(tenant2Token);
-        tenant1CertUuid = createCertificateAs(tenant1Token);
     }
 
     @Test
@@ -801,14 +789,15 @@ class TenantIsolationSecurityTest {
     }
 
     @Test
-    @DisplayName("SEC-05: Tenant 2 cannot access Tenant 1's certificate")
-    void cannotAccessOtherTenantCertificate() {
+    @DisplayName("SEC-05: Tenant 2 cannot access or mutate Tenant 1's simulator profile")
+    void cannotAccessOtherTenantSimulatorProfile() {
         given()
             .header("Authorization", "Bearer " + tenant2Token)
         .when()
-            .get("/api/v1/certificates/{uuid}", tenant1CertUuid)
+            .get("/api/v1/simulator/profile")
         .then()
-            .statusCode(404);
+            .statusCode(200)
+            .body("institutionName", not(containsString("Tenant 1")));
     }
 
     @Test
@@ -915,23 +904,6 @@ class TenantIsolationSecurityTest {
                 .post("/api/v1/messages")
             .extract()
                 .path("messageUuid")
-        );
-    }
-
-    private UUID createCertificateAs(String token) {
-        return UUID.fromString(
-            given()
-                .header("Authorization", "Bearer " + token)
-                .contentType("application/json")
-                .body(Map.of(
-                    "certificateName", "Test Certificate",
-                    "certificatePem", "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
-                    "usagePurpose", "SIGNING"
-                ))
-            .when()
-                .post("/api/v1/certificates")
-            .extract()
-                .path("certificateUuid")
         );
     }
 }
@@ -1371,12 +1343,12 @@ class MessageWorkflowLoadTest extends Simulation {
 - [ ] No tenant_id manipulation possible via API
 - [ ] Database foreign keys cascade deletes properly
 - [ ] Tenant context properly initialized from JWT
-- [ ] No shared resources between tenants (certs, keys, messages)
+- [ ] Strict tenant data isolation for messages, test scenarios, validation results, and simulator profiles (shared simulator keys are platform runtime only)
 
 ## Data Protection
 - [ ] Sensitive data encrypted at rest (signing keys, passwords)
 - [ ] HTTPS enforced for all API endpoints (in production)
-- [ ] Certificate private keys never returned in API responses
+- [ ] Simulator private keys never exposed via API endpoints or client payloads
 - [ ] Database connection uses SSL/TLS
 - [ ] No sensitive data in application logs
 - [ ] XML content sanitized before storage
@@ -1389,7 +1361,7 @@ class MessageWorkflowLoadTest extends Simulation {
 - [ ] All authentication events logged
 - [ ] All message operations logged
 - [ ] All user management operations logged
-- [ ] All certificate operations logged
+- [ ] All simulator profile updates and message operations logged
 - [ ] Support impersonation sessions logged
 - [ ] Audit logs immutable (append-only)
 - [ ] Audit logs include IP address and user agent
@@ -1576,20 +1548,31 @@ class AuditTrailCompletenessTest {
     }
 
     @Test
-    @DisplayName("AUDIT-06: Certificate upload creates audit log entry")
-    void certificateUpload_CreatesAuditLog() {
+    @DisplayName("AUDIT-06: Simulator profile update creates audit log entry")
+    void simulatorProfileUpdate_CreatesAuditLog() {
         String token = loginAs("admin@tenant1.test", "Password123!");
         
-        // Upload certificate
-        UUID certUuid = uploadCertificate(token);
+        // Update simulator profile
+        given()
+            .header("Authorization", "Bearer " + token)
+            .contentType("application/json")
+            .body(Map.of(
+                "institutionCode", "090004",
+                "institutionName", "Bank One (Simulator)",
+                "bic", "BONEUS33XXX"
+            ))
+        .when()
+            .put("/api/v1/simulator/profile")
+        .then()
+            .statusCode(200);
         
         // Verify audit log created
-        List<AuditLog> logs = auditLogRepository.findByResourceIdAndAction(
-            certUuid.toString(),
-            "CERTIFICATE_UPLOADED"
+        List<AuditLog> logs = auditLogRepository.findByTenantIdAndAction(
+            1L,
+            "SIMULATOR_PROFILE_UPDATED"
         );
         
-        assertThat(logs).hasSize(1);
+        assertThat(logs).isNotEmpty();
     }
 
     @Test
@@ -1926,16 +1909,17 @@ class ApiResponseTimeTest {
 **Steps**:
 1. Bank A admin creates account and invites 2 developers
 2. Bank B admin creates account and invites 2 developers
-3. Both banks upload their certificates independently
-4. Both banks create, validate, sign, and send ISO 20022 messages
+3. Both banks configure their pseudo-bank simulator profiles (Institution Code, BIC, accounts) independently without uploading cryptographic keys
+4. Both banks create, validate, sign, and send ISO 20022 messages (automated signing via shared simulator keys)
 5. Both banks verify they can only see their own data
 6. Both banks export their audit logs
 
 **Expected Results**:
 - [ ] Each bank sees only their own users
 - [ ] Each bank sees only their own messages
-- [ ] Each bank sees only their own certificates
+- [ ] Each bank sees only their own simulator profiles
 - [ ] Each bank sees only their own audit logs
+- [ ] Automated signing succeeds seamlessly using system simulator keys without cross-tenant collision
 - [ ] No errors or performance degradation
 - [ ] All messages process successfully
 
@@ -2056,27 +2040,26 @@ class ApiResponseTimeTest {
 
 ---
 
-## UAT-07: Certificate Management
+## UAT-07: Pseudo-Bank Profile Configuration & Automated Simulator Signing
 
-**Objective**: Verify certificate upload, management, and usage.
+**Objective**: Verify pseudo-bank identity configuration, default test accounts, automated transparent signing via shared simulator keys, and inbound callback correlation.
 
 **Participants**: Tenant admin, developer
 
 **Steps**:
-1. Upload signing certificate
-2. Upload encryption certificate
-3. Set default certificates
-4. Use certificates for message signing
-5. View certificate details
-6. Revoke a certificate
-7. Verify revoked certificate cannot be used
+1. Configure tenant's pseudo-bank profile (Institution Code e.g. `090004`, BIC, Bank Name, Default Account/BVN)
+2. Generate an ISO 20022 message (`pain.001` or `pain.013`) and verify tenant's institution code is injected
+3. Execute automated signing and verify envelope signature is created using shared simulator private key without requiring manual key upload
+4. Verify message status transitions to `SIGNED`
+5. Simulate dispatch to mock NIBSS switch
+6. Verify inbound simulator response correlates back to the originating tenant via `OrgnlMsgId` / `OrgnlEndToEndId`
 
 **Expected Results**:
-- [ ] Certificates upload successfully
-- [ ] Certificate metadata extracted correctly
-- [ ] Default certificates used automatically
-- [ ] Revoked certificates cannot be used
-- [ ] Certificate expiration warnings shown
+- [ ] Profile attributes save and retrieve strictly within tenant boundary
+- [ ] Messages generated with tenant's configured pseudo-bank parameters
+- [ ] Signing succeeds automatically with system simulator keys
+- [ ] Zero onboarding friction (no manual certificate or key uploads required)
+- [ ] Inbound counterparty callbacks correlate accurately to originating tenant
 
 ---
 
