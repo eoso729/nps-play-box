@@ -98,10 +98,10 @@ Each phase is designed to be independently implementable and testable.
 
 ---
 
-### ✅ Phase 10: ISO 20022 Message Tenant Isolation
+### ✅ Phase 10: ISO 20022 Message Tenant Isolation & Simulator Key Architecture
 **Duration**: 4-5 days  
 **Dependencies**: Phase 1, Phase 2  
-**Deliverable**: Existing ISO 20022 features scoped to tenant context
+**Deliverable**: Existing ISO 20022 messaging scoped to tenant context with shared simulator keys & pseudo-bank profiles
 
 [View Details →](./phase-10-iso20022-tenant-isolation.md)
 
