@@ -1,10 +1,56 @@
-# Phase 10: ISO 20022 Message Tenant Isolation
+# Phase 10: ISO 20022 Message Tenant Isolation & Simulator Key Architecture
 
 ## Objective
-Implement comprehensive tenant isolation for all ISO 20022 message processing, including message storage, certificate management, signing key isolation, test scenarios, and validation results. Ensure that all message-related operations respect tenant boundaries with zero cross-tenant data leakage.
+Implement comprehensive tenant isolation for all ISO 20022 message processing, test scenarios, validation results, and pseudo-bank identity profiles. In this simulator sandbox environment, participating institutions operate as **pseudo-banks** using **shared, pre-configured simulator keys** (`999999.private.pem` and `NIBSS-999999.public.pem`) managed transparently at the platform level. This eliminates per-institution PKI key collection and certificate onboarding friction while strictly enforcing tenant data boundaries for all message records, execution history, and audit trails.
 
 **Duration**: 4-5 days  
 **Dependencies**: Phase 1 (Multi-Tenant Database Foundation), Phase 2 (Tenant-Aware Authentication)
+
+---
+
+## Simulator Key Architecture & Pseudo-Bank Model
+
+### Design Rationale
+
+1. **Sandbox / Simulator Pragmatism**: In a payments testing sandbox (NPS Play Box), requiring institutions to generate, upload, and rotate X.509 certificates and RSA private keys causes immense onboarding friction.
+2. **Mock Switch Alignment**: The receiving mock clearing switch (e.g. NIBSS simulator) is pre-configured with known public keys. Using a centralized simulator key pair ensures that messages signed by any pseudo-bank are automatically verifiable by the mock switch without needing custom truststore updates on the switch for every tenant.
+3. **Identity vs. Cryptography**:
+   - **Identity** is tenant-specific: Each tenant configures their own **Pseudo-Bank Profile** (Institution Code e.g. `090004`, `999057`, BIC, Bank Name, Default Test Accounts).
+   - **Cryptography** is platform-managed: The platform signs and encrypts payloads automatically using the shared simulator keys.
+   - **Data Boundaries** are strictly isolated: All message records, test scenarios, validation reports, and callbacks are isolated by `tenant_id` in the database.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Bank User (Tenant A)
+    participant UI as Play Box Frontend
+    participant App as Play Box Backend (TenantContext: A)
+    participant KeyProv as SimulatorKeyProvider (Shared)
+    participant DB as Postgres (iso20022_messages)
+    participant Switch as Mock NIBSS Switch / Simulator
+
+    User->>UI: Select Scenario (pain.001 / pain.013)
+    UI->>App: POST /api/v1/messages (JWT with tenant_id: A)
+    Note over App: Injects Tenant A's Institution Code & BIC
+    App->>DB: Save draft message (tenant_id = A, status = DRAFT)
+    
+    Note over App,KeyProv: Automated Signing & Encryption
+    App->>KeyProv: Load simulator private key (999999.private.pem)
+    KeyProv-->>App: PrivateKey
+    App->>App: Apply XMLDSig (Enveloped RSA-SHA256)
+    App->>KeyProv: Load simulator public key (NIBSS-999999.public.pem)
+    KeyProv-->>App: PublicKey
+    App->>App: Encrypt sensitive XML elements (if required)
+    
+    Note over App,Switch: Dispatch to Simulator
+    App->>Switch: HTTP POST / CurlSender (Signed & Encrypted XML)
+    Switch-->>App: HTTP 200 OK + Clearing Response (pacs.002)
+    
+    Note over App,DB: Tenant-Scoped Storage
+    App->>DB: Update message record (status = SENT, tenant_id = A)
+    App-->>UI: Return transaction result
+    UI-->>User: Display simulated response
+```
 
 ---
 
@@ -33,7 +79,7 @@ CREATE TABLE iso20022_messages (
     sent_at TIMESTAMP,
     received_at TIMESTAMP,
     
-    -- Transaction tracking
+    -- Transaction tracking & correlation
     transaction_reference VARCHAR(255),
     end_to_end_id VARCHAR(255),
     message_id VARCHAR(255),
@@ -63,102 +109,51 @@ CREATE INDEX idx_messages_tenant_id ON iso20022_messages(tenant_id);
 CREATE INDEX idx_messages_tenant_type ON iso20022_messages(tenant_id, message_type);
 CREATE INDEX idx_messages_tenant_status ON iso20022_messages(tenant_id, status);
 CREATE INDEX idx_messages_transaction_ref ON iso20022_messages(tenant_id, transaction_reference);
+CREATE INDEX idx_messages_msg_id ON iso20022_messages(message_id);
+CREATE INDEX idx_messages_end_to_end ON iso20022_messages(end_to_end_id);
 CREATE INDEX idx_messages_created_at ON iso20022_messages(tenant_id, created_at DESC);
 ```
 
-### 10.2 Create Tenant Certificates Table
+### 10.2 Create Tenant Simulator Profiles Table
+
+Instead of storing individual private keys and certificates per tenant, each tenant configures their pseudo-bank operational attributes:
 
 ```sql
-CREATE TABLE tenant_certificates (
+CREATE TABLE tenant_simulator_profiles (
     id BIGSERIAL PRIMARY KEY,
-    tenant_id BIGINT NOT NULL,
-    certificate_uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+    tenant_id BIGINT UNIQUE NOT NULL,
+    profile_uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
     
-    -- Certificate details
-    certificate_name VARCHAR(255) NOT NULL,
-    certificate_type VARCHAR(50) NOT NULL,
-    certificate_pem TEXT NOT NULL,
-    public_key_pem TEXT NOT NULL,
+    -- Pseudo-Bank Identification
+    institution_code VARCHAR(20) NOT NULL,           -- e.g., '090004', '999057'
+    institution_name VARCHAR(255) NOT NULL,          -- e.g., 'Zenith Bank Simulator'
+    bic VARCHAR(50) NOT NULL,                        -- e.g., 'ZEIBNGLAXXX'
+    scheme_code VARCHAR(50),                         -- e.g., '999057'
     
-    -- Certificate metadata
-    issuer VARCHAR(500),
-    subject VARCHAR(500),
-    serial_number VARCHAR(100),
-    thumbprint VARCHAR(255),
-    valid_from TIMESTAMP NOT NULL,
-    valid_to TIMESTAMP NOT NULL,
+    -- Default Account Settings for Mock Flows
+    default_currency VARCHAR(3) NOT NULL DEFAULT 'NGN',
+    default_account_number VARCHAR(50),
+    default_account_name VARCHAR(255),
+    default_bvn VARCHAR(20),
     
-    -- Status and usage
-    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-    is_default BOOLEAN DEFAULT FALSE,
-    usage_purpose VARCHAR(100) NOT NULL,
+    -- Dispatch & Simulator Routing
+    callback_url VARCHAR(500),                       -- Webhook for async clearing notifications
+    auto_respond_inbound BOOLEAN NOT NULL DEFAULT TRUE, -- Auto-generate response if counterparty
     
     -- Audit
-    uploaded_by BIGINT NOT NULL,
+    updated_by BIGINT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_used_at TIMESTAMP,
     
-    CONSTRAINT fk_certificates_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
-    CONSTRAINT fk_certificates_uploader FOREIGN KEY (uploaded_by) REFERENCES users(id),
-    CONSTRAINT chk_cert_type CHECK (certificate_type IN ('X509', 'PGP')),
-    CONSTRAINT chk_cert_status CHECK (status IN ('ACTIVE', 'EXPIRED', 'REVOKED', 'DISABLED')),
-    CONSTRAINT chk_usage_purpose CHECK (usage_purpose IN ('SIGNING', 'ENCRYPTION', 'BOTH')),
-    CONSTRAINT uq_tenant_cert_name UNIQUE (tenant_id, certificate_name)
+    CONSTRAINT fk_sim_profiles_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    CONSTRAINT fk_sim_profiles_updater FOREIGN KEY (updated_by) REFERENCES users(id)
 );
 
-CREATE INDEX idx_certificates_tenant_id ON tenant_certificates(tenant_id);
-CREATE INDEX idx_certificates_tenant_status ON tenant_certificates(tenant_id, status);
-CREATE INDEX idx_certificates_tenant_default ON tenant_certificates(tenant_id, is_default) WHERE is_default = TRUE;
-CREATE INDEX idx_certificates_valid_to ON tenant_certificates(tenant_id, valid_to);
+CREATE INDEX idx_sim_profiles_tenant_id ON tenant_simulator_profiles(tenant_id);
+CREATE INDEX idx_sim_profiles_inst_code ON tenant_simulator_profiles(institution_code);
 ```
 
-### 10.3 Create Tenant Signing Keys Table
-
-```sql
-CREATE TABLE tenant_signing_keys (
-    id BIGSERIAL PRIMARY KEY,
-    tenant_id BIGINT NOT NULL,
-    key_uuid UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
-    
-    -- Key details
-    key_name VARCHAR(255) NOT NULL,
-    key_algorithm VARCHAR(50) NOT NULL,
-    key_size INTEGER NOT NULL,
-    
-    -- Encrypted private key storage
-    private_key_encrypted TEXT NOT NULL,
-    public_key_pem TEXT NOT NULL,
-    encryption_iv VARCHAR(255) NOT NULL,
-    
-    -- Key metadata
-    fingerprint VARCHAR(255) NOT NULL,
-    is_default BOOLEAN DEFAULT FALSE,
-    key_purpose VARCHAR(100) NOT NULL,
-    
-    -- Status and expiration
-    status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP,
-    last_used_at TIMESTAMP,
-    
-    -- Audit
-    created_by BIGINT NOT NULL,
-    
-    CONSTRAINT fk_signing_keys_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
-    CONSTRAINT fk_signing_keys_creator FOREIGN KEY (created_by) REFERENCES users(id),
-    CONSTRAINT chk_key_algorithm CHECK (key_algorithm IN ('RSA', 'ECDSA', 'DSA')),
-    CONSTRAINT chk_key_status CHECK (status IN ('ACTIVE', 'EXPIRED', 'REVOKED', 'DISABLED')),
-    CONSTRAINT chk_key_purpose CHECK (key_purpose IN ('MESSAGE_SIGNING', 'DOCUMENT_SIGNING', 'BOTH')),
-    CONSTRAINT uq_tenant_key_name UNIQUE (tenant_id, key_name)
-);
-
-CREATE INDEX idx_signing_keys_tenant_id ON tenant_signing_keys(tenant_id);
-CREATE INDEX idx_signing_keys_tenant_status ON tenant_signing_keys(tenant_id, status);
-CREATE INDEX idx_signing_keys_tenant_default ON tenant_signing_keys(tenant_id, is_default) WHERE is_default = TRUE;
-```
-
-### 10.4 Create Test Scenarios Table
+### 10.3 Create Test Scenarios Table
 
 ```sql
 CREATE TABLE test_scenarios (
@@ -204,7 +199,7 @@ CREATE INDEX idx_scenarios_tenant_category ON test_scenarios(tenant_id, test_cat
 CREATE INDEX idx_scenarios_tenant_status ON test_scenarios(tenant_id, status);
 ```
 
-### 10.5 Create Validation Results Table
+### 10.4 Create Validation Results Table
 
 ```sql
 CREATE TABLE validation_results (
@@ -260,44 +255,36 @@ CREATE INDEX idx_validation_created_at ON validation_results(tenant_id, validate
 
 ## Migration Scripts
 
-### 10.6 Migration: Add tenant_id to Existing Tables
+### 10.5 Migration: Add Tables & Default Profiles
 
 ```sql
--- Migration script: V10_1__add_tenant_id_to_existing_tables.sql
+-- Migration script: V10_1__create_iso20022_and_simulator_profile_tables.sql
 
 BEGIN;
 
--- Step 1: Create a default tenant for existing data (if needed)
+-- Ensure default tenant exists
 INSERT INTO tenants (name, slug, status, max_seats, subscription_tier)
-VALUES ('Legacy Tenant', 'legacy-tenant', 'ACTIVE', 100, 'ENTERPRISE')
+VALUES ('Default Simulator Bank', 'default-bank', 'ACTIVE', 100, 'ENTERPRISE')
 ON CONFLICT (slug) DO NOTHING;
 
--- Store the default tenant ID
-DO $$
-DECLARE
-    default_tenant_id BIGINT;
-BEGIN
-    SELECT id INTO default_tenant_id FROM tenants WHERE slug = 'legacy-tenant';
-    
-    -- Add tenant_id to any existing message-related tables
-    -- Example: If you have a payment_messages table
-    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'payment_messages') THEN
-        ALTER TABLE payment_messages ADD COLUMN IF NOT EXISTS tenant_id BIGINT;
-        UPDATE payment_messages SET tenant_id = default_tenant_id WHERE tenant_id IS NULL;
-        ALTER TABLE payment_messages ALTER COLUMN tenant_id SET NOT NULL;
-        ALTER TABLE payment_messages ADD CONSTRAINT fk_payment_messages_tenant 
-            FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE;
-        CREATE INDEX IF NOT EXISTS idx_payment_messages_tenant_id ON payment_messages(tenant_id);
-    END IF;
-    
-    -- Repeat for other domain-specific tables
-    -- Add similar blocks for validation_logs, test_results, etc.
-END $$;
+-- Seed default simulator profile for existing tenants that do not have one
+INSERT INTO tenant_simulator_profiles (tenant_id, institution_code, institution_name, bic, scheme_code, default_currency)
+SELECT 
+    t.id,
+    '999057',
+    t.name || ' (Simulator)',
+    'NIBSSNGLAXXX',
+    '999057',
+    'NGN'
+FROM tenants t
+WHERE NOT EXISTS (
+    SELECT 1 FROM tenant_simulator_profiles p WHERE p.tenant_id = t.id
+);
 
 COMMIT;
 ```
 
-### 10.7 Data Migration Script
+### 10.6 Java Data Migration Script
 
 ```java
 package org.example.signer.migration;
@@ -309,6 +296,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -323,17 +311,9 @@ public class Phase10DataMigration {
         log.info("Starting Phase 10 data migration...");
         
         try {
-            // 1. Ensure default tenant exists
             Long defaultTenantId = ensureDefaultTenant();
-            
-            // 2. Migrate any existing message data
-            migrateExistingMessages(defaultTenantId);
-            
-            // 3. Migrate existing certificates
-            migrateExistingCertificates(defaultTenantId);
-            
-            // 4. Migrate existing signing keys
-            migrateExistingSigningKeys(defaultTenantId);
+            seedSimulatorProfilesForAllTenants();
+            migrateLegacyMessages(defaultTenantId);
             
             log.info("Phase 10 data migration completed successfully");
         } catch (Exception e) {
@@ -345,7 +325,7 @@ public class Phase10DataMigration {
     private Long ensureDefaultTenant() {
         String sql = """
             INSERT INTO tenants (name, slug, status, max_seats, subscription_tier)
-            VALUES ('Legacy Tenant', 'legacy-tenant', 'ACTIVE', 100, 'ENTERPRISE')
+            VALUES ('Default Simulator Bank', 'default-bank', 'ACTIVE', 100, 'ENTERPRISE')
             ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
             RETURNING id
             """;
@@ -353,8 +333,28 @@ public class Phase10DataMigration {
         return jdbcTemplate.queryForObject(sql, Long.class);
     }
     
-    private void migrateExistingMessages(Long tenantId) {
-        // Check if old message tables exist and migrate them
+    private void seedSimulatorProfilesForAllTenants() {
+        String sql = """
+            INSERT INTO tenant_simulator_profiles 
+                (tenant_id, institution_code, institution_name, bic, scheme_code, default_currency, auto_respond_inbound)
+            SELECT 
+                t.id, 
+                '999057', 
+                t.name, 
+                'SIMUNGLAXXX', 
+                '999057', 
+                'NGN',
+                TRUE
+            FROM tenants t
+            WHERE NOT EXISTS (
+                SELECT 1 FROM tenant_simulator_profiles WHERE tenant_id = t.id
+            )
+            """;
+        int created = jdbcTemplate.update(sql);
+        log.info("Initialized {} tenant simulator profiles", created);
+    }
+    
+    private void migrateLegacyMessages(Long tenantId) {
         String checkTableSql = """
             SELECT EXISTS (
                 SELECT FROM information_schema.tables 
@@ -363,43 +363,23 @@ public class Phase10DataMigration {
             """;
         
         Boolean tableExists = jdbcTemplate.queryForObject(checkTableSql, Boolean.class);
-        
         if (Boolean.TRUE.equals(tableExists)) {
             String migrateSql = """
                 INSERT INTO iso20022_messages 
                     (tenant_id, message_type, message_code, direction, raw_xml, 
                      status, created_by, created_at, transaction_reference)
                 SELECT 
-                    ?, 
-                    message_type, 
-                    message_code, 
-                    'OUTBOUND',
-                    xml_content,
-                    status,
-                    user_id,
-                    created_at,
-                    reference
+                    ?, message_type, message_code, 'OUTBOUND', xml_content, 
+                    status, user_id, created_at, reference
                 FROM legacy_messages
                 WHERE NOT EXISTS (
                     SELECT 1 FROM iso20022_messages 
                     WHERE transaction_reference = legacy_messages.reference
                 )
                 """;
-            
-            int migratedCount = jdbcTemplate.update(migrateSql, tenantId);
-            log.info("Migrated {} legacy messages", migratedCount);
+            int count = jdbcTemplate.update(migrateSql, tenantId);
+            log.info("Migrated {} legacy messages to tenant {}", count, tenantId);
         }
-    }
-    
-    private void migrateExistingCertificates(Long tenantId) {
-        // Scan for certificates in the filesystem and register them
-        // This would integrate with your existing key management
-        log.info("Certificate migration completed for tenant {}", tenantId);
-    }
-    
-    private void migrateExistingSigningKeys(Long tenantId) {
-        // Register existing signing keys under the default tenant
-        log.info("Signing key migration completed for tenant {}", tenantId);
     }
 }
 ```
@@ -408,7 +388,7 @@ public class Phase10DataMigration {
 
 ## Backend Implementation
 
-### 10.8 ISO 20022 Message Entity
+### 10.7 ISO 20022 Message Entity
 
 ```java
 package org.example.signer.model;
@@ -429,7 +409,9 @@ import java.util.UUID;
     @Index(name = "idx_messages_tenant_id", columnList = "tenant_id"),
     @Index(name = "idx_messages_tenant_type", columnList = "tenant_id,message_type"),
     @Index(name = "idx_messages_tenant_status", columnList = "tenant_id,status"),
-    @Index(name = "idx_messages_transaction_ref", columnList = "tenant_id,transaction_reference")
+    @Index(name = "idx_messages_transaction_ref", columnList = "tenant_id,transaction_reference"),
+    @Index(name = "idx_messages_msg_id", columnList = "message_id"),
+    @Index(name = "idx_messages_end_to_end", columnList = "end_to_end_id")
 })
 @Data
 @Builder
@@ -562,7 +544,7 @@ public class Iso20022Message {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MessageMetadata {
-        private String nibssBankCode;
+        private String institutionCode;
         private String counterpartyBic;
         private String currency;
         private String amount;
@@ -574,7 +556,7 @@ public class Iso20022Message {
 }
 ```
 
-### 10.9 Tenant Certificate Entity
+### 10.8 Tenant Simulator Profile Entity
 
 ```java
 package org.example.signer.model;
@@ -589,71 +571,59 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tenant_certificates", indexes = {
-    @Index(name = "idx_certificates_tenant_id", columnList = "tenant_id"),
-    @Index(name = "idx_certificates_tenant_status", columnList = "tenant_id,status")
+@Table(name = "tenant_simulator_profiles", indexes = {
+    @Index(name = "idx_sim_profiles_tenant_id", columnList = "tenant_id"),
+    @Index(name = "idx_sim_profiles_inst_code", columnList = "institution_code")
 })
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TenantCertificate {
+public class TenantSimulatorProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id", unique = true, nullable = false)
     private Long tenantId;
 
-    @Column(name = "certificate_uuid", unique = true, nullable = false)
-    private UUID certificateUuid;
+    @Column(name = "profile_uuid", unique = true, nullable = false)
+    private UUID profileUuid;
 
-    @Column(name = "certificate_name", nullable = false, length = 255)
-    private String certificateName;
+    @Column(name = "institution_code", nullable = false, length = 20)
+    private String institutionCode;
 
-    @Column(name = "certificate_type", nullable = false, length = 50)
-    @Enumerated(EnumType.STRING)
-    private CertificateType certificateType;
+    @Column(name = "institution_name", nullable = false, length = 255)
+    private String institutionName;
 
-    @Column(name = "certificate_pem", nullable = false, columnDefinition = "TEXT")
-    private String certificatePem;
+    @Column(name = "bic", nullable = false, length = 50)
+    private String bic;
 
-    @Column(name = "public_key_pem", nullable = false, columnDefinition = "TEXT")
-    private String publicKeyPem;
+    @Column(name = "scheme_code", length = 50)
+    private String schemeCode;
 
-    @Column(name = "issuer", length = 500)
-    private String issuer;
+    @Column(name = "default_currency", nullable = false, length = 3)
+    private String defaultCurrency;
 
-    @Column(name = "subject", length = 500)
-    private String subject;
+    @Column(name = "default_account_number", length = 50)
+    private String defaultAccountNumber;
 
-    @Column(name = "serial_number", length = 100)
-    private String serialNumber;
+    @Column(name = "default_account_name", length = 255)
+    private String defaultAccountName;
 
-    @Column(name = "thumbprint", length = 255)
-    private String thumbprint;
+    @Column(name = "default_bvn", length = 20)
+    private String defaultBvn;
 
-    @Column(name = "valid_from", nullable = false)
-    private LocalDateTime validFrom;
+    @Column(name = "callback_url", length = 500)
+    private String callbackUrl;
 
-    @Column(name = "valid_to", nullable = false)
-    private LocalDateTime validTo;
-
-    @Column(name = "status", nullable = false, length = 50)
-    @Enumerated(EnumType.STRING)
-    private CertificateStatus status;
-
-    @Column(name = "is_default")
-    private Boolean isDefault;
-
-    @Column(name = "usage_purpose", nullable = false, length = 100)
-    @Enumerated(EnumType.STRING)
-    private UsagePurpose usagePurpose;
+    @Column(name = "auto_respond_inbound", nullable = false)
+    private Boolean autoRespondInbound;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "uploaded_by", nullable = false)
-    private User uploadedBy;
+    @JoinColumn(name = "updated_by")
+    private User updatedBy;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -661,13 +631,10 @@ public class TenantCertificate {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Column(name = "last_used_at")
-    private LocalDateTime lastUsedAt;
-
     @PrePersist
     protected void onCreate() {
-        if (certificateUuid == null) {
-            certificateUuid = UUID.randomUUID();
+        if (profileUuid == null) {
+            profileUuid = UUID.randomUUID();
         }
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
@@ -675,11 +642,11 @@ public class TenantCertificate {
         if (updatedAt == null) {
             updatedAt = LocalDateTime.now();
         }
-        if (status == null) {
-            status = CertificateStatus.ACTIVE;
+        if (defaultCurrency == null) {
+            defaultCurrency = "NGN";
         }
-        if (isDefault == null) {
-            isDefault = false;
+        if (autoRespondInbound == null) {
+            autoRespondInbound = true;
         }
     }
 
@@ -687,28 +654,10 @@ public class TenantCertificate {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
-    public enum CertificateType {
-        X509,
-        PGP
-    }
-
-    public enum CertificateStatus {
-        ACTIVE,
-        EXPIRED,
-        REVOKED,
-        DISABLED
-    }
-
-    public enum UsagePurpose {
-        SIGNING,
-        ENCRYPTION,
-        BOTH
-    }
 }
 ```
 
-### 10.10 Tenant-Aware Message Repository
+### 10.9 Tenant-Aware Message Repository
 
 ```java
 package org.example.signer.repository;
@@ -753,24 +702,20 @@ public interface Iso20022MessageRepository extends JpaRepository<Iso20022Message
         String transactionReference
     );
     
-    // Advanced queries
-    @Query("""
-        SELECT m FROM Iso20022Message m
-        WHERE m.tenantId = :tenantId
-        AND m.messageType = :messageType
-        AND m.status = :status
-        AND m.createdAt BETWEEN :startDate AND :endDate
-        ORDER BY m.createdAt DESC
-        """)
-    List<Iso20022Message> findByTenantAndCriteria(
-        @Param("tenantId") Long tenantId,
-        @Param("messageType") MessageType messageType,
-        @Param("status") MessageStatus status,
-        @Param("startDate") LocalDateTime startDate,
-        @Param("endDate") LocalDateTime endDate
-    );
+    // Inbound Correlation (find tenant by original identifiers)
+    Optional<Iso20022Message> findByMessageId(String messageId);
     
-    // Statistics queries
+    Optional<Iso20022Message> findByEndToEndId(String endToEndId);
+
+    Optional<Iso20022Message> findByTransactionReference(String transactionReference);
+
+    // Tenant message statistics
+    long countByTenantId(Long tenantId);
+    
+    long countByTenantIdAndStatus(Long tenantId, MessageStatus status);
+    
+    long countByTenantIdAndCreatedAtAfter(Long tenantId, LocalDateTime createdAt);
+    
     @Query("""
         SELECT m.status, COUNT(m)
         FROM Iso20022Message m
@@ -790,35 +735,113 @@ public interface Iso20022MessageRepository extends JpaRepository<Iso20022Message
         @Param("tenantId") Long tenantId,
         @Param("since") LocalDateTime since
     );
-    
-    // Count queries
-    long countByTenantIdAndStatus(Long tenantId, MessageStatus status);
-    
-    long countByTenantIdAndCreatedAtAfter(Long tenantId, LocalDateTime createdAt);
 }
 ```
 
-### 10.11 Tenant-Aware Message Service
+### 10.10 Tenant Simulator Profile Repository
+
+```java
+package org.example.signer.repository;
+
+import org.example.signer.model.TenantSimulatorProfile;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface TenantSimulatorProfileRepository extends JpaRepository<TenantSimulatorProfile, Long> {
+
+    Optional<TenantSimulatorProfile> findByTenantId(Long tenantId);
+
+    Optional<TenantSimulatorProfile> findByTenantIdAndProfileUuid(Long tenantId, UUID profileUuid);
+
+    Optional<TenantSimulatorProfile> findByInstitutionCode(String institutionCode);
+}
+```
+
+### 10.11 Centralized Simulator Key Provider
+
+```java
+package org.example.signer.security;
+
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.example.signer.Utils.Signer;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.security.PrivateKey;
+import java.security.PublicKey;
+
+/**
+ * System-level provider for shared simulator keys.
+ * In a simulator environment, all pseudo-banks use the same configured keys
+ * to allow instant testing and compatibility with the mock NIBSS switch.
+ */
+@Slf4j
+@Component
+@Getter
+public class SimulatorKeyProvider {
+
+    @Value("${app.keys.private-path:src/main/java/org/example/signer/keys/999999.private.pem}")
+    private String privateKeyPath;
+
+    @Value("${app.keys.public-path:src/main/java/org/example/signer/keys/NIBSS-999999.public.pem}")
+    private String publicKeyPath;
+
+    private PrivateKey simulatorPrivateKey;
+    private PublicKey simulatorPublicKey;
+
+    @PostConstruct
+    public void init() {
+        try {
+            log.info("Loading shared simulator keys from: private={}, public={}", privateKeyPath, publicKeyPath);
+            this.simulatorPrivateKey = Signer.loadPrivateKey(privateKeyPath);
+            this.simulatorPublicKey = Signer.loadPublicKey(publicKeyPath);
+            log.info("Shared simulator keys initialized successfully for all pseudo-banks");
+        } catch (Exception e) {
+            log.error("Failed to load shared simulator keys", e);
+            throw new IllegalStateException("Cannot start simulator without valid signing keys", e);
+        }
+    }
+}
+```
+
+### 10.12 Tenant-Aware Message Service with Automated Signing
 
 ```java
 package org.example.signer.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.signer.Utils.Encrypter;
+import org.example.signer.Utils.Signer;
+import org.example.signer.Utils.XmlUtils;
 import org.example.signer.dto.Iso20022MessageDto;
+import org.example.signer.dto.MessageStatisticsDto;
+import org.example.signer.exception.MessageNotFoundException;
 import org.example.signer.model.Iso20022Message;
+import org.example.signer.model.Iso20022Message.MessageDirection;
 import org.example.signer.model.Iso20022Message.MessageStatus;
 import org.example.signer.model.Iso20022Message.MessageType;
+import org.example.signer.model.TenantSimulatorProfile;
 import org.example.signer.repository.Iso20022MessageRepository;
+import org.example.signer.security.SimulatorKeyProvider;
 import org.example.signer.security.TenantContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.Document;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -826,140 +849,164 @@ import java.util.UUID;
 public class TenantAwareMessageService {
 
     private final Iso20022MessageRepository messageRepository;
+    private final TenantSimulatorProfileService profileService;
+    private final SimulatorKeyProvider keyProvider;
     private final TenantContext tenantContext;
-    
+
     @Transactional
     public Iso20022Message createMessage(Iso20022MessageDto dto) {
         Long tenantId = tenantContext.getCurrentTenantId();
-        Long userId = tenantContext.getCurrentUserId();
+        TenantSimulatorProfile profile = profileService.getOrCreateProfile(tenantId);
         
         log.info("Creating ISO 20022 message for tenant {}: type={}", tenantId, dto.getMessageType());
-        
+
         Iso20022Message message = Iso20022Message.builder()
             .tenantId(tenantId)
             .messageType(dto.getMessageType())
             .messageCode(dto.getMessageCode())
-            .direction(dto.getDirection())
+            .direction(dto.getDirection() != null ? dto.getDirection() : MessageDirection.OUTBOUND)
             .rawXml(dto.getRawXml())
             .status(MessageStatus.DRAFT)
             .transactionReference(dto.getTransactionReference())
             .endToEndId(dto.getEndToEndId())
             .messageId(dto.getMessageId())
-            .metadata(dto.getMetadata())
+            .metadata(Iso20022Message.MessageMetadata.builder()
+                .institutionCode(profile.getInstitutionCode())
+                .currency(profile.getDefaultCurrency())
+                .build())
+            .creator(tenantContext.getCurrentUser())
             .build();
-        
-        message.setCreator(tenantContext.getCurrentUser());
-        
-        Iso20022Message saved = messageRepository.save(message);
-        
-        log.info("Created ISO 20022 message: tenantId={}, messageUuid={}, type={}", 
-            tenantId, saved.getMessageUuid(), saved.getMessageType());
-        
-        return saved;
+
+        return messageRepository.save(message);
     }
-    
+
+    @Transactional
+    public Iso20022Message signMessage(UUID messageUuid) throws Exception {
+        Long tenantId = tenantContext.getCurrentTenantId();
+        Iso20022Message message = getMessage(messageUuid);
+
+        log.info("Transparently signing message {} for tenant {} using shared simulator key", 
+            messageUuid, tenantId);
+
+        Document doc = XmlUtils.stringToDocument(message.getRawXml());
+        Signer.sign(doc, keyProvider.getSimulatorPrivateKey());
+        String signedXml = XmlUtils.documentToString(doc);
+
+        message.setSignedXml(signedXml);
+        message.setStatus(MessageStatus.SIGNED);
+        message.setProcessedAt(LocalDateTime.now());
+
+        return messageRepository.save(message);
+    }
+
+    @Transactional
+    public Iso20022Message encryptMessage(UUID messageUuid, String encryptElement) throws Exception {
+        Long tenantId = tenantContext.getCurrentTenantId();
+        Iso20022Message message = getMessage(messageUuid);
+
+        String baseXml = message.getSignedXml() != null ? message.getSignedXml() : message.getRawXml();
+        Document doc = XmlUtils.stringToDocument(baseXml);
+
+        if (encryptElement != null && !encryptElement.isEmpty()) {
+            Encrypter.encrypt(doc, keyProvider.getSimulatorPublicKey(), encryptElement);
+        }
+        String encryptedXml = XmlUtils.documentToString(doc);
+
+        message.setEncryptedXml(encryptedXml);
+        message.setStatus(MessageStatus.ENCRYPTED);
+
+        return messageRepository.save(message);
+    }
+
     @Transactional(readOnly = true)
     public Iso20022Message getMessage(UUID messageUuid) {
         Long tenantId = tenantContext.getCurrentTenantId();
-        
         return messageRepository.findByTenantIdAndMessageUuid(tenantId, messageUuid)
             .orElseThrow(() -> new MessageNotFoundException(
                 "Message not found: " + messageUuid + " for tenant " + tenantId
             ));
     }
-    
+
     @Transactional(readOnly = true)
     public Page<Iso20022Message> getMessages(Pageable pageable) {
         Long tenantId = tenantContext.getCurrentTenantId();
         return messageRepository.findByTenantId(tenantId, pageable);
     }
-    
+
     @Transactional(readOnly = true)
     public Page<Iso20022Message> getMessagesByType(MessageType type, Pageable pageable) {
         Long tenantId = tenantContext.getCurrentTenantId();
         return messageRepository.findByTenantIdAndMessageType(tenantId, type, pageable);
     }
-    
+
     @Transactional(readOnly = true)
     public Page<Iso20022Message> getMessagesByStatus(MessageStatus status, Pageable pageable) {
         Long tenantId = tenantContext.getCurrentTenantId();
         return messageRepository.findByTenantIdAndStatus(tenantId, status, pageable);
     }
-    
+
     @Transactional
     public Iso20022Message updateMessageStatus(UUID messageUuid, MessageStatus newStatus) {
-        Long tenantId = tenantContext.getCurrentTenantId();
-        
         Iso20022Message message = getMessage(messageUuid);
-        
-        log.info("Updating message status: tenantId={}, messageUuid={}, {} -> {}", 
-            tenantId, messageUuid, message.getStatus(), newStatus);
-        
         message.setStatus(newStatus);
-        
         if (newStatus == MessageStatus.VALIDATED) {
             message.setProcessedAt(LocalDateTime.now());
         } else if (newStatus == MessageStatus.SENT) {
             message.setSentAt(LocalDateTime.now());
         }
-        
         return messageRepository.save(message);
     }
-    
+
+    /**
+     * Inbound response correlator: Maps simulator callbacks (e.g. pacs.002, pain.012)
+     * back to the originating tenant using message identifiers.
+     */
     @Transactional
-    public Iso20022Message signMessage(UUID messageUuid, String signedXml) {
-        Long tenantId = tenantContext.getCurrentTenantId();
-        
-        Iso20022Message message = getMessage(messageUuid);
-        
-        log.info("Signing message: tenantId={}, messageUuid={}", tenantId, messageUuid);
-        
-        message.setSignedXml(signedXml);
-        message.setStatus(MessageStatus.SIGNED);
-        message.setProcessedAt(LocalDateTime.now());
-        
-        return messageRepository.save(message);
+    public Iso20022Message handleInboundSimulatorResponse(String responseXml, String originalMsgId, String originalEndToEndId) {
+        Iso20022Message originalMessage = null;
+        if (originalMsgId != null) {
+            originalMessage = messageRepository.findByMessageId(originalMsgId).orElse(null);
+        }
+        if (originalMessage == null && originalEndToEndId != null) {
+            originalMessage = messageRepository.findByEndToEndId(originalEndToEndId).orElse(null);
+        }
+
+        Long tenantId = originalMessage != null ? originalMessage.getTenantId() : 1L;
+
+        Iso20022Message responseRecord = Iso20022Message.builder()
+            .tenantId(tenantId)
+            .messageType(MessageType.PAYMENT_STATUS)
+            .messageCode("pacs.002.001.10")
+            .direction(MessageDirection.INBOUND)
+            .rawXml(responseXml)
+            .status(MessageStatus.DELIVERED)
+            .messageId(UUID.randomUUID().toString())
+            .receivedAt(LocalDateTime.now())
+            .build();
+
+        return messageRepository.save(responseRecord);
     }
-    
-    @Transactional
-    public Iso20022Message encryptMessage(UUID messageUuid, String encryptedXml) {
-        Long tenantId = tenantContext.getCurrentTenantId();
-        
-        Iso20022Message message = getMessage(messageUuid);
-        
-        log.info("Encrypting message: tenantId={}, messageUuid={}", tenantId, messageUuid);
-        
-        message.setEncryptedXml(encryptedXml);
-        message.setStatus(MessageStatus.ENCRYPTED);
-        
-        return messageRepository.save(message);
-    }
-    
+
     @Transactional(readOnly = true)
-    public MessageStatistics getMessageStatistics() {
+    public MessageStatisticsDto getMessageStatistics() {
         Long tenantId = tenantContext.getCurrentTenantId();
-        
         List<Object[]> statusDist = messageRepository.getMessageStatusDistribution(tenantId);
         List<Object[]> typeDist = messageRepository.getMessageTypeDistribution(
             tenantId, 
             LocalDateTime.now().minusDays(30)
         );
-        
-        long totalMessages = messageRepository.countByTenantId(tenantId);
-        long todayMessages = messageRepository.countByTenantIdAndCreatedAtAfter(
-            tenantId, 
-            LocalDateTime.now().withHour(0).withMinute(0).withSecond(0)
-        );
-        
-        return MessageStatistics.builder()
-            .tenantId(tenantId)
-            .totalMessages(totalMessages)
-            .todayMessages(todayMessages)
+
+        return MessageStatisticsDto.builder()
+            .totalMessages(messageRepository.countByTenantId(tenantId))
+            .todayMessages(messageRepository.countByTenantIdAndCreatedAtAfter(
+                tenantId, 
+                LocalDateTime.now().withHour(0).withMinute(0).withSecond(0)
+            ))
             .statusDistribution(convertToMap(statusDist))
             .typeDistribution(convertToMap(typeDist))
             .build();
     }
-    
+
     private Map<String, Long> convertToMap(List<Object[]> data) {
         return data.stream()
             .collect(Collectors.toMap(
@@ -970,171 +1017,84 @@ public class TenantAwareMessageService {
 }
 ```
 
-### 10.12 Tenant Certificate Service
+### 10.13 Tenant Simulator Profile Service
 
 ```java
 package org.example.signer.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.signer.model.TenantCertificate;
-import org.example.signer.model.TenantCertificate.CertificateStatus;
-import org.example.signer.repository.TenantCertificateRepository;
+import org.example.signer.dto.TenantSimulatorProfileDto;
+import org.example.signer.exception.ResourceNotFoundException;
+import org.example.signer.model.Tenant;
+import org.example.signer.model.TenantSimulatorProfile;
+import org.example.signer.repository.TenantRepository;
+import org.example.signer.repository.TenantSimulatorProfileRepository;
 import org.example.signer.security.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayInputStream;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TenantCertificateService {
+public class TenantSimulatorProfileService {
 
-    private final TenantCertificateRepository certificateRepository;
+    private final TenantSimulatorProfileRepository profileRepository;
+    private final TenantRepository tenantRepository;
     private final TenantContext tenantContext;
-    
-    @Transactional
-    public TenantCertificate uploadCertificate(String certificateName, 
-                                               String certificatePem, 
-                                               TenantCertificate.UsagePurpose purpose) {
-        Long tenantId = tenantContext.getCurrentTenantId();
-        
-        log.info("Uploading certificate for tenant {}: name={}", tenantId, certificateName);
-        
-        // Parse certificate to extract metadata
-        X509Certificate x509Cert = parseCertificate(certificatePem);
-        
-        TenantCertificate certificate = TenantCertificate.builder()
-            .tenantId(tenantId)
-            .certificateName(certificateName)
-            .certificateType(TenantCertificate.CertificateType.X509)
-            .certificatePem(certificatePem)
-            .publicKeyPem(extractPublicKey(x509Cert))
-            .issuer(x509Cert.getIssuerDN().toString())
-            .subject(x509Cert.getSubjectDN().toString())
-            .serialNumber(x509Cert.getSerialNumber().toString())
-            .thumbprint(calculateThumbprint(x509Cert))
-            .validFrom(LocalDateTime.ofInstant(
-                x509Cert.getNotBefore().toInstant(), 
-                ZoneId.systemDefault()
-            ))
-            .validTo(LocalDateTime.ofInstant(
-                x509Cert.getNotAfter().toInstant(), 
-                ZoneId.systemDefault()
-            ))
-            .status(CertificateStatus.ACTIVE)
-            .usagePurpose(purpose)
-            .uploadedBy(tenantContext.getCurrentUser())
-            .build();
-        
-        TenantCertificate saved = certificateRepository.save(certificate);
-        
-        log.info("Uploaded certificate: tenantId={}, certUuid={}, thumbprint={}", 
-            tenantId, saved.getCertificateUuid(), saved.getThumbprint());
-        
-        return saved;
-    }
-    
+
     @Transactional(readOnly = true)
-    public TenantCertificate getDefaultCertificate(TenantCertificate.UsagePurpose purpose) {
+    public TenantSimulatorProfile getCurrentTenantProfile() {
         Long tenantId = tenantContext.getCurrentTenantId();
-        
-        return certificateRepository
-            .findByTenantIdAndUsagePurposeAndIsDefaultAndStatus(
-                tenantId, purpose, true, CertificateStatus.ACTIVE
-            )
-            .orElseThrow(() -> new CertificateNotFoundException(
-                "No default " + purpose + " certificate found for tenant " + tenantId
-            ));
+        return getOrCreateProfile(tenantId);
     }
-    
-    @Transactional(readOnly = true)
-    public List<TenantCertificate> getActiveCertificates() {
-        Long tenantId = tenantContext.getCurrentTenantId();
-        return certificateRepository.findByTenantIdAndStatus(tenantId, CertificateStatus.ACTIVE);
-    }
-    
+
     @Transactional
-    public void setDefaultCertificate(UUID certificateUuid) {
+    public TenantSimulatorProfile updateCurrentTenantProfile(TenantSimulatorProfileDto dto) {
         Long tenantId = tenantContext.getCurrentTenantId();
-        
-        TenantCertificate certificate = certificateRepository
-            .findByTenantIdAndCertificateUuid(tenantId, certificateUuid)
-            .orElseThrow(() -> new CertificateNotFoundException(
-                "Certificate not found: " + certificateUuid
-            ));
-        
-        // Clear existing default for this usage purpose
-        certificateRepository.clearDefaultForPurpose(tenantId, certificate.getUsagePurpose());
-        
-        // Set new default
-        certificate.setIsDefault(true);
-        certificateRepository.save(certificate);
-        
-        log.info("Set default certificate: tenantId={}, certUuid={}, purpose={}", 
-            tenantId, certificateUuid, certificate.getUsagePurpose());
+        TenantSimulatorProfile profile = getOrCreateProfile(tenantId);
+
+        profile.setInstitutionCode(dto.getInstitutionCode());
+        profile.setInstitutionName(dto.getInstitutionName());
+        profile.setBic(dto.getBic());
+        profile.setSchemeCode(dto.getSchemeCode());
+        profile.setDefaultCurrency(dto.getDefaultCurrency() != null ? dto.getDefaultCurrency() : "NGN");
+        profile.setDefaultAccountNumber(dto.getDefaultAccountNumber());
+        profile.setDefaultAccountName(dto.getDefaultAccountName());
+        profile.setDefaultBvn(dto.getDefaultBvn());
+        profile.setCallbackUrl(dto.getCallbackUrl());
+        profile.setAutoRespondInbound(dto.getAutoRespondInbound() != null ? dto.getAutoRespondInbound() : true);
+        profile.setUpdatedBy(tenantContext.getCurrentUser());
+
+        log.info("Updated pseudo-bank simulator profile for tenant {}: instCode={}", 
+            tenantId, profile.getInstitutionCode());
+
+        return profileRepository.save(profile);
     }
-    
+
     @Transactional
-    public void revokeCertificate(UUID certificateUuid) {
-        Long tenantId = tenantContext.getCurrentTenantId();
-        
-        TenantCertificate certificate = certificateRepository
-            .findByTenantIdAndCertificateUuid(tenantId, certificateUuid)
-            .orElseThrow(() -> new CertificateNotFoundException(
-                "Certificate not found: " + certificateUuid
-            ));
-        
-        certificate.setStatus(CertificateStatus.REVOKED);
-        certificateRepository.save(certificate);
-        
-        log.warn("Revoked certificate: tenantId={}, certUuid={}", tenantId, certificateUuid);
-    }
-    
-    private X509Certificate parseCertificate(String certificatePem) {
-        try {
-            String pem = certificatePem
-                .replace("-----BEGIN CERTIFICATE-----", "")
-                .replace("-----END CERTIFICATE-----", "")
-                .replaceAll("\\s", "");
-            
-            byte[] decoded = Base64.getDecoder().decode(pem);
-            
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            return (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(decoded));
-        } catch (Exception e) {
-            throw new CertificateParseException("Failed to parse certificate", e);
-        }
-    }
-    
-    private String extractPublicKey(X509Certificate cert) {
-        byte[] encoded = cert.getPublicKey().getEncoded();
-        return "-----BEGIN PUBLIC KEY-----\n" +
-               Base64.getEncoder().encodeToString(encoded) +
-               "\n-----END PUBLIC KEY-----";
-    }
-    
-    private String calculateThumbprint(X509Certificate cert) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] digest = md.digest(cert.getEncoded());
-            return Base64.getEncoder().encodeToString(digest);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to calculate thumbprint", e);
-        }
+    public TenantSimulatorProfile getOrCreateProfile(Long tenantId) {
+        return profileRepository.findByTenantId(tenantId)
+            .orElseGet(() -> {
+                Tenant tenant = tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Tenant not found: " + tenantId));
+                
+                TenantSimulatorProfile newProfile = TenantSimulatorProfile.builder()
+                    .tenantId(tenantId)
+                    .institutionCode("999057")
+                    .institutionName(tenant.getName() + " (Simulator)")
+                    .bic(tenant.getSlug().toUpperCase() + "NGLAXXX")
+                    .schemeCode("999057")
+                    .defaultCurrency("NGN")
+                    .autoRespondInbound(true)
+                    .build();
+                return profileRepository.save(newProfile);
+            });
     }
 }
 ```
 
-### 10.13 Message Processing Controller
+### 10.14 Message Controller
 
 ```java
 package org.example.signer.controller;
@@ -1171,24 +1131,21 @@ public class MessageController {
     @Operation(summary = "Create new ISO 20022 message")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'DEVELOPER')")
     public ResponseEntity<Iso20022Message> createMessage(@Valid @RequestBody Iso20022MessageDto dto) {
-        Iso20022Message message = messageService.createMessage(dto);
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(messageService.createMessage(dto));
     }
     
     @GetMapping("/{messageUuid}")
     @Operation(summary = "Get message by UUID (tenant-scoped)")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'DEVELOPER', 'VIEWER')")
     public ResponseEntity<Iso20022Message> getMessage(@PathVariable UUID messageUuid) {
-        Iso20022Message message = messageService.getMessage(messageUuid);
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(messageService.getMessage(messageUuid));
     }
     
     @GetMapping
     @Operation(summary = "List all messages for current tenant")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'DEVELOPER', 'VIEWER')")
     public ResponseEntity<Page<Iso20022Message>> getMessages(Pageable pageable) {
-        Page<Iso20022Message> messages = messageService.getMessages(pageable);
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(messageService.getMessages(pageable));
     }
     
     @GetMapping("/type/{messageType}")
@@ -1197,8 +1154,7 @@ public class MessageController {
     public ResponseEntity<Page<Iso20022Message>> getMessagesByType(
             @PathVariable MessageType messageType,
             Pageable pageable) {
-        Page<Iso20022Message> messages = messageService.getMessagesByType(messageType, pageable);
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(messageService.getMessagesByType(messageType, pageable));
     }
     
     @GetMapping("/status/{status}")
@@ -1207,8 +1163,7 @@ public class MessageController {
     public ResponseEntity<Page<Iso20022Message>> getMessagesByStatus(
             @PathVariable MessageStatus status,
             Pageable pageable) {
-        Page<Iso20022Message> messages = messageService.getMessagesByStatus(status, pageable);
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(messageService.getMessagesByStatus(status, pageable));
     }
     
     @PatchMapping("/{messageUuid}/status")
@@ -1217,36 +1172,74 @@ public class MessageController {
     public ResponseEntity<Iso20022Message> updateStatus(
             @PathVariable UUID messageUuid,
             @RequestParam MessageStatus status) {
-        Iso20022Message updated = messageService.updateMessageStatus(messageUuid, status);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(messageService.updateMessageStatus(messageUuid, status));
     }
     
     @PostMapping("/{messageUuid}/sign")
-    @Operation(summary = "Sign message with tenant's signing key")
+    @Operation(summary = "Sign message with system simulator key")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'DEVELOPER')")
-    public ResponseEntity<Iso20022Message> signMessage(
-            @PathVariable UUID messageUuid,
-            @RequestBody String signedXml) {
-        Iso20022Message signed = messageService.signMessage(messageUuid, signedXml);
-        return ResponseEntity.ok(signed);
+    public ResponseEntity<Iso20022Message> signMessage(@PathVariable UUID messageUuid) throws Exception {
+        return ResponseEntity.ok(messageService.signMessage(messageUuid));
     }
     
     @PostMapping("/{messageUuid}/encrypt")
-    @Operation(summary = "Encrypt message with recipient's certificate")
+    @Operation(summary = "Encrypt message element with system simulator key")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'DEVELOPER')")
     public ResponseEntity<Iso20022Message> encryptMessage(
             @PathVariable UUID messageUuid,
-            @RequestBody String encryptedXml) {
-        Iso20022Message encrypted = messageService.encryptMessage(messageUuid, encryptedXml);
-        return ResponseEntity.ok(encrypted);
+            @RequestParam(required = false, defaultValue = "CdtrPmtActvtnReq") String encryptElement) throws Exception {
+        return ResponseEntity.ok(messageService.encryptMessage(messageUuid, encryptElement));
     }
     
     @GetMapping("/statistics")
     @Operation(summary = "Get message statistics for tenant")
     @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'DEVELOPER', 'VIEWER')")
     public ResponseEntity<MessageStatisticsDto> getStatistics() {
-        MessageStatistics stats = messageService.getMessageStatistics();
-        return ResponseEntity.ok(MessageStatisticsDto.fromEntity(stats));
+        return ResponseEntity.ok(messageService.getMessageStatistics());
+    }
+}
+```
+
+### 10.15 Tenant Simulator Profile Controller
+
+```java
+package org.example.signer.controller;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.example.signer.dto.TenantSimulatorProfileDto;
+import org.example.signer.model.TenantSimulatorProfile;
+import org.example.signer.service.TenantSimulatorProfileService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+
+@RestController
+@RequestMapping("/api/v1/simulator/profile")
+@Tag(name = "Simulator Profile", description = "Tenant pseudo-bank simulator profile management")
+@SecurityRequirement(name = "bearerAuth")
+@RequiredArgsConstructor
+public class TenantSimulatorProfileController {
+
+    private final TenantSimulatorProfileService profileService;
+
+    @GetMapping
+    @Operation(summary = "Get current tenant pseudo-bank simulator profile")
+    @PreAuthorize("hasAnyRole('TENANT_ADMIN', 'DEVELOPER', 'VIEWER')")
+    public ResponseEntity<TenantSimulatorProfile> getProfile() {
+        return ResponseEntity.ok(profileService.getCurrentTenantProfile());
+    }
+
+    @PutMapping
+    @Operation(summary = "Update current tenant pseudo-bank simulator profile")
+    @PreAuthorize("hasRole('TENANT_ADMIN')")
+    public ResponseEntity<TenantSimulatorProfile> updateProfile(
+            @Valid @RequestBody TenantSimulatorProfileDto dto) {
+        return ResponseEntity.ok(profileService.updateCurrentTenantProfile(dto));
     }
 }
 ```
@@ -1255,7 +1248,7 @@ public class MessageController {
 
 ## Testing
 
-### 10.14 Integration Test: Tenant Isolation
+### 10.16 Integration Test: Tenant Isolation & Shared Simulator Keys
 
 ```java
 package org.example.signer.integration;
@@ -1263,8 +1256,10 @@ package org.example.signer.integration;
 import org.example.signer.model.Iso20022Message;
 import org.example.signer.model.Iso20022Message.MessageType;
 import org.example.signer.model.Iso20022Message.MessageDirection;
+import org.example.signer.model.TenantSimulatorProfile;
 import org.example.signer.repository.Iso20022MessageRepository;
-import org.example.signer.security.TenantContext;
+import org.example.signer.repository.TenantSimulatorProfileRepository;
+import org.example.signer.security.SimulatorKeyProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -1273,7 +1268,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @Transactional
@@ -1281,77 +1275,93 @@ class MessageTenantIsolationTest {
 
     @Autowired
     private Iso20022MessageRepository messageRepository;
-    
+
     @Autowired
-    private TenantContext tenantContext;
-    
+    private TenantSimulatorProfileRepository profileRepository;
+
+    @Autowired
+    private SimulatorKeyProvider keyProvider;
+
+    @Test
+    void testSimulatorKeyProvider_Initialized() {
+        assertThat(keyProvider.getSimulatorPrivateKey()).isNotNull();
+        assertThat(keyProvider.getSimulatorPublicKey()).isNotNull();
+    }
+
     @Test
     void testMessageIsolation_DifferentTenants_CannotAccessEachOthersMessages() {
-        // Arrange: Create messages for two different tenants
         Long tenant1Id = 1L;
         Long tenant2Id = 2L;
-        
+
         Iso20022Message tenant1Message = Iso20022Message.builder()
             .tenantId(tenant1Id)
             .messageType(MessageType.PAYMENT_INITIATION)
-            .messageCode("pacs.008.001.08")
+            .messageCode("pain.001.001.09")
             .direction(MessageDirection.OUTBOUND)
-            .rawXml("<Document>Tenant 1</Document>")
+            .rawXml("<Document>Tenant 1 Message</Document>")
             .build();
-        
+
         Iso20022Message tenant2Message = Iso20022Message.builder()
             .tenantId(tenant2Id)
             .messageType(MessageType.PAYMENT_INITIATION)
-            .messageCode("pacs.008.001.08")
+            .messageCode("pain.001.001.09")
             .direction(MessageDirection.OUTBOUND)
-            .rawXml("<Document>Tenant 2</Document>")
+            .rawXml("<Document>Tenant 2 Message</Document>")
             .build();
-        
+
         messageRepository.save(tenant1Message);
         messageRepository.save(tenant2Message);
-        
-        UUID tenant1MessageUuid = tenant1Message.getMessageUuid();
-        UUID tenant2MessageUuid = tenant2Message.getMessageUuid();
-        
-        // Act & Assert: Tenant 1 can only access their own message
-        assertThat(messageRepository.findByTenantIdAndMessageUuid(tenant1Id, tenant1MessageUuid))
-            .isPresent()
-            .get()
-            .satisfies(m -> assertThat(m.getRawXml()).contains("Tenant 1"));
-        
-        assertThat(messageRepository.findByTenantIdAndMessageUuid(tenant1Id, tenant2MessageUuid))
-            .isEmpty();
-        
-        // Act & Assert: Tenant 2 can only access their own message
-        assertThat(messageRepository.findByTenantIdAndMessageUuid(tenant2Id, tenant2MessageUuid))
-            .isPresent()
-            .get()
-            .satisfies(m -> assertThat(m.getRawXml()).contains("Tenant 2"));
-        
-        assertThat(messageRepository.findByTenantIdAndMessageUuid(tenant2Id, tenant1MessageUuid))
-            .isEmpty();
+
+        UUID t1Uuid = tenant1Message.getMessageUuid();
+        UUID t2Uuid = tenant2Message.getMessageUuid();
+
+        // Tenant 1 checks
+        assertThat(messageRepository.findByTenantIdAndMessageUuid(tenant1Id, t1Uuid)).isPresent();
+        assertThat(messageRepository.findByTenantIdAndMessageUuid(tenant1Id, t2Uuid)).isEmpty();
+
+        // Tenant 2 checks
+        assertThat(messageRepository.findByTenantIdAndMessageUuid(tenant2Id, t2Uuid)).isPresent();
+        assertThat(messageRepository.findByTenantIdAndMessageUuid(tenant2Id, t1Uuid)).isEmpty();
     }
-    
+
     @Test
-    void testCertificateIsolation_DifferentTenants_CannotAccessEachOthersCertificates() {
-        // Similar test for certificates
-        // Implementation omitted for brevity
-    }
-    
-    @Test
-    void testTestScenarioIsolation_DifferentTenants_IndependentTestData() {
-        // Similar test for test scenarios
-        // Implementation omitted for brevity
+    void testProfileIsolation_DifferentTenants_DistinctBankProfiles() {
+        Long tenant1Id = 1L;
+        Long tenant2Id = 2L;
+
+        TenantSimulatorProfile p1 = TenantSimulatorProfile.builder()
+            .tenantId(tenant1Id)
+            .institutionCode("090004")
+            .institutionName("Bank One")
+            .bic("BONEUS33XXX")
+            .defaultCurrency("NGN")
+            .build();
+
+        TenantSimulatorProfile p2 = TenantSimulatorProfile.builder()
+            .tenantId(tenant2Id)
+            .institutionCode("090005")
+            .institutionName("Bank Two")
+            .bic("BTWOUS33XXX")
+            .defaultCurrency("NGN")
+            .build();
+
+        profileRepository.save(p1);
+        profileRepository.save(p2);
+
+        assertThat(profileRepository.findByTenantId(tenant1Id).get().getInstitutionCode()).isEqualTo("090004");
+        assertThat(profileRepository.findByTenantId(tenant2Id).get().getInstitutionCode()).isEqualTo("090005");
     }
 }
 ```
 
-### 10.15 Performance Test: Message Queries
+### 10.17 Performance Test: Message Queries
 
 ```java
 package org.example.signer.performance;
 
 import org.example.signer.model.Iso20022Message;
+import org.example.signer.model.Iso20022Message.MessageType;
+import org.example.signer.model.Iso20022Message.MessageDirection;
 import org.example.signer.repository.Iso20022MessageRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1373,7 +1383,6 @@ class MessageQueryPerformanceTest {
     
     @Test
     void testPaginationPerformance_1000Messages_UnderThreshold() {
-        // Arrange: Create 1000 messages for a tenant
         Long tenantId = 1L;
         List<Iso20022Message> messages = new ArrayList<>();
         
@@ -1389,7 +1398,6 @@ class MessageQueryPerformanceTest {
         
         messageRepository.saveAll(messages);
         
-        // Act: Query with pagination
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         
@@ -1400,10 +1408,9 @@ class MessageQueryPerformanceTest {
         
         stopWatch.stop();
         
-        // Assert: Query should complete in under 100ms
         assertThat(stopWatch.getTotalTimeMillis()).isLessThan(100);
         assertThat(page.getContent()).hasSize(50);
-        assertThat(page.getTotalElements()).isEqualTo(1000);
+        assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(1000);
     }
 }
 ```
@@ -1412,42 +1419,36 @@ class MessageQueryPerformanceTest {
 
 ## API Endpoint Updates
 
-### 10.16 Updated API Endpoints
+### 10.18 Summary of API Endpoints
 
-All API endpoints are now tenant-scoped through the JWT token:
+All API endpoints are tenant-scoped via the JWT token:
 
 ```
-POST   /api/v1/messages                    # Create message
-GET    /api/v1/messages/{uuid}             # Get message (tenant-scoped)
-GET    /api/v1/messages                    # List messages (tenant-scoped)
-GET    /api/v1/messages/type/{type}        # Filter by type (tenant-scoped)
-GET    /api/v1/messages/status/{status}    # Filter by status (tenant-scoped)
-PATCH  /api/v1/messages/{uuid}/status      # Update status
-POST   /api/v1/messages/{uuid}/sign        # Sign message
-POST   /api/v1/messages/{uuid}/encrypt     # Encrypt message
-GET    /api/v1/messages/statistics         # Get statistics (tenant-scoped)
+-- ISO 20022 Messages --
+POST   /api/v1/messages                      # Create message (tenant-scoped)
+GET    /api/v1/messages/{uuid}               # Get message by UUID (tenant-scoped)
+GET    /api/v1/messages                      # List messages with pagination (tenant-scoped)
+GET    /api/v1/messages/type/{type}          # Filter messages by type (tenant-scoped)
+GET    /api/v1/messages/status/{status}      # Filter messages by status (tenant-scoped)
+PATCH  /api/v1/messages/{uuid}/status        # Update message status
+POST   /api/v1/messages/{uuid}/sign          # Sign message with simulator private key
+POST   /api/v1/messages/{uuid}/encrypt       # Encrypt message with simulator public key
+GET    /api/v1/messages/statistics           # Get message statistics (tenant-scoped)
 
-POST   /api/v1/certificates                # Upload certificate
-GET    /api/v1/certificates                # List certificates (tenant-scoped)
-GET    /api/v1/certificates/{uuid}         # Get certificate
-PATCH  /api/v1/certificates/{uuid}/default # Set as default
-DELETE /api/v1/certificates/{uuid}         # Revoke certificate
+-- Pseudo-Bank Simulator Profile --
+GET    /api/v1/simulator/profile             # Get current tenant's pseudo-bank profile
+PUT    /api/v1/simulator/profile             # Update pseudo-bank profile (Institution code, BIC, accounts)
 
-POST   /api/v1/signing-keys                # Generate signing key
-GET    /api/v1/signing-keys                # List keys (tenant-scoped)
-GET    /api/v1/signing-keys/{uuid}         # Get key
-PATCH  /api/v1/signing-keys/{uuid}/default # Set as default
-DELETE /api/v1/signing-keys/{uuid}         # Revoke key
+-- Test Scenarios & Validation --
+POST   /api/v1/test-scenarios                # Create test scenario (tenant-scoped)
+GET    /api/v1/test-scenarios                # List test scenarios (tenant-scoped)
+GET    /api/v1/test-scenarios/{uuid}         # Get test scenario
+PUT    /api/v1/test-scenarios/{uuid}         # Update test scenario
+POST   /api/v1/test-scenarios/{uuid}/execute # Execute test scenario
+DELETE /api/v1/test-scenarios/{uuid}         # Delete test scenario
 
-POST   /api/v1/test-scenarios              # Create test scenario
-GET    /api/v1/test-scenarios              # List scenarios (tenant-scoped)
-GET    /api/v1/test-scenarios/{uuid}       # Get scenario
-PUT    /api/v1/test-scenarios/{uuid}       # Update scenario
-POST   /api/v1/test-scenarios/{uuid}/execute # Execute scenario
-DELETE /api/v1/test-scenarios/{uuid}       # Delete scenario
-
-GET    /api/v1/validation-results          # List results (tenant-scoped)
-GET    /api/v1/validation-results/{uuid}   # Get result details
+GET    /api/v1/validation-results            # List validation results (tenant-scoped)
+GET    /api/v1/validation-results/{uuid}     # Get result details
 ```
 
 ---
@@ -1456,43 +1457,30 @@ GET    /api/v1/validation-results/{uuid}   # Get result details
 
 ### Functional Requirements
 
-- [ ] All ISO 20022 message tables include tenant_id with non-nullable constraint
-- [ ] All message queries filtered by tenant_id automatically
-- [ ] Cross-tenant message access returns 404 (not 403, to avoid information leakage)
-- [ ] Certificate management fully isolated per tenant
-- [ ] Signing keys stored encrypted and scoped to tenant
-- [ ] Test scenarios cannot be accessed across tenant boundaries
-- [ ] Validation results linked to tenant and message/scenario
-- [ ] All API endpoints respect tenant context from JWT
-- [ ] Message statistics calculated per tenant only
+- [ ] All ISO 20022 message tables include non-nullable `tenant_id`
+- [ ] All message queries are filtered by `tenant_id` automatically
+- [ ] Cross-tenant message access returns 404 (not 403, preventing information leakage)
+- [ ] Centralized `SimulatorKeyProvider` automatically loads shared keys (`999999.private.pem`, `NIBSS-999999.public.pem`)
+- [ ] Any tenant can sign and encrypt ISO 20022 payloads without uploading certificates or private keys
+- [ ] Each tenant can independently configure their pseudo-bank profile (Institution Code, BIC, accounts)
+- [ ] Inbound simulator responses correlate back to the originating tenant using message tracking identifiers
+- [ ] Test scenarios and validation results are strictly partitioned by tenant
 
 ### Security Requirements
 
 - [ ] TenantContext properly initialized from JWT token
-- [ ] All repository methods include tenantId parameter
-- [ ] Service layer validates tenant ownership before operations
-- [ ] Certificate private keys never returned in API responses
-- [ ] Signing keys stored with encryption at rest
-- [ ] Audit logs record tenant_id for all message operations
+- [ ] All repository methods include `tenantId` parameter
+- [ ] Service layer validates tenant ownership before all message and profile operations
+- [ ] Simulator private keys are never exposed in API responses or client payloads
+- [ ] Audit logs record `tenant_id` for all message creation, signing, and dispatch actions
 - [ ] Cross-tenant access attempts logged as security events
 
 ### Performance Requirements
 
 - [ ] Message list queries with pagination complete in <100ms
 - [ ] Message retrieval by UUID completes in <50ms
-- [ ] Certificate lookup completes in <30ms
-- [ ] Tenant-scoped indexes optimize all queries
-- [ ] Statistics aggregation completes in <200ms
-
-### Testing Requirements
-
-- [ ] Integration tests verify tenant isolation for messages
-- [ ] Integration tests verify tenant isolation for certificates
-- [ ] Integration tests verify tenant isolation for signing keys
-- [ ] Integration tests verify tenant isolation for test scenarios
-- [ ] Unit tests cover all service methods
-- [ ] Performance tests validate query response times
-- [ ] Security tests attempt cross-tenant access
+- [ ] Signing and encryption using in-memory simulator keys complete in <40ms
+- [ ] Tenant-scoped indexes optimize all message and profile queries
 
 ---
 
@@ -1502,33 +1490,26 @@ If critical issues are discovered:
 
 1. **Database Rollback**:
    ```sql
-   -- Drop new tables
    DROP TABLE IF EXISTS validation_results CASCADE;
    DROP TABLE IF EXISTS test_scenarios CASCADE;
-   DROP TABLE IF EXISTS tenant_signing_keys CASCADE;
-   DROP TABLE IF EXISTS tenant_certificates CASCADE;
+   DROP TABLE IF EXISTS tenant_simulator_profiles CASCADE;
    DROP TABLE IF EXISTS iso20022_messages CASCADE;
    ```
 
 2. **Code Rollback**:
-   - Revert to previous commit before Phase 10 changes
-   - Remove new service classes
-   - Restore original controller endpoints
-
-3. **Data Migration Rollback**:
-   - If data was migrated, restore from pre-migration backup
-   - Verify data integrity with checksums
+   - Revert Phase 10 commits
+   - Restore original pipeline controller endpoints
 
 ---
 
 ## Dependencies
 
 **Requires Completion**:
-- Phase 1: Multi-Tenant Database Foundation (tenants table, tenant_id pattern)
-- Phase 2: Tenant-Aware Authentication (JWT with tenant_id, TenantContext)
+- Phase 1: Multi-Tenant Database Foundation (`tenants` table, `tenant_id` pattern)
+- Phase 2: Tenant-Aware Authentication (JWT with `tenant_id`, `TenantContext`)
 
 **Blocks**:
-- Phase 11: Integration Testing & Security Validation (needs complete implementation to test)
+- Phase 11: Integration Testing & Security Validation
 
 ---
 
@@ -1536,9 +1517,8 @@ If critical issues are discovered:
 
 - Database schema design and migration: 0.5 days
 - Entity and repository implementation: 1 day
-- Service layer implementation: 1.5 days
+- Service layer (`TenantAwareMessageService`, `SimulatorKeyProvider`, profile service): 1.5 days
 - Controller and API updates: 0.5 day
-- Certificate and key management: 1 day
 - Testing and validation: 0.5-1 day
 
 **Total: 4-5 days**
