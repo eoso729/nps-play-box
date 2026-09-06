@@ -62,19 +62,9 @@ export const App: React.FC = () => {
                     <PlatformAdminDashboard />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/platform" element={
-                  <ProtectedRoute allowedRoles={['PLATFORM_ADMIN']}>
-                    <PlatformAdminDashboard />
-                  </ProtectedRoute>
-                } />
 
                 {/* Tenant admin – PLATFORM_ADMIN can also view */}
                 <Route path="/tenant-admin" element={
-                  <ProtectedRoute allowedRoles={['TENANT_ADMIN', 'PLATFORM_ADMIN']}>
-                    <TenantAdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/tenant" element={
                   <ProtectedRoute allowedRoles={['TENANT_ADMIN', 'PLATFORM_ADMIN']}>
                     <TenantAdminDashboard />
                   </ProtectedRoute>
