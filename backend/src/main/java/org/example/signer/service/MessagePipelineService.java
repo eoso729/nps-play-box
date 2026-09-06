@@ -13,6 +13,11 @@ import org.example.signer.dto.response.ServicePushResult;
 import org.example.signer.dto.response.XmlGenerationResponseDto;
 import org.example.signer.model.*;
 import org.example.signer.xml.*;
+import org.example.signer.entity.Iso20022Message;
+import org.example.signer.repository.Iso20022MessageRepository;
+import org.example.signer.security.SimulatorKeyProvider;
+import org.example.signer.security.TenantContext;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
@@ -34,6 +39,12 @@ import java.util.Random;
 @Slf4j
 @Service
 public class MessagePipelineService {
+
+    @Autowired(required = false)
+    private SimulatorKeyProvider simulatorKeyProvider;
+
+    @Autowired(required = false)
+    private Iso20022MessageRepository messageRepository;
 
     @Value("${app.keys.private-path}")
     private String privateKeyPath;
@@ -363,8 +374,12 @@ public class MessagePipelineService {
         Document doc = XmlUtils.marshalToDocument(jaxbModel);
         String plainXml = XmlUtils.documentToString(doc);
 
-        PrivateKey privateKey = Signer.loadPrivateKey(privateKeyPath);
-        Signer.sign(doc, privateKey);
+        if (simulatorKeyProvider != null && simulatorKeyProvider.isInitialized()) {
+            simulatorKeyProvider.sign(doc);
+        } else {
+            PrivateKey privateKey = Signer.loadPrivateKey(privateKeyPath);
+            Signer.sign(doc, privateKey);
+        }
         String signedXml = XmlUtils.documentToString(doc);
 
         return XmlGenerationResponseDto.builder()
@@ -389,8 +404,15 @@ public class MessagePipelineService {
         Document doc = XmlUtils.marshalToDocument(jaxbModel);
         String plainXml = XmlUtils.documentToString(doc);
 
-        PrivateKey privateKey = Signer.loadPrivateKey(privateKeyPath);
-        PublicKey publicKey = Signer.loadPublicKey(publicKeyPath);
+        PrivateKey privateKey;
+        PublicKey publicKey;
+        if (simulatorKeyProvider != null && simulatorKeyProvider.isInitialized()) {
+            privateKey = simulatorKeyProvider.getPrivateKey();
+            publicKey = simulatorKeyProvider.getPublicKey();
+        } else {
+            privateKey = Signer.loadPrivateKey(privateKeyPath);
+            publicKey = Signer.loadPublicKey(publicKeyPath);
+        }
 
         Signer.sign(doc, privateKey);
         String signedXml = XmlUtils.documentToString(doc);
@@ -446,6 +468,28 @@ public class MessagePipelineService {
                     .build();
         }
 
+        Long currentTenantId = TenantContext.getTenantId();
+        if (currentTenantId != null && messageRepository != null) {
+            try {
+                Iso20022Message msg = Iso20022Message.builder()
+                        .tenantId(currentTenantId)
+                        .messageType(mapMessageType(messageType))
+                        .messageCode(messageType)
+                        .direction(Iso20022Message.MessageDirection.OUTBOUND)
+                        .rawXml(plainXml)
+                        .signedXml(signedXml)
+                        .encryptedXml(encryptElement != null ? xmlContentToSend : null)
+                        .messageId(msgId)
+                        .status(servicePushResult.isSuccess() ? Iso20022Message.MessageStatus.SENT : Iso20022Message.MessageStatus.FAILED)
+                        .sentAt(LocalDateTime.now())
+                        .processedAt(LocalDateTime.now())
+                        .build();
+                messageRepository.save(msg);
+            } catch (Exception e) {
+                log.warn("Failed to record outbound message for tenant {}: {}", currentTenantId, e.getMessage());
+            }
+        }
+
         return MessageSendResponseDto.builder()
                 .messageType(messageType)
                 .messageId(msgId)
@@ -453,6 +497,26 @@ public class MessagePipelineService {
                 .signedXml(signedXml)
                 .serviceResponse(servicePushResult)
                 .build();
+    }
+
+    private Iso20022Message.MessageType mapMessageType(String messageType) {
+        if (messageType == null) return Iso20022Message.MessageType.TRANSFER;
+        return switch (messageType.toLowerCase()) {
+            case "pain.001" -> Iso20022Message.MessageType.PAYMENT_INITIATION;
+            case "pain.013", "pain.014" -> Iso20022Message.MessageType.PAYMENT_ACTIVATION;
+            case "pain.009", "pain.012" -> Iso20022Message.MessageType.MANDATE_CREATION;
+            case "pain.010" -> Iso20022Message.MessageType.MANDATE_AMENDMENT;
+            case "pain.011" -> Iso20022Message.MessageType.MANDATE_CANCELLATION;
+            case "pain.008" -> Iso20022Message.MessageType.DIRECT_DEBIT;
+            case "pacs.003" -> Iso20022Message.MessageType.CUSTOMER_DIRECT_DEBIT;
+            case "pacs.004" -> Iso20022Message.MessageType.PAYMENT_RETURN;
+            case "pacs.002", "pacs.028" -> Iso20022Message.MessageType.PAYMENT_STATUS;
+            case "acmt.023" -> Iso20022Message.MessageType.NAME_VERIFICATION;
+            case "camt.052" -> Iso20022Message.MessageType.ACCOUNT_REPORT;
+            case "camt.053" -> Iso20022Message.MessageType.BANK_STATEMENT;
+            case "camt.060" -> Iso20022Message.MessageType.BALANCE_ENQUIRY;
+            default -> Iso20022Message.MessageType.TRANSFER;
+        };
     }
 
     private String getOAuthToken(String tokenUrl) throws IOException, InterruptedException {
