@@ -13,6 +13,10 @@ import javax.xml.crypto.dsig.spec.C14NMethodParameterSpec;
 import javax.xml.crypto.dsig.spec.TransformParameterSpec;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.Collections;
 
@@ -52,24 +56,48 @@ public final class Signer {
     }
 
     public static PrivateKey loadPrivateKey(String pemFilePath) throws IOException {
-        try (PEMParser pemParser = new PEMParser(new FileReader(pemFilePath))) {
+        try (Reader reader = new FileReader(pemFilePath)) {
+            return loadPrivateKey(reader);
+        }
+    }
+
+    public static PrivateKey loadPrivateKey(InputStream in) throws IOException {
+        try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+            return loadPrivateKey(reader);
+        }
+    }
+
+    public static PrivateKey loadPrivateKey(Reader reader) throws IOException {
+        try (PEMParser pemParser = new PEMParser(reader)) {
             Object object = pemParser.readObject();
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
             if (object instanceof PrivateKeyInfo) {
                 return converter.getPrivateKey((PrivateKeyInfo) object);
             }
-            throw new IOException("PEM file does not contain a private key of type PrivateKeyInfo.");
+            throw new IOException("PEM input does not contain a private key of type PrivateKeyInfo.");
         }
     }
 
     public static PublicKey loadPublicKey(String pemFilePath) throws IOException {
-        try (PEMParser pemParser = new PEMParser(new FileReader(pemFilePath))) {
+        try (Reader reader = new FileReader(pemFilePath)) {
+            return loadPublicKey(reader);
+        }
+    }
+
+    public static PublicKey loadPublicKey(InputStream in) throws IOException {
+        try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+            return loadPublicKey(reader);
+        }
+    }
+
+    public static PublicKey loadPublicKey(Reader reader) throws IOException {
+        try (PEMParser pemParser = new PEMParser(reader)) {
             Object object = pemParser.readObject();
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
             if (object instanceof SubjectPublicKeyInfo) {
                 return converter.getPublicKey((SubjectPublicKeyInfo) object);
             }
-            throw new IOException("PEM file does not contain a public key of type SubjectPublicKeyInfo.");
+            throw new IOException("PEM input does not contain a public key of type SubjectPublicKeyInfo.");
         }
     }
 }

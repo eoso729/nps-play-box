@@ -68,6 +68,7 @@ public class XmlUtils {
 
     public static Document stringToDocument(String xmlString) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
         DocumentBuilder builder = factory.newDocumentBuilder();
         StringReader stringReader = new StringReader(xmlString);
         InputSource inputSource = new InputSource(stringReader);
