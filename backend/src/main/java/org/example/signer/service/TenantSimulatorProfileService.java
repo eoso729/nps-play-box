@@ -2,8 +2,10 @@ package org.example.signer.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.signer.audit.Auditable;
 import org.example.signer.dto.message.TenantSimulatorProfileDto;
 import org.example.signer.dto.message.UpdateSimulatorProfileDto;
+import org.example.signer.entity.AuditEvent;
 import org.example.signer.entity.Tenant;
 import org.example.signer.entity.TenantSimulatorProfile;
 import org.example.signer.exception.ResourceNotFoundException;
@@ -38,6 +40,7 @@ public class TenantSimulatorProfileService {
         return TenantSimulatorProfileDto.fromEntity(getOrCreateProfile(tenantId));
     }
 
+    @Auditable(eventType = AuditEvent.EventType.CONFIG_CHANGE, action = "UPDATE_SIMULATOR_PROFILE", resourceType = "SIMULATOR_PROFILE", resourceId = "#result != null ? #result.institutionCode : null")
     @Transactional
     public TenantSimulatorProfileDto updateCurrentProfile(UpdateSimulatorProfileDto dto) {
         Long tenantId = resolveTenantId();

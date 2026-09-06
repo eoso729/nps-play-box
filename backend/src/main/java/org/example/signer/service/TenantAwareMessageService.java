@@ -2,9 +2,11 @@ package org.example.signer.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.signer.audit.Auditable;
 import org.example.signer.dto.message.CreateMessageRequestDto;
 import org.example.signer.dto.message.Iso20022MessageDto;
 import org.example.signer.dto.message.MessageStatisticsDto;
+import org.example.signer.entity.AuditEvent;
 import org.example.signer.entity.Iso20022Message;
 import org.example.signer.exception.ResourceNotFoundException;
 import org.example.signer.repository.Iso20022MessageRepository;
@@ -26,6 +28,7 @@ public class TenantAwareMessageService {
     private final Iso20022MessageRepository messageRepository;
     private final SimulatorKeyProvider simulatorKeyProvider;
 
+    @Auditable(eventType = AuditEvent.EventType.ISO20022_OPERATION, action = "CREATE_MESSAGE", resourceType = "ISO20022_MESSAGE", resourceId = "#result != null ? #result.messageUuid.toString() : null")
     @Transactional
     public Iso20022MessageDto createDraftMessage(CreateMessageRequestDto requestDto) {
         Long tenantId = resolveTenantId();
@@ -79,6 +82,7 @@ public class TenantAwareMessageService {
         return page.map(Iso20022MessageDto::fromEntity);
     }
 
+    @Auditable(eventType = AuditEvent.EventType.ISO20022_OPERATION, action = "SIGN_MESSAGE", resourceType = "ISO20022_MESSAGE", resourceId = "#messageUuid.toString()")
     @Transactional
     public Iso20022MessageDto signMessage(UUID messageUuid) {
         Long tenantId = resolveTenantId();
@@ -103,6 +107,7 @@ public class TenantAwareMessageService {
         }
     }
 
+    @Auditable(eventType = AuditEvent.EventType.ISO20022_OPERATION, action = "ENCRYPT_MESSAGE", resourceType = "ISO20022_MESSAGE", resourceId = "#messageUuid.toString()")
     @Transactional
     public Iso20022MessageDto encryptMessage(UUID messageUuid, String elementTagName) {
         Long tenantId = resolveTenantId();
@@ -130,6 +135,7 @@ public class TenantAwareMessageService {
         }
     }
 
+    @Auditable(eventType = AuditEvent.EventType.ISO20022_OPERATION, action = "DISPATCH_MESSAGE", resourceType = "ISO20022_MESSAGE", resourceId = "#messageId")
     @Transactional
     public Iso20022Message recordOutboundMessage(
             Long tenantId,
