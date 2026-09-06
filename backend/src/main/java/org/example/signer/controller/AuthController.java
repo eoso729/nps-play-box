@@ -44,7 +44,8 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(Authentication authentication) {
+        authService.logout(authentication);
         return ResponseEntity.noContent().build();
     }
 }

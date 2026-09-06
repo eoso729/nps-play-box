@@ -54,6 +54,9 @@ public final class Encrypter {
         // Find the first element with this tag
         NodeList nodes = doc.getElementsByTagNameNS("*", tagName);
         if (nodes.getLength() == 0) {
+            nodes = doc.getElementsByTagName(tagName);
+        }
+        if (nodes.getLength() == 0) {
             throw new Exception("No <" + tagName + "> element found to encrypt.");
         }
 

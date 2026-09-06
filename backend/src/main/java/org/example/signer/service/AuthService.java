@@ -249,4 +249,13 @@ public class AuthService {
                         .build())
                 .build();
     }
+
+    public void logout(Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof TenantUserDetails tud) {
+            Long userId = tud.getUser() != null ? tud.getUser().getId() : null;
+            auditService.logAuth(tud.getTenantId(), userId, "LOGOUT", AuditEvent.EventStatus.SUCCESS, null);
+        } else {
+            auditService.logAuth(0L, null, "LOGOUT", AuditEvent.EventStatus.SUCCESS, null);
+        }
+    }
 }
