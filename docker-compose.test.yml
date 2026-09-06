@@ -1,0 +1,32 @@
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: nps-postgres-test
+    environment:
+      TZ: Africa/Lagos
+      POSTGRES_DB: nps_test
+      POSTGRES_USER: nps_test_user
+      POSTGRES_PASSWORD: nps_test_password
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nps_test_user -d nps_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: nps-backend-test
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-test:5432/nps_test
+      SPRING_DATASOURCE_USERNAME: nps_test_user
+      SPRING_DATASOURCE_PASSWORD: nps_test_password
+      SPRING_PROFILES_ACTIVE: test
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    command: ["mvn", "test"]
