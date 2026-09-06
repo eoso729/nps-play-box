@@ -83,6 +83,11 @@ public class AuditEvent {
         }
     }
 
+    @PreUpdate
+    protected void onPreUpdate() {
+        throw new UnsupportedOperationException("Audit events are immutable and cannot be updated");
+    }
+
     public enum EventType {
         AUTH,
         USER_MANAGEMENT,
