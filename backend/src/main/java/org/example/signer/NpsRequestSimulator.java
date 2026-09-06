@@ -6,8 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 @OpenAPIDefinition(info = @Info(title = "NPS Request Simulator", version = "1.0", description = "Documentation for my NPS Request Simulator"))
 public class NpsRequestSimulator {
 

@@ -50,10 +50,17 @@ export const AuthScreen: React.FC = () => {
 
   // Redirect users who are already authenticated
   useEffect(() => {
-    if (isAuthenticated && !isRedirecting) {
-      navigate('/workbench', { replace: true });
+    if (isAuthenticated && !isRedirecting && user) {
+      if (user.role === 'PLATFORM_ADMIN') {
+        navigate('/platform-admin', { replace: true });
+      } else if (user.role === 'TENANT_ADMIN') {
+        navigate('/tenant-admin', { replace: true });
+      } else {
+        navigate('/workbench', { replace: true });
+      }
     }
-  }, [isAuthenticated, isRedirecting, navigate]);
+  }, [isAuthenticated, isRedirecting, user, navigate]);
+
 
   const handleTabSwitch = (newMode: 'signin' | 'register') => {
     setMode(newMode);
@@ -96,16 +103,27 @@ export const AuthScreen: React.FC = () => {
     setAuthError(null);
     setSuccessMessage(null);
     try {
-      await login({ email: data.email, password: data.password });
+      const response = await login({ email: data.email, password: data.password });
       setIsRedirecting(true);
-      setSuccessMessage('Sign in successful! Redirecting to your workbench...');
+      const role = response.user?.role;
+      let destination = '/workbench';
+      let message = 'Sign in successful! Redirecting to your workbench...';
+      if (role === 'PLATFORM_ADMIN') {
+        destination = '/platform-admin';
+        message = 'Sign in successful! Redirecting to the platform dashboard...';
+      } else if (role === 'TENANT_ADMIN') {
+        destination = '/tenant-admin';
+        message = 'Sign in successful! Redirecting to your tenant dashboard...';
+      }
+      setSuccessMessage(message);
       setTimeout(() => {
-        navigate('/workbench');
+        navigate(destination);
       }, 1500);
     } catch (err: any) {
       setAuthError(err.message || 'Authentication failed. Please check your credentials.');
     }
   };
+
 
   const onRegister = async (data: RegisterFormValues) => {
     setAuthError(null);
