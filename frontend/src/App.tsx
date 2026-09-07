@@ -14,6 +14,7 @@ const XmlInspectorPage = React.lazy(() => import('./components/inspector/XmlInsp
 const FlowOrchestratorPage = React.lazy(() => import('./components/orchestrator/FlowOrchestratorPage').then(m => ({ default: m.FlowOrchestratorPage })));
 const TenantAdminDashboard = React.lazy(() => import('./features/tenant-admin/pages/TenantAdminDashboard').then(m => ({ default: m.TenantAdminDashboard })));
 const PlatformAdminDashboard = React.lazy(() => import('./features/platform-admin/pages/PlatformAdminDashboard').then(m => ({ default: m.PlatformAdminDashboard })));
+const AcceptInvitationPage = React.lazy(() => import('./features/tenant-admin/pages/AcceptInvitationPage').then(m => ({ default: m.AcceptInvitationPage })));
 
 const PageLoadingFallback: React.FC = () => (
   <div className="flex items-center justify-center min-h-screen bg-[#f6f9f7]">
@@ -55,6 +56,7 @@ export const App: React.FC = () => {
                 {/* Public auth routes */}
                 <Route path="/login" element={<AuthScreen />} />
                 <Route path="/register" element={<AuthScreen />} />
+                <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
 
                 {/* Platform admin – only PLATFORM_ADMIN */}
                 <Route path="/platform-admin" element={
