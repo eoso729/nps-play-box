@@ -110,4 +110,12 @@ public class EmailService {
         log.info("Seat request status for {} ({}) - Approved: {}, Seats: {}, Notes/Reason: {}",
                 toEmail, tenantName, approved, seatCount, reasonOrNotes);
     }
+
+    public String buildInvitationUrl(String token) {
+        return frontendUrl + "/accept-invitation?token=" + token;
+    }
+
+    public String getFrontendUrl() {
+        return frontendUrl;
+    }
 }

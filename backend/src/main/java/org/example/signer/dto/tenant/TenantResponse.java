@@ -23,4 +23,6 @@ public class TenantResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String metadata;
+    private String invitationToken;
+    private String invitationUrl;
 }

@@ -6,7 +6,9 @@ import org.example.signer.entity.User;
 import org.example.signer.exception.DuplicateSlugException;
 import org.example.signer.exception.InvalidQuotaException;
 import org.example.signer.exception.TenantNotFoundException;
+import org.example.signer.entity.UserInvitation;
 import org.example.signer.repository.TenantRepository;
+import org.example.signer.repository.UserInvitationRepository;
 import org.example.signer.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,12 +39,53 @@ class TenantServiceTest {
     private UserRepository userRepository;
 
     @Autowired
+    private UserInvitationRepository userInvitationRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
+        userInvitationRepository.deleteAll();
         userRepository.deleteAll();
         tenantRepository.deleteAll();
+    }
+
+    @Test
+    @DisplayName("Should create tenant and generate invitation when admin password is omitted")
+    void shouldCreateTenantWithInvitationWhenPasswordOmitted() {
+        CreateTenantRequest request = CreateTenantRequest.builder()
+                .name("Zenith Bank")
+                .slug("zenith-bank")
+                .maxSeats(10)
+                .subscriptionTier("PROFESSIONAL")
+                .adminEmail("admin@zenithbank.com")
+                .adminFirstName("Emmanuel")
+                .adminLastName("Oso")
+                .build();
+
+        TenantResponse response = tenantService.createTenant(request);
+
+        assertNotNull(response.getId());
+        assertEquals("zenith-bank", response.getSlug());
+        assertEquals(10, response.getMaxSeats());
+        assertEquals(0, response.getUsedSeats());
+        assertEquals("ACTIVE", response.getStatus());
+        assertNotNull(response.getInvitationToken());
+        assertNotNull(response.getInvitationUrl());
+        assertTrue(response.getInvitationUrl().contains(response.getInvitationToken()));
+
+        // Active admin user should NOT exist yet
+        assertTrue(userRepository.findByEmailAndTenantId("admin@zenithbank.com", response.getId()).isEmpty());
+
+        // Pending invitation should exist
+        UserInvitation inv = userInvitationRepository.findByInvitationToken(response.getInvitationToken())
+                .orElseThrow();
+        assertEquals(response.getId(), inv.getTenantId());
+        assertEquals("admin@zenithbank.com", inv.getEmail());
+        assertEquals(User.UserRole.TENANT_ADMIN, inv.getRole());
+        assertNull(inv.getAcceptedAt());
+        assertFalse(inv.isExpired());
     }
 
     @Test

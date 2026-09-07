@@ -64,6 +64,16 @@ public class UserController {
         return ResponseEntity.ok(userService.acceptInvitation(request));
     }
 
+    @Operation(summary = "Verify an invitation token", description = "Public endpoint to validate token before accepting")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Invitation status verified successfully")
+    })
+    @GetMapping("/invitations/verify")
+    public ResponseEntity<VerifyInvitationResponse> verifyInvitation(
+            @RequestParam("token") String token) {
+        return ResponseEntity.ok(userService.verifyInvitation(token));
+    }
+
     @Operation(summary = "List users in the tenant organization", description = "Tenant administrators only, paginated")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Users retrieved successfully"),

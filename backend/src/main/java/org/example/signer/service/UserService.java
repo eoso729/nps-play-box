@@ -162,6 +162,59 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public VerifyInvitationResponse verifyInvitation(String token) {
+        if (!StringUtils.hasText(token)) {
+            return VerifyInvitationResponse.builder()
+                    .valid(false)
+                    .message("Invitation token is required")
+                    .build();
+        }
+
+        java.util.Optional<UserInvitation> invitationOpt = invitationRepository.findByInvitationToken(token.trim());
+        if (invitationOpt.isEmpty()) {
+            return VerifyInvitationResponse.builder()
+                    .valid(false)
+                    .message("Invalid or non-existent invitation token")
+                    .build();
+        }
+
+        UserInvitation invitation = invitationOpt.get();
+        if (invitation.isAccepted()) {
+            return VerifyInvitationResponse.builder()
+                    .token(token)
+                    .email(invitation.getEmail())
+                    .valid(false)
+                    .message("This invitation has already been accepted")
+                    .build();
+        }
+
+        if (invitation.isExpired()) {
+            return VerifyInvitationResponse.builder()
+                    .token(token)
+                    .email(invitation.getEmail())
+                    .valid(false)
+                    .message("This invitation has expired")
+                    .build();
+        }
+
+        Tenant tenant = tenantRepository.findById(invitation.getTenantId()).orElse(null);
+        String tenantName = tenant != null ? tenant.getName() : "Unknown";
+        String tenantSlug = tenant != null ? tenant.getSlug() : "";
+
+        return VerifyInvitationResponse.builder()
+                .token(invitation.getInvitationToken())
+                .email(invitation.getEmail())
+                .role(invitation.getRole().name())
+                .tenantId(invitation.getTenantId())
+                .tenantName(tenantName)
+                .tenantSlug(tenantSlug)
+                .valid(true)
+                .message("Invitation is valid")
+                .expiresAt(invitation.getExpiresAt())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
     public Page<UserResponse> getUsersByTenant(Long tenantId, Pageable pageable) {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new TenantNotFoundException(tenantId));
