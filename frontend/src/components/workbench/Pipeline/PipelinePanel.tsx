@@ -15,9 +15,10 @@ export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result, mode = 'ge
   );
 
   useEffect(() => {
-    if (mode === 'dispatch') {
-      setActiveTab('response');
-    } else {
+    // Only reset if the current tab is invalid for the new mode.
+    // 'response' tab only exists in dispatch mode — if switching to generation, fall back to 'plain'.
+    // All other tabs (plain, signed) are valid in both modes, so preserve them.
+    if (mode === 'generation' && activeTab === 'response') {
       setActiveTab('plain');
     }
   }, [mode]);
@@ -116,6 +117,7 @@ export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result, mode = 'ge
         ) : activeTab === 'plain' ? (
           <XmlPane
             title="Plain XML"
+            mode={mode}
             stageNum={mode === 'dispatch' ? 2 : 1}
             stageColor="#16a34a"
             statusText={plainStatus === 'gen' ? 'Generated' : plainStatus === 'error' ? 'Error' : 'Awaiting input'}
@@ -126,6 +128,7 @@ export const PipelinePanel: React.FC<PipelinePanelProps> = ({ result, mode = 'ge
         ) : (
           <XmlPane
             title="Signed XML"
+            mode={mode}
             stageNum={mode === 'dispatch' ? 3 : 2}
             stageColor="#6366f1"
             statusText={signedStatus === 'signed' ? 'Signed' : signedStatus === 'error' ? 'Error' : 'Awaiting input'}
