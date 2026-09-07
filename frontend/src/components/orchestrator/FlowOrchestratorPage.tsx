@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useOptionalAuth } from '../../context/AuthContext';
 import {
   ORCHESTRATOR_FLOWS,
   computeClientNextStepPrefill,
@@ -17,7 +17,9 @@ import { FormFieldset } from '../workbench/MessageConfigurator/FormFieldset';
 import { validateFormField, validateMessageForm } from '../../utils/formValidation';
 
 export const FlowOrchestratorPage: React.FC = () => {
-  const { user } = useAuth();
+  const auth = useOptionalAuth();
+  const user = auth?.user;
+  const isViewer = user?.role === 'VIEWER';
   const navigate = useNavigate();
   const { flowId: paramFlowId } = useParams<{ flowId?: string }>();
 
@@ -633,8 +635,9 @@ export const FlowOrchestratorPage: React.FC = () => {
           <button
             type="button"
             onClick={handleAutoRun}
-            disabled={isAutoRunning}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#16a34a] to-[#15803d] text-white text-[12.5px] font-bold shadow-md hover:from-[#15803d] hover:to-[#0f5132] transition-all cursor-pointer disabled:opacity-50"
+            disabled={isAutoRunning || isViewer}
+            title={isViewer ? "Auto-run is restricted to Developer and Admin roles" : undefined}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#16a34a] to-[#15803d] text-white text-[12.5px] font-bold shadow-md hover:from-[#15803d] hover:to-[#0f5132] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isAutoRunning ? (
               <>
@@ -646,8 +649,8 @@ export const FlowOrchestratorPage: React.FC = () => {
               </>
             ) : (
               <>
-                <span>⚡</span>
-                1-Click Auto Run
+                <span>{isViewer ? '🔒' : '⚡'}</span>
+                {isViewer ? 'Auto Run (Restricted)' : '1-Click Auto Run'}
               </>
             )}
           </button>
@@ -671,6 +674,17 @@ export const FlowOrchestratorPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Read-Only Notice for Viewers */}
+      {isViewer && (
+        <div className="bg-slate-50 border-b border-slate-200 px-6 py-2 text-[12px] text-slate-700 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-600">👁 Viewer (Read-Only Mode)</span>
+            <span className="text-slate-500">— You can review workflow definitions and step payloads, but executing orchestrator flows requires Developer or Admin access.</span>
+          </div>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700 uppercase">Read Only</span>
+        </div>
+      )}
 
       {/* Stepper Timeline & Progression */}
       <div className="bg-[#f2f7f4] border-b border-[#e1e9e3] px-6 py-3 flex-shrink-0">
@@ -980,25 +994,30 @@ export const FlowOrchestratorPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleExecuteStep('GENERATE')}
-                  disabled={isExecutingStep || isAutoRunning}
+                  disabled={isExecutingStep || isAutoRunning || isViewer}
+                  title={isViewer ? "Generating XML is restricted to Developer or Admin roles" : undefined}
                   className="flex-1 border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                   style={{
-                    background: isExecutingStep ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
-                    boxShadow: isExecutingStep ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
+                    background: (isExecutingStep || isViewer) ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
+                    boxShadow: (isExecutingStep || isViewer) ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
                   }}
                 >
-                  <span>⚡</span>
-                  <span>{isExecutingStep ? 'Generating...' : 'Generate ISO 20022 XML'}</span>
+                  <span>{isViewer ? '🔒' : '⚡'}</span>
+                  <span>{isExecutingStep ? 'Generating...' : isViewer ? 'Generate XML (Restricted)' : 'Generate ISO 20022 XML'}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleExecuteStep('SEND')}
-                  disabled={isExecutingStep || isAutoRunning}
+                  disabled={isExecutingStep || isAutoRunning || isViewer}
+                  title={isViewer ? "Sending to pipeline is restricted to Developer or Admin roles" : undefined}
                   className="flex-1 border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 bg-[#0f3a22] hover:bg-[#1a5534] shadow-md"
+                  style={{
+                    background: isViewer ? '#6b7280' : undefined,
+                  }}
                 >
-                  <span>🚀</span>
-                  <span>{isExecutingStep ? 'Processing...' : 'Send to Pipeline'}</span>
+                  <span>{isViewer ? '🔒' : '🚀'}</span>
+                  <span>{isExecutingStep ? 'Processing...' : isViewer ? 'Send (Restricted)' : 'Send to Pipeline'}</span>
                 </button>
               </div>
 

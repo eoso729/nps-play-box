@@ -9,16 +9,23 @@ import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
 import org.example.signer.exception.DuplicateSlugException;
 import org.example.signer.exception.InvalidQuotaException;
+import org.example.signer.exception.ResourceNotFoundException;
 import org.example.signer.exception.TenantNotFoundException;
+import org.example.signer.entity.UserInvitation;
 import org.example.signer.repository.TenantRepository;
+import org.example.signer.repository.UserInvitationRepository;
 import org.example.signer.repository.UserRepository;
+import org.example.signer.security.TenantUserDetails;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,10 +37,16 @@ public class TenantService {
     private final TenantRepository tenantRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserInvitationRepository invitationRepository;
+    private final EmailService emailService;
+
+    public TenantResponse createTenant(CreateTenantRequest request) {
+        return createTenant(request, null);
+    }
 
     @Auditable(eventType = AuditEvent.EventType.TENANT_MANAGEMENT, action = "CREATE_TENANT", resourceType = "TENANT", resourceId = "#result.id")
     @Transactional
-    public TenantResponse createTenant(CreateTenantRequest request) {
+    public TenantResponse createTenant(CreateTenantRequest request, Long currentUserId) {
         String slug = request.getSlug().trim().toLowerCase();
         if (tenantRepository.existsBySlug(slug)) {
             throw new DuplicateSlugException(slug, null);
@@ -57,23 +70,72 @@ public class TenantService {
 
         tenant = tenantRepository.save(tenant);
 
-        User adminUser = User.builder()
-                .tenantId(tenant.getId())
-                .userUuid(UUID.randomUUID())
-                .email(request.getAdminEmail().trim())
-                .username(request.getAdminEmail().trim())
-                .passwordHash(passwordEncoder.encode(request.getAdminPassword()))
-                .firstName(request.getAdminFirstName().trim())
-                .lastName(request.getAdminLastName().trim())
-                .role(User.UserRole.TENANT_ADMIN)
-                .status(User.UserStatus.ACTIVE)
-                .authProvider("LOCAL")
-                .build();
+        String invitationToken = null;
+        String invitationUrl = null;
+        int usedSeats = 0;
 
-        userRepository.save(adminUser);
+        if (StringUtils.hasText(request.getAdminPassword())) {
+            User adminUser = User.builder()
+                    .tenantId(tenant.getId())
+                    .userUuid(UUID.randomUUID())
+                    .email(request.getAdminEmail().trim())
+                    .username(request.getAdminEmail().trim())
+                    .passwordHash(passwordEncoder.encode(request.getAdminPassword().trim()))
+                    .firstName(StringUtils.hasText(request.getAdminFirstName()) ? request.getAdminFirstName().trim() : "")
+                    .lastName(StringUtils.hasText(request.getAdminLastName()) ? request.getAdminLastName().trim() : "")
+                    .role(User.UserRole.TENANT_ADMIN)
+                    .status(User.UserStatus.ACTIVE)
+                    .authProvider("LOCAL")
+                    .build();
 
-        log.info("Created tenant '{}' (id: {}) with admin user '{}'", tenant.getName(), tenant.getId(), adminUser.getEmail());
-        return mapToResponse(tenant, 1);
+            userRepository.save(adminUser);
+            usedSeats = 1;
+            log.info("Created tenant '{}' (id: {}) with active admin user '{}'", tenant.getName(), tenant.getId(), adminUser.getEmail());
+        } else {
+            Long inviterId = resolveCurrentUserId(currentUserId);
+            if (inviterId == null) {
+                throw new IllegalStateException("Cannot create tenant invitation: Authenticated platform administrator context is required");
+            }
+
+            User inviter = userRepository.findById(inviterId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", inviterId));
+
+            String token = UUID.randomUUID().toString();
+            UserInvitation invitation = UserInvitation.builder()
+                    .tenantId(tenant.getId())
+                    .email(request.getAdminEmail().trim().toLowerCase())
+                    .role(User.UserRole.TENANT_ADMIN)
+                    .invitationToken(token)
+                    .invitedBy(inviter.getId())
+                    .expiresAt(LocalDateTime.now().plusHours(72))
+                    .build();
+
+            invitationRepository.save(invitation);
+
+            invitationToken = token;
+            invitationUrl = emailService.buildInvitationUrl(token);
+
+            String inviterName = (inviter.getFirstName() + " " + inviter.getLastName()).trim();
+            if (!StringUtils.hasText(inviterName)) {
+                inviterName = "Platform Administrator";
+            }
+
+            emailService.sendInvitationEmail(
+                    request.getAdminEmail().trim(),
+                    tenant.getName(),
+                    inviterName,
+                    token,
+                    "Welcome to NPS Play Box! You have been provisioned as the Primary Administrator for " + tenant.getName() + "."
+            );
+
+            log.info("Created tenant '{}' (id: {}) and dispatched invitation token to admin '{}' by inviter '{}' (id: {})",
+                    tenant.getName(), tenant.getId(), request.getAdminEmail(), inviter.getEmail(), inviter.getId());
+        }
+
+        TenantResponse response = mapToResponse(tenant, usedSeats);
+        response.setInvitationToken(invitationToken);
+        response.setInvitationUrl(invitationUrl);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -195,5 +257,20 @@ public class TenantService {
                 .updatedAt(tenant.getUpdatedAt())
                 .metadata(tenant.getMetadata())
                 .build();
+    }
+
+    private Long resolveCurrentUserId(Long explicitUserId) {
+        if (explicitUserId != null && explicitUserId > 0) {
+            return explicitUserId;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() != null) {
+            if (authentication.getPrincipal() instanceof TenantUserDetails tud && tud.getUser() != null) {
+                return tud.getUser().getId();
+            } else if (authentication.getPrincipal() instanceof User u) {
+                return u.getId();
+            }
+        }
+        return null;
     }
 }

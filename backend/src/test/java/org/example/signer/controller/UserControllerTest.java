@@ -179,6 +179,34 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("Public user can verify invitation token without authentication")
+    void publicShouldVerifyInvitationWithoutAuth() throws Exception {
+        InviteUserRequest inviteReq = InviteUserRequest.builder()
+                .email("verify@acmebank.com")
+                .role("DEVELOPER")
+                .build();
+
+        MvcResult inviteResult = mockMvc.perform(post("/api/v1/users/invite")
+                        .header("Authorization", "Bearer " + tenantAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inviteReq)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        InvitationResponse inv = objectMapper.readValue(
+                inviteResult.getResponse().getContentAsString(), InvitationResponse.class);
+
+        mockMvc.perform(get("/api/v1/users/invitations/verify")
+                        .param("token", inv.getInvitationToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(true))
+                .andExpect(jsonPath("$.email").value("verify@acmebank.com"))
+                .andExpect(jsonPath("$.role").value("DEVELOPER"))
+                .andExpect(jsonPath("$.tenantName").value("Acme Bank"))
+                .andExpect(jsonPath("$.tenantSlug").value("acme-bank"));
+    }
+
+    @Test
     @DisplayName("Reject accept invitation with invalid token")
     void shouldRejectInvalidInvitationToken() throws Exception {
         AcceptInvitationRequest acceptReq = AcceptInvitationRequest.builder()

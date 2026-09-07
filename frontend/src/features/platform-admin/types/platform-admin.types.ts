@@ -23,6 +23,8 @@ export interface PlatformTenant {
   createdAt: string;
   updatedAt: string;
   metadata?: string;
+  invitationToken?: string;
+  invitationUrl?: string;
 }
 
 export interface CreateTenantPayload {
@@ -31,6 +33,7 @@ export interface CreateTenantPayload {
   adminEmail: string;
   adminFirstName?: string;
   adminLastName?: string;
+  adminPassword?: string;
   maxSeats: number;
   subscriptionTier: string;
 }

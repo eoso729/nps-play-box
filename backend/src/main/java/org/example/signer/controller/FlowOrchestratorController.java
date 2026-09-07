@@ -3,6 +3,7 @@ package org.example.signer.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.signer.dto.orchestrator.*;
+import org.example.signer.security.RequireDeveloper;
 import org.example.signer.service.FlowOrchestratorService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +39,7 @@ public class FlowOrchestratorController {
         }
     }
 
+    @RequireDeveloper
     @PostMapping("/execute-step")
     public ResponseEntity<FlowStepExecutionResponseDto> executeStep(@RequestBody FlowStepExecutionRequestDto requestDto) {
         try {
@@ -53,6 +55,7 @@ public class FlowOrchestratorController {
         }
     }
 
+    @RequireDeveloper
     @PostMapping("/map-next-step")
     public ResponseEntity<FlowMapNextStepResponseDto> mapNextStep(@RequestBody FlowMapNextStepRequestDto requestDto) {
         try {
@@ -64,6 +67,7 @@ public class FlowOrchestratorController {
         }
     }
 
+    @RequireDeveloper
     @PostMapping("/run-flow")
     public ResponseEntity<FlowAutoRunResponseDto> runFlow(@RequestBody FlowAutoRunRequestDto requestDto) {
         try {

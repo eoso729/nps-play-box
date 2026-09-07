@@ -34,13 +34,14 @@ public class CreateTenantRequest {
     @Email(message = "Invalid email format")
     private String adminEmail;
 
-    @NotBlank(message = "Admin first name is required")
     private String adminFirstName;
 
-    @NotBlank(message = "Admin last name is required")
     private String adminLastName;
 
-    @NotBlank(message = "Admin password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String adminPassword;
+
+    public void setAdminPassword(String adminPassword) {
+        this.adminPassword = (adminPassword != null && !adminPassword.isBlank()) ? adminPassword.trim() : null;
+    }
 }

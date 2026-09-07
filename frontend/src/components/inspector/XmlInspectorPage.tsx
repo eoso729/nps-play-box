@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useOptionalAuth } from '../../context/AuthContext';
 import { inspectXml, autoFixXml, getAllSamples } from '../../api/validation';
 import { ValidationReport, MessageSample } from '../../types/validation';
 
 export const XmlInspectorPage: React.FC = () => {
-  const { user } = useAuth();
+  const auth = useOptionalAuth();
+  const isViewer = auth?.user?.role === 'VIEWER';
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -225,8 +226,9 @@ export const XmlInspectorPage: React.FC = () => {
   const errorLines = new Set((report?.issues || []).filter(i => i.severity === 'ERROR').map(i => i.lineNumber));
   const warningLines = new Set((report?.issues || []).filter(i => i.severity === 'WARNING').map(i => i.lineNumber));
 
+  const user = auth?.user;
   const displayName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
     : 'Developer';
 
   return (
@@ -407,9 +409,9 @@ export const XmlInspectorPage: React.FC = () => {
           <button
             type="button"
             onClick={handleFormatOnly}
-            disabled={isFixing || !xmlContent.trim()}
+            disabled={isFixing || !xmlContent.trim() || isViewer}
             className="px-3.5 py-2 border border-[#bce3cb] bg-[#e6f6ec] hover:bg-[#d5eedf] rounded-lg text-[12.5px] font-bold text-[#15803d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
-            title="Clean format XML with 4-space indentation without mutating field values"
+            title={isViewer ? "Format & auto-fix are restricted to Developer or Admin roles" : "Clean format XML with 4-space indentation without mutating field values"}
           >
             <span>🧹</span> Format XML
           </button>
@@ -417,8 +419,13 @@ export const XmlInspectorPage: React.FC = () => {
           <button
             type="button"
             onClick={handleAutoFix}
-            disabled={isFixing || !xmlContent.trim()}
+            disabled={isFixing || !xmlContent.trim() || isViewer}
+            title={isViewer ? "Auto-fix is restricted to Developer or Admin roles" : undefined}
             className="px-4 py-2 rounded-lg text-white font-bold text-[13px] transition-all bg-gradient-to-r from-purple-600 to-indigo-600 shadow-[0_3px_10px_rgba(124,58,237,0.25)] hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
+            style={{
+              background: isViewer ? '#6b7280' : undefined,
+              boxShadow: isViewer ? 'none' : undefined,
+            }}
           >
             {isFixing ? (
               <>
@@ -430,7 +437,7 @@ export const XmlInspectorPage: React.FC = () => {
               </>
             ) : (
               <>
-                <span>✨</span> One-Click Auto-Fix & Format
+                <span>{isViewer ? '🔒' : '✨'}</span> {isViewer ? 'Auto-Fix (Restricted)' : 'One-Click Auto-Fix & Format'}
               </>
             )}
           </button>
@@ -444,6 +451,17 @@ export const XmlInspectorPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Read-Only Notice for Viewers */}
+      {isViewer && (
+        <div className="bg-slate-50 border-b border-slate-200 px-6 py-2 text-[12px] text-slate-700 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-slate-600">👁 Viewer (Read-Only Mode)</span>
+            <span className="text-slate-500">— You can validate XML payloads and inspect compliance diagnostics, but auto-fix repairs require Developer or Admin access.</span>
+          </div>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-200 text-slate-700 uppercase">Read Only</span>
+        </div>
+      )}
 
       {/* Health Metrics & Status Banner */}
       {report && (

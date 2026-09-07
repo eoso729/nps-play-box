@@ -91,6 +91,7 @@ public class SecurityConfig {
                     "/api/v1/auth/**",
                     "/api/v1/public/**",
                     "/api/v1/users/accept-invitation",
+                    "/api/v1/users/invitations/verify",
                     "/api/auth/**",
                     "/oauth2/**",
                     "/login/oauth2/**",

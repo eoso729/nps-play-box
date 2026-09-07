@@ -10,6 +10,7 @@ import org.example.signer.entity.User;
 import org.example.signer.entity.UserInvitation;
 import org.example.signer.exception.InvalidQuotaException;
 import org.example.signer.exception.QuotaExceededException;
+import org.example.signer.exception.ResourceNotFoundException;
 import org.example.signer.exception.TenantNotFoundException;
 import org.example.signer.repository.TenantRepository;
 import org.example.signer.repository.UserInvitationRepository;
@@ -84,20 +85,29 @@ public class UserService {
                     + tenant.getMaxSeats() + ", active users: " + activeUsers + ", pending invitations: " + activePendingCount);
         }
 
+        if (invitedBy == null) {
+            throw new IllegalStateException("Cannot invite user: Inviter user ID is required");
+        }
+
+        User inviter = userRepository.findById(invitedBy)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", invitedBy));
+
         String token = generateInvitationToken();
         UserInvitation invitation = UserInvitation.builder()
                 .tenantId(tenantId)
                 .email(email)
                 .role(role)
                 .invitationToken(token)
-                .invitedBy(invitedBy != null ? invitedBy : 0L)
+                .invitedBy(inviter.getId())
                 .expiresAt(LocalDateTime.now().plusHours(INVITATION_EXPIRY_HOURS))
                 .build();
 
         invitation = invitationRepository.save(invitation);
 
-        User inviter = invitedBy != null ? userRepository.findById(invitedBy).orElse(null) : null;
-        String inviterName = inviter != null ? (inviter.getFirstName() + " " + inviter.getLastName()).trim() : "An administrator";
+        String inviterName = (inviter.getFirstName() + " " + inviter.getLastName()).trim();
+        if (!StringUtils.hasText(inviterName)) {
+            inviterName = "An administrator";
+        }
 
         emailService.sendInvitationEmail(
                 email,
@@ -159,6 +169,59 @@ public class UserService {
 
         log.info("Invitation accepted: userId={}, tenantId={}, email={}", user.getId(), tenant.getId(), user.getEmail());
         return mapToResponse(user, tenant);
+    }
+
+    @Transactional(readOnly = true)
+    public VerifyInvitationResponse verifyInvitation(String token) {
+        if (!StringUtils.hasText(token)) {
+            return VerifyInvitationResponse.builder()
+                    .valid(false)
+                    .message("Invitation token is required")
+                    .build();
+        }
+
+        java.util.Optional<UserInvitation> invitationOpt = invitationRepository.findByInvitationToken(token.trim());
+        if (invitationOpt.isEmpty()) {
+            return VerifyInvitationResponse.builder()
+                    .valid(false)
+                    .message("Invalid or non-existent invitation token")
+                    .build();
+        }
+
+        UserInvitation invitation = invitationOpt.get();
+        if (invitation.isAccepted()) {
+            return VerifyInvitationResponse.builder()
+                    .token(token)
+                    .email(invitation.getEmail())
+                    .valid(false)
+                    .message("This invitation has already been accepted")
+                    .build();
+        }
+
+        if (invitation.isExpired()) {
+            return VerifyInvitationResponse.builder()
+                    .token(token)
+                    .email(invitation.getEmail())
+                    .valid(false)
+                    .message("This invitation has expired")
+                    .build();
+        }
+
+        Tenant tenant = tenantRepository.findById(invitation.getTenantId()).orElse(null);
+        String tenantName = tenant != null ? tenant.getName() : "Unknown";
+        String tenantSlug = tenant != null ? tenant.getSlug() : "";
+
+        return VerifyInvitationResponse.builder()
+                .token(invitation.getInvitationToken())
+                .email(invitation.getEmail())
+                .role(invitation.getRole().name())
+                .tenantId(invitation.getTenantId())
+                .tenantName(tenantName)
+                .tenantSlug(tenantSlug)
+                .valid(true)
+                .message("Invitation is valid")
+                .expiresAt(invitation.getExpiresAt())
+                .build();
     }
 
     @Transactional(readOnly = true)

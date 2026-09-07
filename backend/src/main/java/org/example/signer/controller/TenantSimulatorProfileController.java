@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.signer.dto.message.TenantSimulatorProfileDto;
 import org.example.signer.dto.message.UpdateSimulatorProfileDto;
+import org.example.signer.security.RequireTenantAdmin;
 import org.example.signer.service.TenantSimulatorProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,7 @@ public class TenantSimulatorProfileController {
         @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid profile payload")
     })
+    @RequireTenantAdmin
     @PutMapping
     public ResponseEntity<TenantSimulatorProfileDto> updateProfile(@Valid @RequestBody UpdateSimulatorProfileDto dto) {
         return ResponseEntity.ok(profileService.updateCurrentProfile(dto));

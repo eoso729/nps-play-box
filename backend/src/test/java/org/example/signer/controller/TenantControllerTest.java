@@ -164,6 +164,33 @@ class TenantControllerTest {
     }
 
     @Test
+    @DisplayName("Platform admin should successfully create a new tenant with invitation when password omitted")
+    void platformAdminShouldCreateTenantWithInvitation() throws Exception {
+        CreateTenantRequest request = CreateTenantRequest.builder()
+                .name("Zenith Bank")
+                .slug("zenith-invitation")
+                .maxSeats(10)
+                .subscriptionTier("PROFESSIONAL")
+                .adminEmail("admin@zenith-invitation.com")
+                .adminFirstName("Emmanuel")
+                .adminLastName("Oso")
+                .build();
+
+        mockMvc.perform(post("/api/v1/tenants")
+                        .header("Authorization", "Bearer " + platformAdminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.slug").value("zenith-invitation"))
+                .andExpect(jsonPath("$.maxSeats").value(10))
+                .andExpect(jsonPath("$.usedSeats").value(0))
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.invitationToken").isString())
+                .andExpect(jsonPath("$.invitationUrl").isString());
+    }
+
+    @Test
     @DisplayName("Should return 409 Conflict when creating tenant with duplicate slug")
     void shouldRejectDuplicateSlugOnCreate() throws Exception {
         CreateTenantRequest request = CreateTenantRequest.builder()

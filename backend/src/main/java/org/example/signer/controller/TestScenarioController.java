@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.signer.dto.message.CreateTestScenarioDto;
 import org.example.signer.dto.message.TestScenarioDto;
 import org.example.signer.entity.TestScenario;
+import org.example.signer.security.RequireDeveloper;
 import org.example.signer.service.TestScenarioService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,7 @@ public class TestScenarioController {
         @ApiResponse(responseCode = "201", description = "Test scenario created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request payload")
     })
+    @RequireDeveloper
     @PostMapping
     public ResponseEntity<TestScenarioDto> createScenario(@Valid @RequestBody CreateTestScenarioDto dto) {
         TestScenarioDto created = scenarioService.createScenario(dto);
@@ -64,6 +66,7 @@ public class TestScenarioController {
 
     @Operation(summary = "Update test scenario status", description = "Changes scenario status between DRAFT, ACTIVE, and ARCHIVED")
     @ApiResponse(responseCode = "200", description = "Status updated successfully")
+    @RequireDeveloper
     @PutMapping("/{scenarioUuid}/status")
     public ResponseEntity<TestScenarioDto> updateStatus(
             @PathVariable UUID scenarioUuid,
@@ -74,6 +77,7 @@ public class TestScenarioController {
 
     @Operation(summary = "Record test scenario execution run", description = "Updates last execution timestamp, counter, and run status")
     @ApiResponse(responseCode = "200", description = "Scenario run recorded successfully")
+    @RequireDeveloper
     @PostMapping("/{scenarioUuid}/run")
     public ResponseEntity<TestScenarioDto> recordRun(
             @PathVariable UUID scenarioUuid,
@@ -84,6 +88,7 @@ public class TestScenarioController {
 
     @Operation(summary = "Delete test scenario", description = "Permanently removes test scenario within tenant boundaries")
     @ApiResponse(responseCode = "204", description = "Scenario deleted successfully")
+    @RequireDeveloper
     @DeleteMapping("/{scenarioUuid}")
     public ResponseEntity<Void> deleteScenario(@PathVariable UUID scenarioUuid) {
         scenarioService.deleteScenario(scenarioUuid);

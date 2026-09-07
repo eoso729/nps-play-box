@@ -42,6 +42,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     ? { label: 'Platform Admin', color: 'bg-emerald-700 text-white' }
     : user?.role === 'TENANT_ADMIN'
     ? { label: 'Tenant Admin', color: 'bg-blue-700 text-white' }
+    : user?.role === 'DEVELOPER'
+    ? { label: 'Developer', color: 'bg-teal-700 text-white' }
+    : user?.role === 'VIEWER'
+    ? { label: 'Viewer (Read-Only)', color: 'bg-slate-600 text-white' }
     : null;
 
   return (
