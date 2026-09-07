@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.signer.dto.*;
 import org.example.signer.dto.response.MessageSendResponseDto;
+import org.example.signer.security.RequireDeveloper;
 import org.example.signer.service.MessagePipelineService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@RequireDeveloper
 public class PushController {
 
     private final MessagePipelineService messagePipelineService;

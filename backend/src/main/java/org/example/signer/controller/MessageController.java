@@ -11,6 +11,7 @@ import org.example.signer.dto.message.CreateMessageRequestDto;
 import org.example.signer.dto.message.Iso20022MessageDto;
 import org.example.signer.dto.message.MessageStatisticsDto;
 import org.example.signer.entity.Iso20022Message;
+import org.example.signer.security.RequireDeveloper;
 import org.example.signer.service.TenantAwareMessageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,7 @@ public class MessageController {
         @ApiResponse(responseCode = "201", description = "Draft message created successfully"),
         @ApiResponse(responseCode = "400", description = "Invalid request payload")
     })
+    @RequireDeveloper
     @PostMapping
     public ResponseEntity<Iso20022MessageDto> createMessage(@Valid @RequestBody CreateMessageRequestDto requestDto) {
         Iso20022MessageDto created = messageService.createDraftMessage(requestDto);
@@ -68,6 +70,7 @@ public class MessageController {
         @ApiResponse(responseCode = "200", description = "Message signed successfully"),
         @ApiResponse(responseCode = "404", description = "Message not found in tenant")
     })
+    @RequireDeveloper
     @PostMapping("/{messageUuid}/sign")
     public ResponseEntity<Iso20022MessageDto> signMessage(@PathVariable UUID messageUuid) {
         return ResponseEntity.ok(messageService.signMessage(messageUuid));
@@ -78,6 +81,7 @@ public class MessageController {
         @ApiResponse(responseCode = "200", description = "Element encrypted successfully"),
         @ApiResponse(responseCode = "404", description = "Message not found in tenant")
     })
+    @RequireDeveloper
     @PostMapping("/{messageUuid}/encrypt")
     public ResponseEntity<Iso20022MessageDto> encryptMessage(
             @PathVariable UUID messageUuid,

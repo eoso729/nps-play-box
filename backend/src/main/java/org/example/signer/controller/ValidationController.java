@@ -3,6 +3,7 @@ package org.example.signer.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.signer.dto.validation.*;
+import org.example.signer.security.RequireDeveloper;
 import org.example.signer.validation.IsoMessageDefinition;
 import org.example.signer.validation.IsoMessageRegistry;
 import org.example.signer.validation.NibssValidationRules;
@@ -34,6 +35,7 @@ public class ValidationController {
         }
     }
 
+    @RequireDeveloper
     @PostMapping("/auto-fix")
     public ResponseEntity<XmlAutoFixResponseDto> autoFixXml(@RequestBody XmlAutoFixRequestDto request) {
         try {
