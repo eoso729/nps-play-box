@@ -34,7 +34,7 @@ public class UserInvitation {
     @Column(name = "invitation_token", unique = true, nullable = false)
     private String invitationToken;
     
-    @Column(name = "invited_by", nullable = false)
+    @Column(name = "invited_by")
     private Long invitedBy;
     
     @Column(name = "expires_at", nullable = false)
