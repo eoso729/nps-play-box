@@ -84,13 +84,18 @@ public class UserService {
                     + tenant.getMaxSeats() + ", active users: " + activeUsers + ", pending invitations: " + activePendingCount);
         }
 
+        Long inviterId = null;
+        if (invitedBy != null && invitedBy > 0 && userRepository.existsById(invitedBy)) {
+            inviterId = invitedBy;
+        }
+
         String token = generateInvitationToken();
         UserInvitation invitation = UserInvitation.builder()
                 .tenantId(tenantId)
                 .email(email)
                 .role(role)
                 .invitationToken(token)
-                .invitedBy(invitedBy != null ? invitedBy : 0L)
+                .invitedBy(inviterId)
                 .expiresAt(LocalDateTime.now().plusHours(INVITATION_EXPIRY_HOURS))
                 .build();
 

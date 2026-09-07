@@ -36,9 +36,13 @@ public class TenantService {
     private final UserInvitationRepository invitationRepository;
     private final EmailService emailService;
 
+    public TenantResponse createTenant(CreateTenantRequest request) {
+        return createTenant(request, null);
+    }
+
     @Auditable(eventType = AuditEvent.EventType.TENANT_MANAGEMENT, action = "CREATE_TENANT", resourceType = "TENANT", resourceId = "#result.id")
     @Transactional
-    public TenantResponse createTenant(CreateTenantRequest request) {
+    public TenantResponse createTenant(CreateTenantRequest request, Long currentUserId) {
         String slug = request.getSlug().trim().toLowerCase();
         if (tenantRepository.existsBySlug(slug)) {
             throw new DuplicateSlugException(slug, null);
@@ -84,13 +88,18 @@ public class TenantService {
             usedSeats = 1;
             log.info("Created tenant '{}' (id: {}) with active admin user '{}'", tenant.getName(), tenant.getId(), adminUser.getEmail());
         } else {
+            Long inviterId = null;
+            if (currentUserId != null && currentUserId > 0 && userRepository.existsById(currentUserId)) {
+                inviterId = currentUserId;
+            }
+
             String token = UUID.randomUUID().toString();
             UserInvitation invitation = UserInvitation.builder()
                     .tenantId(tenant.getId())
                     .email(request.getAdminEmail().trim().toLowerCase())
                     .role(User.UserRole.TENANT_ADMIN)
                     .invitationToken(token)
-                    .invitedBy(0L)
+                    .invitedBy(inviterId)
                     .expiresAt(LocalDateTime.now().plusHours(72))
                     .build();
 

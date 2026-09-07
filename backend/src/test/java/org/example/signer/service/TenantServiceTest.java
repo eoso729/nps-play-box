@@ -86,6 +86,44 @@ class TenantServiceTest {
         assertEquals(User.UserRole.TENANT_ADMIN, inv.getRole());
         assertNull(inv.getAcceptedAt());
         assertFalse(inv.isExpired());
+        assertNull(inv.getInvitedBy());
+    }
+
+    @Test
+    @DisplayName("Should record platform admin as inviter when currentUserId is provided")
+    void shouldCreateTenantWithInvitationWithInviterWhenCurrentUserIdProvided() {
+        Tenant platformTenant = tenantRepository.save(Tenant.builder()
+                .name("Platform Admin")
+                .slug("platform-admin-test")
+                .subscriptionTier(Tenant.SubscriptionTier.ENTERPRISE)
+                .status(Tenant.TenantStatus.ACTIVE)
+                .maxSeats(999)
+                .build());
+
+        User platformAdmin = userRepository.save(User.builder()
+                .tenantId(platformTenant.getId())
+                .userUuid(UUID.randomUUID())
+                .email("superadmin@npsbox.io")
+                .username("superadmin")
+                .passwordHash(passwordEncoder.encode("Admin@123"))
+                .role(User.UserRole.PLATFORM_ADMIN)
+                .status(User.UserStatus.ACTIVE)
+                .authProvider("LOCAL")
+                .build());
+
+        CreateTenantRequest request = CreateTenantRequest.builder()
+                .name("Access Bank")
+                .slug("access-bank")
+                .maxSeats(15)
+                .subscriptionTier("ENTERPRISE")
+                .adminEmail("admin@accessbank.com")
+                .build();
+
+        TenantResponse response = tenantService.createTenant(request, platformAdmin.getId());
+        assertNotNull(response.getInvitationToken());
+
+        UserInvitation inv = userInvitationRepository.findByInvitationToken(response.getInvitationToken()).orElseThrow();
+        assertEquals(platformAdmin.getId(), inv.getInvitedBy());
     }
 
     @Test

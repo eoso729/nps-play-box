@@ -40,8 +40,12 @@ public class TenantController {
     })
     @RequirePlatformAdmin
     @PostMapping
-    public ResponseEntity<TenantResponse> createTenant(@Valid @RequestBody CreateTenantRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(tenantService.createTenant(request));
+    public ResponseEntity<TenantResponse> createTenant(
+            @Valid @RequestBody CreateTenantRequest request,
+            @RequestAttribute(value = "userId", required = false) Long requestUserId,
+            Authentication authentication) {
+        Long currentUserId = resolveUserId(requestUserId, authentication);
+        return ResponseEntity.status(HttpStatus.CREATED).body(tenantService.createTenant(request, currentUserId));
     }
 
     @Operation(summary = "List all tenants", description = "Platform administrators only, paginated")
@@ -172,5 +176,17 @@ public class TenantController {
     public ResponseEntity<Void> deleteTenant(@PathVariable Long id) {
         tenantService.deleteTenant(id);
         return ResponseEntity.noContent().build();
+    }
+
+    private Long resolveUserId(Long requestUserId, Authentication authentication) {
+        if (requestUserId != null) return requestUserId;
+        if (authentication != null) {
+            if (authentication.getPrincipal() instanceof TenantUserDetails tud && tud.getUser() != null) {
+                return tud.getUser().getId();
+            } else if (authentication.getPrincipal() instanceof User u) {
+                return u.getId();
+            }
+        }
+        return null;
     }
 }
