@@ -7,7 +7,6 @@ interface ResponsePaneProps {
 }
 
 export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isLoading }) => {
-  const [activeTab, setActiveTab] = useState<'body' | 'headers'>('body');
   const [copied, setCopied] = useState(false);
 
   const statusCode = serviceResponse?.statusCode;
@@ -67,7 +66,7 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
               className="w-[17px] h-[17px] rounded-full flex items-center justify-center text-white flex-shrink-0"
               style={{ background: '#16a34a', fontSize: 9.5, fontWeight: 700 }}
             >
-              3
+              1
             </span>
             Gateway Service Response
           </div>
@@ -93,30 +92,11 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
         />
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 px-3 border-b border-[#e4e9e6] bg-white flex-shrink-0">
-        <button
-          type="button"
-          onClick={() => setActiveTab('body')}
-          className={`py-2 text-[12px] font-semibold border-b-2 transition-colors cursor-pointer bg-transparent ${
-            activeTab === 'body'
-              ? 'text-[#15803d] border-[#16a34a]'
-              : 'text-[#6b7280] border-transparent hover:text-[#111827]'
-          }`}
-        >
+      {/* Response Body label */}
+      <div className="px-3.5 bg-white border-b border-[#e4e9e6] flex-shrink-0">
+        <span className="inline-block py-2 text-[12px] font-semibold border-b-2 border-[#16a34a] text-[#15803d]">
           Response Body
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('headers')}
-          className={`py-2 text-[12px] font-semibold border-b-2 transition-colors cursor-pointer bg-transparent ${
-            activeTab === 'headers'
-              ? 'text-[#15803d] border-[#16a34a]'
-              : 'text-[#6b7280] border-transparent hover:text-[#111827]'
-          }`}
-        >
-          Headers
-        </button>
+        </span>
       </div>
 
       {/* Code Body */}
@@ -145,12 +125,12 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
         {!isLoading && !serviceResponse && (
           <div className="flex flex-col items-center justify-center h-full px-4 py-10 text-center">
             <p style={{ color: '#3f6a52', fontSize: 12 }}>
-              Use &ldquo;Execute Request Pipeline&rdquo; to send and view the gateway response here.
+              Use &ldquo;Execute Pipeline&rdquo; to send and view the gateway response here.
             </p>
           </div>
         )}
 
-        {!isLoading && serviceResponse && activeTab === 'body' && bodyLines.map((line, i) => (
+        {!isLoading && serviceResponse && bodyLines.map((line, i) => (
           <div
             key={i}
             className="flex"
@@ -164,15 +144,6 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
             <span style={{ color: '#cfe8db' }}>{line}</span>
           </div>
         ))}
-
-        {!isLoading && serviceResponse && activeTab === 'headers' && (
-          <div className="px-4 py-4 space-y-1.5">
-            <HeaderRow label="Content-Type" value="application/xml; charset=UTF-8" />
-            <HeaderRow label="X-Request-ID" value={requestId} />
-            <HeaderRow label="X-Response-Time" value={latency != null ? `${latency}ms` : '--'} />
-            <HeaderRow label="Server" value="NIBSS-Gateway/2.4" />
-          </div>
-        )}
       </div>
 
       {/* Action Buttons */}
@@ -180,14 +151,20 @@ export const ResponsePane: React.FC<ResponsePaneProps> = ({ serviceResponse, isL
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold cursor-pointer hover:border-[#22a05a] hover:text-[#15803d] transition-colors"
+          disabled={!body}
+          className={`flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold transition-colors ${
+            body ? 'cursor-pointer hover:border-[#22a05a] hover:text-[#15803d]' : 'opacity-40 cursor-not-allowed'
+          }`}
         >
           {copied ? 'Copied' : 'Copy'}
         </button>
         <button
           type="button"
           onClick={handleExport}
-          className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold cursor-pointer hover:border-[#22a05a] hover:text-[#15803d] transition-colors"
+          disabled={!body}
+          className={`flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold transition-colors ${
+            body ? 'cursor-pointer hover:border-[#22a05a] hover:text-[#15803d]' : 'opacity-40 cursor-not-allowed'
+          }`}
         >
           Export Response
         </button>
@@ -216,12 +193,5 @@ const StatCard: React.FC<{
     >
       {value}
     </div>
-  </div>
-);
-
-const HeaderRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex gap-3 text-[11px]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-    <span style={{ color: '#8fd4b8', minWidth: 140 }}>{label}:</span>
-    <span style={{ color: '#cfe8db' }}>{value}</span>
   </div>
 );
