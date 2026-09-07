@@ -70,6 +70,10 @@ export const MessageWorkbench: React.FC = () => {
     }
   }, [activeMessage]);
 
+  const handleDismissError = useCallback(() => {
+    setResult(prev => ({ ...prev, error: null }));
+  }, [setResult]);
+
   return (
     <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: '#f6f9f7' }}>
       {/* Header */}
@@ -77,6 +81,30 @@ export const MessageWorkbench: React.FC = () => {
         activeMode={workbenchMode}
         onModeChange={setWorkbenchMode}
       />
+
+      {/* Error Banner — inline, full-width, dismissible */}
+      {result.error && (
+        <div
+          className="flex-shrink-0 flex items-center justify-between px-5 py-2.5 border-b"
+          style={{ background: '#fee2e2', borderColor: '#fecaca', color: '#dc2626' }}
+        >
+          <div className="flex items-center gap-2 text-[12.5px] font-medium">
+            <span className="text-[15px] leading-none font-bold">⚠</span>
+            <span>{result.error}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleDismissError}
+            className="ml-4 text-[13px] font-bold leading-none transition-colors cursor-pointer bg-transparent border-0"
+            style={{ color: '#f87171' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#b91c1c'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
+            aria-label="Dismiss error"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Body Row */}
       <div className="flex flex-1 min-h-0">
@@ -106,14 +134,6 @@ export const MessageWorkbench: React.FC = () => {
 
           {/* Right: Pipeline Panel */}
           <div className="flex flex-1 min-w-0 overflow-hidden" style={{ flex: 2 }}>
-            {result.error && (
-              <div
-                className="absolute top-16 right-4 z-50 max-w-sm px-4 py-3 rounded-lg border text-[12.5px] font-medium shadow-lg"
-                style={{ background: '#fee2e2', borderColor: '#fecaca', color: '#dc2626' }}
-              >
-                {result.error}
-              </div>
-            )}
             <PipelinePanel result={result} mode={workbenchMode} />
           </div>
         </main>

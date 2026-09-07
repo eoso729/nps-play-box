@@ -25,13 +25,39 @@ export const FormFieldset: React.FC<FormFieldsetProps> = ({
   register,
   watch,
 }) => {
+  const requiredFields = section.fields.filter(f => f.required);
+  const filledCount = requiredFields.filter(f => {
+    const val = register && watch ? watch(f.key) : formData[f.key];
+    return String(val ?? '').trim().length > 0;
+  }).length;
+  const progressPct = requiredFields.length > 0 ? (filledCount / requiredFields.length) * 100 : 100;
+  const allDone = requiredFields.length === 0 || filledCount === requiredFields.length;
+
   return (
     <div className="border border-[#e4e9e6] rounded-[10px] mb-4 overflow-hidden shadow-sm bg-white">
-      <div className="bg-[#f3faf5] px-3.5 py-2.5 text-[11.5px] font-bold text-[#0f3a22] tracking-[0.3px] border-b border-[#e4e9e6] flex items-center justify-between">
-        <span>{section.title}</span>
-        <span className="text-[10.5px] text-[#2d6a4f] font-normal font-mono">
-          {section.fields.filter(f => f.required).length} required
-        </span>
+      <div className="bg-[#f3faf5] px-3.5 pt-2.5 pb-2 text-[11.5px] font-bold text-[#0f3a22] tracking-[0.3px] border-b border-[#e4e9e6]">
+        <div className="flex items-center justify-between mb-1.5">
+          <span>{section.title}</span>
+          {requiredFields.length > 0 && (
+            <span
+              className="text-[10px] font-semibold font-mono transition-colors"
+              style={{ color: allDone ? '#16a34a' : '#9ca3af' }}
+            >
+              {filledCount}/{requiredFields.length} required
+            </span>
+          )}
+        </div>
+        {requiredFields.length > 0 && (
+          <div className="h-[3px] w-full rounded-full overflow-hidden" style={{ background: '#e4e9e6' }}>
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${progressPct}%`,
+                background: allDone ? '#16a34a' : 'linear-gradient(90deg, #22a05a, #4ade80)',
+              }}
+            />
+          </div>
+        )}
       </div>
       <div className="p-3.5 grid grid-cols-2 gap-3.5">
         {section.fields.map(field => {

@@ -100,55 +100,65 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         </div>
       ) : (
         /* Workbench / Default Nav */
-        <div className="flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
-          <button
-            type="button"
-            onClick={() => { if (onModeChange) onModeChange('generation'); else navigate('/workbench'); }}
-            className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeMode === 'generation'
-                ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${activeMode === 'generation' ? 'bg-[#16a34a]' : 'bg-gray-400'}`} />
-            XML Generation
-          </button>
-          <button
-            type="button"
-            onClick={() => { if (onModeChange) onModeChange('dispatch'); else navigate('/workbench'); }}
-            className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeMode === 'dispatch'
-                ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${activeMode === 'dispatch' ? 'bg-[#16a34a]' : 'bg-gray-400'}`} />
-            Pipeline Execution
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/orchestrator')}
-            className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-          >
-            <span className="text-[12px]">⚡</span>
-            Flow Orchestrator
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/inspector')}
-            className="px-3.5 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-          >
-            <span className="text-[12px]">🔍</span>
-            Fix My XML
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/diff')}
-            className="px-3 py-1.5 text-[12px] font-semibold rounded-lg text-gray-600 hover:text-gray-900 transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
-          >
-            <span className="text-[12px]">⚖️</span>
-            Diff Checker
-          </button>
+        <div className="flex items-center gap-2">
+          {/* Mode switcher pill */}
+          <div className="flex bg-[#edf2ee] border border-[#e1e9e3] rounded-xl p-1 shadow-inner">
+            <button
+              type="button"
+              onClick={() => { if (onModeChange) onModeChange('generation'); else navigate('/workbench'); }}
+              className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeMode === 'generation'
+                  ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${activeMode === 'generation' ? 'bg-[#16a34a]' : 'bg-gray-400'}`} />
+              XML Generation
+            </button>
+            <button
+              type="button"
+              onClick={() => { if (onModeChange) onModeChange('dispatch'); else navigate('/workbench'); }}
+              className={`px-3.5 py-1.5 text-[12px] font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeMode === 'dispatch'
+                  ? 'bg-white text-[#16a34a] shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${activeMode === 'dispatch' ? 'bg-[#16a34a]' : 'bg-gray-400'}`} />
+              Pipeline Execution
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="h-5 w-px flex-shrink-0" style={{ background: '#d1d5db' }} />
+
+          {/* Tool navigation — visually distinct from mode switcher */}
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => navigate('/orchestrator')}
+              className="px-2.5 py-1.5 text-[11.5px] font-medium rounded-lg text-[#6b7280] hover:text-[#0f3a22] hover:bg-[#f0f4f1] transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+            >
+              <span className="text-[11px]">⚡</span>
+              Flow Orchestrator
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/inspector')}
+              className="px-2.5 py-1.5 text-[11.5px] font-medium rounded-lg text-[#6b7280] hover:text-[#0f3a22] hover:bg-[#f0f4f1] transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+            >
+              <span className="text-[11px]">🔍</span>
+              Fix My XML
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/diff')}
+              className="px-2.5 py-1.5 text-[11.5px] font-medium rounded-lg text-[#6b7280] hover:text-[#0f3a22] hover:bg-[#f0f4f1] transition-all flex items-center gap-1.5 cursor-pointer bg-transparent border-0"
+            >
+              <span className="text-[11px]">⚖️</span>
+              Diff Checker
+            </button>
+          </div>
         </div>
       )}
 

@@ -23,19 +23,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   if (collapsed) {
+    const shortCode = activeMessage.split('.').slice(0, 2).join('.');
     return (
       <div
-        className="flex-shrink-0 flex flex-col items-center py-4 cursor-pointer"
+        className="flex-shrink-0 flex flex-col items-center pt-4 pb-3 cursor-pointer select-none"
         style={{ width: 48, background: 'linear-gradient(180deg, #0b2818, #081f14)' }}
         onClick={onToggleCollapse}
       >
+        {/* Logo */}
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-[10px] mb-4"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-[10px] mb-5 flex-shrink-0"
           style={{ background: 'linear-gradient(135deg, #22a05a, #15803d)' }}
         >
           NPS
         </div>
-        <span className="text-[#9fd8b3] text-[11px] rotate-90 mt-8 whitespace-nowrap">Expand</span>
+
+        {/* Active selection indicator */}
+        <div className="flex flex-col items-center gap-2 flex-1 overflow-hidden">
+          <div
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ background: '#22a05a', boxShadow: '0 0 5px rgba(34,160,90,0.75)' }}
+          />
+          <span
+            className="text-[9px] font-mono font-semibold tracking-wider"
+            style={{
+              color: '#9fd8b3',
+              writingMode: 'vertical-lr',
+              transform: 'rotate(180deg)',
+            }}
+          >
+            {shortCode}
+          </span>
+        </div>
+
+        {/* Expand hint */}
+        <span
+          className="text-[9px] font-medium mt-2"
+          style={{
+            color: '#4d7a5f',
+            writingMode: 'vertical-lr',
+            transform: 'rotate(180deg)',
+          }}
+        >
+          expand
+        </span>
       </div>
     );
   }

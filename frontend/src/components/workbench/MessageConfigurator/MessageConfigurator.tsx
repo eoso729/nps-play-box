@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Loader2 } from 'lucide-react';
 import { MESSAGE_CONFIGS } from '../messageConfigs';
 import { FormFieldset } from './FormFieldset';
 import { createMessageZodSchema } from '../../../utils/formValidation';
@@ -196,7 +197,7 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
             className="flex-1 border border-[#16a34a] text-[#15803d] bg-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer hover:bg-[#f3faf5] transition-colors flex items-center justify-center gap-1.5 shadow-sm"
           >
             <span>📄</span>
-            <span>Load Pre-filled Spec Data</span>
+            <span>Use Sample Data</span>
           </button>
           
           {mode === 'generation' ? (
@@ -210,8 +211,11 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
                 boxShadow: isLoading ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
               }}
             >
-              <span>⚡</span>
-              <span>{isLoading ? 'Generating XML...' : 'Generate ISO 20022 XML'}</span>
+              {isLoading
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <span>⚡</span>
+              }
+              <span>{isLoading ? 'Generating...' : 'Generate XML'}</span>
             </button>
           ) : (
             <button
@@ -224,8 +228,11 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
                 boxShadow: isLoading ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
               }}
             >
-              <span>🚀</span>
-              <span>{isLoading ? 'Processing...' : 'Execute Request Pipeline'}</span>
+              {isLoading
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <span>🚀</span>
+              }
+              <span>{isLoading ? 'Processing...' : 'Execute Pipeline'}</span>
             </button>
           )}
         </div>

@@ -11,7 +11,22 @@ interface XmlPaneProps {
   xml: string | null;
   isLoading: boolean;
   footer?: React.ReactNode;
+  mode?: 'generation' | 'dispatch';
 }
+
+const getEmptyStateText = (title: string, mode: 'generation' | 'dispatch'): string => {
+  if (title === 'Plain XML') {
+    return mode === 'dispatch'
+      ? 'Execute the pipeline to see the unsigned XML payload here.'
+      : 'Fill the form and generate XML to see the unsigned output here.';
+  }
+  if (title === 'Signed XML') {
+    return mode === 'dispatch'
+      ? 'Your signed envelope will appear here after pipeline execution.'
+      : 'Your DSIG-signed payload will appear here after generating XML.';
+  }
+  return 'Fill the form and run a pipeline to see output here.';
+};
 
 const SKELETON_WIDTHS = [45, 78, 62, 85, 53, 70, 90, 48, 65, 80, 58, 72];
 
@@ -56,6 +71,7 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
   xml,
   isLoading,
   footer,
+  mode = 'generation',
 }) => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
@@ -143,7 +159,7 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
             <div className="w-8 h-8 rounded-lg mb-3 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)' }}>
               <span style={{ color: '#3f6a52', fontSize: 16 }}>&#60;/&#62;</span>
             </div>
-            <p style={{ color: '#3f6a52', fontSize: 12 }}>Fill the form and run a pipeline to see output here.</p>
+            <p style={{ color: '#3f6a52', fontSize: 12 }}>{getEmptyStateText(title, mode)}</p>
           </div>
         )}
 
@@ -200,14 +216,20 @@ export const XmlPane: React.FC<XmlPaneProps> = ({
         <button
           type="button"
           onClick={handleCopy}
-          className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold cursor-pointer hover:border-[#22a05a] hover:text-[#15803d] transition-colors"
+          disabled={!xml}
+          className={`flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold transition-colors ${
+            xml ? 'cursor-pointer hover:border-[#22a05a] hover:text-[#15803d]' : 'opacity-40 cursor-not-allowed'
+          }`}
         >
           {copied ? 'Copied' : 'Copy'}
         </button>
         <button
           type="button"
           onClick={handleExport}
-          className="flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold cursor-pointer hover:border-[#22a05a] hover:text-[#15803d] transition-colors"
+          disabled={!xml}
+          className={`flex items-center gap-1.5 border border-[#e4e9e6] bg-white text-[#111827] px-2.5 py-1.5 rounded-[6px] text-[11px] font-semibold transition-colors ${
+            xml ? 'cursor-pointer hover:border-[#22a05a] hover:text-[#15803d]' : 'opacity-40 cursor-not-allowed'
+          }`}
         >
           Export XML
         </button>
