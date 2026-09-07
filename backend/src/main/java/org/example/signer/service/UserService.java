@@ -10,6 +10,7 @@ import org.example.signer.entity.User;
 import org.example.signer.entity.UserInvitation;
 import org.example.signer.exception.InvalidQuotaException;
 import org.example.signer.exception.QuotaExceededException;
+import org.example.signer.exception.ResourceNotFoundException;
 import org.example.signer.exception.TenantNotFoundException;
 import org.example.signer.repository.TenantRepository;
 import org.example.signer.repository.UserInvitationRepository;
@@ -84,10 +85,12 @@ public class UserService {
                     + tenant.getMaxSeats() + ", active users: " + activeUsers + ", pending invitations: " + activePendingCount);
         }
 
-        Long inviterId = null;
-        if (invitedBy != null && invitedBy > 0 && userRepository.existsById(invitedBy)) {
-            inviterId = invitedBy;
+        if (invitedBy == null) {
+            throw new IllegalStateException("Cannot invite user: Inviter user ID is required");
         }
+
+        User inviter = userRepository.findById(invitedBy)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", invitedBy));
 
         String token = generateInvitationToken();
         UserInvitation invitation = UserInvitation.builder()
@@ -95,14 +98,16 @@ public class UserService {
                 .email(email)
                 .role(role)
                 .invitationToken(token)
-                .invitedBy(inviterId)
+                .invitedBy(inviter.getId())
                 .expiresAt(LocalDateTime.now().plusHours(INVITATION_EXPIRY_HOURS))
                 .build();
 
         invitation = invitationRepository.save(invitation);
 
-        User inviter = invitedBy != null ? userRepository.findById(invitedBy).orElse(null) : null;
-        String inviterName = inviter != null ? (inviter.getFirstName() + " " + inviter.getLastName()).trim() : "An administrator";
+        String inviterName = (inviter.getFirstName() + " " + inviter.getLastName()).trim();
+        if (!StringUtils.hasText(inviterName)) {
+            inviterName = "An administrator";
+        }
 
         emailService.sendInvitationEmail(
                 email,

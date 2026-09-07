@@ -5,11 +5,13 @@ import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
 import org.example.signer.exception.DuplicateSlugException;
 import org.example.signer.exception.InvalidQuotaException;
+import org.example.signer.exception.ResourceNotFoundException;
 import org.example.signer.exception.TenantNotFoundException;
 import org.example.signer.entity.UserInvitation;
 import org.example.signer.repository.TenantRepository;
 import org.example.signer.repository.UserInvitationRepository;
 import org.example.signer.repository.UserRepository;
+import org.example.signer.security.TenantUserDetails;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,8 +57,37 @@ class TenantServiceTest {
     }
 
     @Test
-    @DisplayName("Should create tenant and generate invitation when admin password is omitted")
+    @DisplayName("Should create tenant and generate invitation when admin password is omitted with authenticated platform admin")
     void shouldCreateTenantWithInvitationWhenPasswordOmitted() {
+        Tenant platformTenant = tenantRepository.save(Tenant.builder()
+                .name("Platform Admin")
+                .slug("platform-admin-ctx")
+                .subscriptionTier(Tenant.SubscriptionTier.ENTERPRISE)
+                .status(Tenant.TenantStatus.ACTIVE)
+                .maxSeats(999)
+                .build());
+
+        User platformAdmin = userRepository.save(User.builder()
+                .tenantId(platformTenant.getId())
+                .userUuid(UUID.randomUUID())
+                .email("admin@npsbox.io")
+                .username("platformadmin")
+                .passwordHash(passwordEncoder.encode("AdminPass123"))
+                .firstName("Platform")
+                .lastName("Admin")
+                .role(User.UserRole.PLATFORM_ADMIN)
+                .status(User.UserStatus.ACTIVE)
+                .authProvider("LOCAL")
+                .build());
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        new TenantUserDetails(platformAdmin, "platform-admin-ctx"),
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN"))
+                )
+        );
+
         CreateTenantRequest request = CreateTenantRequest.builder()
                 .name("Zenith Bank")
                 .slug("zenith-bank")
@@ -86,7 +120,38 @@ class TenantServiceTest {
         assertEquals(User.UserRole.TENANT_ADMIN, inv.getRole());
         assertNull(inv.getAcceptedAt());
         assertFalse(inv.isExpired());
-        assertNull(inv.getInvitedBy());
+        assertEquals(platformAdmin.getId(), inv.getInvitedBy());
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalStateException when no inviter is present in security context or request")
+    void shouldThrowExceptionWhenNoInviterPresentInSecurityContext() {
+        SecurityContextHolder.clearContext();
+
+        CreateTenantRequest request = CreateTenantRequest.builder()
+                .name("No Auth Bank")
+                .slug("no-auth-bank")
+                .maxSeats(10)
+                .subscriptionTier("PROFESSIONAL")
+                .adminEmail("admin@noauthbank.com")
+                .build();
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> tenantService.createTenant(request));
+        assertTrue(ex.getMessage().contains("Authenticated platform administrator context is required"));
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException when explicit inviter user ID does not exist in database")
+    void shouldThrowExceptionWhenInviterNotFoundInDatabase() {
+        CreateTenantRequest request = CreateTenantRequest.builder()
+                .name("Ghost User Bank")
+                .slug("ghost-user-bank")
+                .maxSeats(10)
+                .subscriptionTier("PROFESSIONAL")
+                .adminEmail("admin@ghostbank.com")
+                .build();
+
+        assertThrows(ResourceNotFoundException.class, () -> tenantService.createTenant(request, 999999L));
     }
 
     @Test

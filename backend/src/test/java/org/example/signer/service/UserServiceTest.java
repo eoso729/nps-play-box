@@ -6,6 +6,7 @@ import org.example.signer.entity.User;
 import org.example.signer.entity.UserInvitation;
 import org.example.signer.exception.InvalidQuotaException;
 import org.example.signer.exception.QuotaExceededException;
+import org.example.signer.exception.ResourceNotFoundException;
 import org.example.signer.repository.TenantRepository;
 import org.example.signer.repository.UserInvitationRepository;
 import org.example.signer.repository.UserRepository;
@@ -152,6 +153,30 @@ class UserServiceTest {
 
         assertThrows(QuotaExceededException.class, () ->
                 userService.inviteUser(tinyTenant.getId(), tinyAdmin.getId(), request));
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalStateException when invitedBy is null")
+    void shouldRejectInvitationIfInviterIdIsNull() {
+        InviteUserRequest request = InviteUserRequest.builder()
+                .email("noinviter@acmebank.com")
+                .role("DEVELOPER")
+                .build();
+
+        assertThrows(IllegalStateException.class, () ->
+                userService.inviteUser(testTenant.getId(), null, request));
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException when inviter user does not exist in database")
+    void shouldRejectInvitationIfInviterDoesNotExist() {
+        InviteUserRequest request = InviteUserRequest.builder()
+                .email("ghostinviter@acmebank.com")
+                .role("DEVELOPER")
+                .build();
+
+        assertThrows(ResourceNotFoundException.class, () ->
+                userService.inviteUser(testTenant.getId(), 999999L, request));
     }
 
     @Test

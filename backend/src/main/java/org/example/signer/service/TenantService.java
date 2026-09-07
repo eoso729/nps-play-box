@@ -9,13 +9,17 @@ import org.example.signer.entity.Tenant;
 import org.example.signer.entity.User;
 import org.example.signer.exception.DuplicateSlugException;
 import org.example.signer.exception.InvalidQuotaException;
+import org.example.signer.exception.ResourceNotFoundException;
 import org.example.signer.exception.TenantNotFoundException;
 import org.example.signer.entity.UserInvitation;
 import org.example.signer.repository.TenantRepository;
 import org.example.signer.repository.UserInvitationRepository;
 import org.example.signer.repository.UserRepository;
+import org.example.signer.security.TenantUserDetails;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,10 +92,13 @@ public class TenantService {
             usedSeats = 1;
             log.info("Created tenant '{}' (id: {}) with active admin user '{}'", tenant.getName(), tenant.getId(), adminUser.getEmail());
         } else {
-            Long inviterId = null;
-            if (currentUserId != null && currentUserId > 0 && userRepository.existsById(currentUserId)) {
-                inviterId = currentUserId;
+            Long inviterId = resolveCurrentUserId(currentUserId);
+            if (inviterId == null) {
+                throw new IllegalStateException("Cannot create tenant invitation: Authenticated platform administrator context is required");
             }
+
+            User inviter = userRepository.findById(inviterId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", inviterId));
 
             String token = UUID.randomUUID().toString();
             UserInvitation invitation = UserInvitation.builder()
@@ -99,7 +106,7 @@ public class TenantService {
                     .email(request.getAdminEmail().trim().toLowerCase())
                     .role(User.UserRole.TENANT_ADMIN)
                     .invitationToken(token)
-                    .invitedBy(inviterId)
+                    .invitedBy(inviter.getId())
                     .expiresAt(LocalDateTime.now().plusHours(72))
                     .build();
 
@@ -108,15 +115,21 @@ public class TenantService {
             invitationToken = token;
             invitationUrl = emailService.buildInvitationUrl(token);
 
+            String inviterName = (inviter.getFirstName() + " " + inviter.getLastName()).trim();
+            if (!StringUtils.hasText(inviterName)) {
+                inviterName = "Platform Administrator";
+            }
+
             emailService.sendInvitationEmail(
                     request.getAdminEmail().trim(),
                     tenant.getName(),
-                    "Platform Administrator",
+                    inviterName,
                     token,
                     "Welcome to NPS Play Box! You have been provisioned as the Primary Administrator for " + tenant.getName() + "."
             );
 
-            log.info("Created tenant '{}' (id: {}) and dispatched invitation token to admin '{}'", tenant.getName(), tenant.getId(), request.getAdminEmail());
+            log.info("Created tenant '{}' (id: {}) and dispatched invitation token to admin '{}' by inviter '{}' (id: {})",
+                    tenant.getName(), tenant.getId(), request.getAdminEmail(), inviter.getEmail(), inviter.getId());
         }
 
         TenantResponse response = mapToResponse(tenant, usedSeats);
@@ -244,5 +257,20 @@ public class TenantService {
                 .updatedAt(tenant.getUpdatedAt())
                 .metadata(tenant.getMetadata())
                 .build();
+    }
+
+    private Long resolveCurrentUserId(Long explicitUserId) {
+        if (explicitUserId != null && explicitUserId > 0) {
+            return explicitUserId;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() != null) {
+            if (authentication.getPrincipal() instanceof TenantUserDetails tud && tud.getUser() != null) {
+                return tud.getUser().getId();
+            } else if (authentication.getPrincipal() instanceof User u) {
+                return u.getId();
+            }
+        }
+        return null;
     }
 }
