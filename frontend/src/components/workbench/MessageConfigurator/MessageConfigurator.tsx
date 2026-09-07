@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, Lock } from 'lucide-react';
 import { MESSAGE_CONFIGS } from '../messageConfigs';
 import { FormFieldset } from './FormFieldset';
 import { createMessageZodSchema } from '../../../utils/formValidation';
 import { useWorkbench } from '../../../context/WorkbenchContext';
+import { useOptionalAuth } from '../../../context/AuthContext';
 
 interface MessageConfiguratorProps {
   messageKey: string;
@@ -22,6 +23,8 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
   isLoading,
   mode = 'generation',
 }) => {
+  const auth = useOptionalAuth();
+  const isViewer = auth?.user?.role === 'VIEWER';
   const config = MESSAGE_CONFIGS[messageKey];
   const { getFormData, setFormDataForMessage, resetFormToPrefill, clearForm } = useWorkbench();
 
@@ -176,6 +179,16 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
         </div>
       )}
 
+      {/* Read-Only Notice for Viewers */}
+      {isViewer && (
+        <div className="bg-slate-50 border-b border-slate-200 px-4 py-2.5 text-[12px] text-slate-700 flex items-center gap-2">
+          <Eye className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <span>
+            <strong>Viewer (Read-Only)</strong>: You can inspect message fields and review sample payloads, but generating XML or executing pipelines requires Developer or Admin access.
+          </span>
+        </div>
+      )}
+
       {/* Scrollable Form Body */}
       <div className="flex-1 overflow-y-auto p-4">
         {config.sections.map(section => (
@@ -204,35 +217,43 @@ export const MessageConfigurator: React.FC<MessageConfiguratorProps> = ({
             <button
               type="button"
               onClick={() => executeAction('generate')}
-              disabled={isLoading}
+              disabled={isLoading || isViewer}
+              title={isViewer ? "Viewers have read-only access. Developer or Admin role required to generate XML." : undefined}
               className="flex-[1.4] border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               style={{
-                background: isLoading ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
-                boxShadow: isLoading ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
+                background: (isLoading || isViewer) ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
+                boxShadow: (isLoading || isViewer) ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
               }}
             >
-              {isLoading
-                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                : <span>⚡</span>
-              }
-              <span>{isLoading ? 'Generating...' : 'Generate XML'}</span>
+              {isLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : isViewer ? (
+                <Lock className="w-3.5 h-3.5" />
+              ) : (
+                <span>⚡</span>
+              )}
+              <span>{isLoading ? 'Generating...' : isViewer ? 'Generate XML (Restricted)' : 'Generate XML'}</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={() => executeAction('send')}
-              disabled={isLoading}
+              disabled={isLoading || isViewer}
+              title={isViewer ? "Viewers have read-only access. Developer or Admin role required to execute pipeline." : undefined}
               className="flex-[1.4] border-0 text-white py-2.5 rounded-lg text-[12.5px] font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
               style={{
-                background: isLoading ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
-                boxShadow: isLoading ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
+                background: (isLoading || isViewer) ? '#6b7280' : 'linear-gradient(180deg, #16a34a, #15803d)',
+                boxShadow: (isLoading || isViewer) ? 'none' : '0 4px 12px rgba(21,128,61,0.28)',
               }}
             >
-              {isLoading
-                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                : <span>🚀</span>
-              }
-              <span>{isLoading ? 'Processing...' : 'Execute Pipeline'}</span>
+              {isLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : isViewer ? (
+                <Lock className="w-3.5 h-3.5" />
+              ) : (
+                <span>🚀</span>
+              )}
+              <span>{isLoading ? 'Processing...' : isViewer ? 'Execute (Restricted)' : 'Execute Pipeline'}</span>
             </button>
           )}
         </div>
