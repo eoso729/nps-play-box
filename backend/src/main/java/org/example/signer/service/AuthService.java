@@ -39,25 +39,40 @@ public class AuthService {
 
     @Transactional
     public AuthResponse authenticate(AuthRequest request) {
-        String slug = StringUtils.hasText(request.getTenantSlug())
-                ? request.getTenantSlug().trim()
-                : "platform-admin";
+        Tenant tenant;
+        User user;
 
-        Tenant tenant = tenantRepository.findBySlug(slug)
-                .orElse(null);
+        if (StringUtils.hasText(request.getTenantSlug())) {
+            String slug = request.getTenantSlug().trim();
+            tenant = tenantRepository.findBySlug(slug).orElse(null);
+
+            if (tenant == null) {
+                auditService.logAuth(0L, null, "LOGIN", AuditEvent.EventStatus.FAILURE, "Tenant not found: " + slug);
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found: " + slug);
+            }
+
+            user = userRepository.findByEmailAndTenantId(request.getEmail(), tenant.getId())
+                    .orElse(null);
+        } else {
+            user = userRepository.findByEmailOrUsername(request.getEmail(), request.getEmail())
+                    .orElse(null);
+
+            if (user != null && user.getTenantId() != null) {
+                tenant = tenantRepository.findById(user.getTenantId()).orElse(null);
+            } else {
+                tenant = tenantRepository.findBySlug("platform-admin").orElse(null);
+            }
+        }
 
         if (tenant == null) {
-            auditService.logAuth(0L, null, "LOGIN", AuditEvent.EventStatus.FAILURE, "Tenant not found: " + slug);
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found: " + slug);
+            auditService.logAuth(0L, null, "LOGIN", AuditEvent.EventStatus.FAILURE, "Tenant not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found");
         }
 
         if (tenant.getStatus() != Tenant.TenantStatus.ACTIVE) {
             auditService.logAuth(tenant.getId(), null, "LOGIN", AuditEvent.EventStatus.FAILURE, "Tenant account is not active");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant account is not active");
         }
-
-        User user = userRepository.findByEmailAndTenantId(request.getEmail(), tenant.getId())
-                .orElse(null);
 
         if (user == null) {
             auditService.logAuth(tenant.getId(), null, "LOGIN", AuditEvent.EventStatus.FAILURE, "Invalid email or password");

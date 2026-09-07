@@ -223,4 +223,22 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty());
     }
+
+    @Test
+    @DisplayName("Should authenticate valid user when tenantSlug is omitted by auto-resolving tenant from email")
+    void shouldAuthenticateUserWithoutTenantSlug() throws Exception {
+        AuthRequest request = AuthRequest.builder()
+                .email("admin@apex-bank.com")
+                .password("Password123!")
+                .build();
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.user.email").value("admin@apex-bank.com"))
+                .andExpect(jsonPath("$.user.tenant.slug").value("apex-bank"))
+                .andExpect(jsonPath("$.user.role").value("TENANT_ADMIN"));
+    }
 }
